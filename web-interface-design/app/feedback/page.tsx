@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input"
 import { AIChatPanel } from "@/components/ai-chat-panel"
 import { FeedbackCanvas } from "@/components/feedback-canvas"
 import { AISidebarChatbot } from "@/components/ai-sidebar-chatbot"
+import { DirectorFeedbackCanvas } from "@/components/director-feedback-canvas"
 
 export default function FeedbackPage() {
   const [rawNotes, setRawNotes] = useState("")
@@ -338,22 +339,8 @@ export default function FeedbackPage() {
             </Card>
           </div>
 
-          {/* Right: Tools & Templates */}
+          {/* Right: Authority & Templates */}
           <div className="space-y-6">
-            {/* Canvas Annotator with Side-by-Side View */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">作品 vs 回饋 Canvas</CardTitle>
-                <CardDescription>並排顯示作品與回饋標註</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <FeedbackCanvas
-                  workImage="/vfx-work-in-progress-shot.jpg"
-                  referenceImages={["/reference-movie-frame.jpg"]}
-                />
-              </CardContent>
-            </Card>
-
             {/* Templates */}
             <Card>
               <CardHeader>
@@ -417,6 +404,58 @@ export default function FeedbackPage() {
             </Card>
           </div>
         </div>
+
+        {/* Director Review Canvas - Full Width */}
+        <Card className="mt-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-teal-600" />
+              Director Review Canvas
+            </CardTitle>
+            <CardDescription>
+              整合 Specs、作品、Reference 對照，可直接圈選標註、AI 分析優先級、潤稿與接受/拒絕回饋
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="h-[600px] border-t">
+              <DirectorFeedbackCanvas
+                workImage="/vfx-work-in-progress-shot.jpg"
+                referenceImages={[
+                  "/reference-movie-frame.jpg",
+                  "/composition-reference.jpg",
+                  "/lighting-setup-reference.png"
+                ]}
+                specs={[
+                  {
+                    title: "Director Specs",
+                    items: [
+                      "主光源必須從右側照射",
+                      "保持品牌 Logo 清晰可見",
+                      "氛圍要 warm & cozy",
+                      "主角臉部需要明確高光"
+                    ]
+                  },
+                  {
+                    title: "Technical Requirements",
+                    items: [
+                      "Resolution: 4K (3840x2160)",
+                      "Frame Rate: 24fps",
+                      "Color Space: ACES"
+                    ]
+                  },
+                  {
+                    title: "Priorities",
+                    items: [
+                      "P0: 光影方向對齊 Ref",
+                      "P1: 構圖符合黃金比例",
+                      "P2: 色溫暖調 4500-5000K"
+                    ]
+                  }
+                ]}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* AI Clarification Dialog */}
