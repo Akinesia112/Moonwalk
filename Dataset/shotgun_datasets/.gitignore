@@ -1,0 +1,11 @@
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Playwright profile
+.pw_profile/
+
+# Outputs / exports
+shotgrid_export_api/
+shotgrid_export/

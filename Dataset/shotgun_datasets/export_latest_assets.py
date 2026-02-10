@@ -20,7 +20,7 @@ SITE_DEFAULT = "https://moonshine.shotgunstudio.com"
 # 你指定的 Project 欄位（用「UI 顯示名」）
 PROJECT_FIELD_DISPLAY_NAMES = [
     "Art Director", "CG Lead", "CG Sup", "Color", "Comp Sup", "Director",
-    "Duration", "End Date", "Favorite", "FPS", "Fx Sup", "PC", "PM",
+    "Duration", "End Date", "Favorite", "FPS", "Fx Sup", "PC", "PM", "Description",
     "Render Engine", "Render Engine Detail", "Res Height", "Res Width",
     "Scale", "Start Date", "Status", "Tags", "Tank Name", "Unit", "Zulip Stream"
 ]
@@ -60,6 +60,45 @@ def dt(v: Any) -> Optional[datetime]:
     except Exception:
         return None
 
+def display_name_to_str(x: Any) -> Optional[str]:
+    """
+    ShotGrid schema 裡的 props["name"] 有時是 str，有時是 dict（多語系/帶 value）。
+    這裡把它變成可用的 display name 字串。
+    """
+    if x is None:
+        return None
+    if isinstance(x, str):
+        s = x.strip()
+        return s or None
+    if isinstance(x, dict):
+        if isinstance(x.get("value"), str) and x["value"].strip():
+            return x["value"].strip()
+        if isinstance(x.get("name"), str) and x["name"].strip():
+            return x["name"].strip()
+        for k in ("en_US", "en", "zh_TW", "zh_CN", "zh"):
+            v = x.get(k)
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+        for v in x.values():
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+    return None
+
+
+def stringify_field_value(v: Any) -> Any:
+    """
+    ShotGrid 會回傳 link dict / list / primitive，這裡轉成適合寫 json 的結構。
+    """
+    if isinstance(v, datetime):
+        return v.isoformat()
+    if isinstance(v, dict):
+        if "type" in v and "id" in v:
+            return {k: v.get(k) for k in ("type", "id", "name")}
+        return {k: stringify_field_value(val) for k, val in v.items()}
+    if isinstance(v, list):
+        return [stringify_field_value(x) for x in v]
+    return v
+
 
 def schema_display_to_field(sg, entity_type: str) -> Dict[str, str]:
     schema = sg.schema_field_read(entity_type)
@@ -75,6 +114,24 @@ def schema_display_to_field(sg, entity_type: str) -> Dict[str, str]:
 def pick_field_by_display(sg, entity_type: str, display_name: str) -> Optional[str]:
     mp = schema_display_to_field(sg, entity_type)
     return mp.get(display_name)
+
+def pick_project_description_field(sg) -> Optional[str]:
+    """
+    Project 的描述欄位在不同站點可能是：
+    - 標準欄位：description
+    - 自訂欄位：sg_description
+    - 或者 UI 顯示名叫 "Description" 但 field name 不同（少見）
+    我們用 schema 保守偵測，優先順序如上。
+    """
+    schema = sg.schema_field_read("Project") or {}
+    if "description" in schema:
+        return "description"
+    if "sg_description" in schema:
+        return "sg_description"
+
+    # fallback：嘗試用 display name 找 "Description"
+    mp = schema_display_to_field(sg, "Project")
+    return mp.get("Description")
 
 
 def pick_fields_by_displays(sg, entity_type: str, display_names: List[str]) -> Dict[str, str]:
@@ -129,6 +186,24 @@ def stringify_field_value(v: Any) -> Any:
     if isinstance(v, list):
         return [stringify_field_value(x) for x in v]
     return v
+
+def schema_display_to_field(sg, entity_type: str) -> Dict[str, str]:
+    schema = sg.schema_field_read(entity_type)
+    out: Dict[str, str] = {}
+    for field_name, props in (schema or {}).items():
+        dn_raw = (props or {}).get("name")
+        dn = display_name_to_str(dn_raw)
+        if dn:
+            out[dn] = field_name
+    return out
+
+def pick_fields_by_displays(sg, entity_type: str, display_names: List[str]) -> Dict[str, str]:
+    mp = schema_display_to_field(sg, entity_type)
+    out = {}
+    for dn in display_names:
+        if dn in mp:
+            out[dn] = mp[dn]
+    return out
 
 
 def find_projects(sg, project_type_field: Optional[str], project_fields: List[str], project_regex: Optional[str]) -> List[Dict[str, Any]]:
@@ -247,6 +322,34 @@ def download_best_asset(sg, version: Dict[str, Any], out_dir: Path) -> Tuple[Opt
 
     return None, "none"
 
+# ---------------------------
+# 斷點續跑：判斷某個 Project folder 是否已完成
+# ---------------------------
+def is_project_done(proj_dir: Path) -> bool:
+    final_json = proj_dir / "final_version.json"
+    if final_json.exists():
+        try:
+            data = json.loads(final_json.read_text(encoding="utf-8"))
+            asset_path = data.get("asset_path")
+            if asset_path:
+                p = Path(asset_path)
+                if not p.is_absolute():
+                    p = (proj_dir / p).resolve()
+                if p.exists() and p.is_file() and p.stat().st_size > 0:
+                    return True
+        except Exception:
+            pass
+
+    # 寬鬆 fallback：只要 final.jpg 或 final.*mov/mp4 存在就算完成
+    if (proj_dir / "final.jpg").exists() and (proj_dir / "final.jpg").stat().st_size > 0:
+        return True
+    for ext in (".mov", ".mp4", ".mxf"):
+        p = proj_dir / f"final{ext}"
+        if p.exists() and p.stat().st_size > 0:
+            return True
+
+    return False
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -263,6 +366,14 @@ def main():
     ap.add_argument("--artist-fields", default="sg_artist,user,created_by",
                     help="Version 上可能代表 Artist 的欄位（逗號分隔，依序嘗試）")
 
+    ap.add_argument("--skip-existing", action="store_true", default=True,
+                    help="如果 Project folder 已有 final_version.json 且 asset 檔案存在，則跳過（預設開啟）")
+    ap.add_argument("--no-skip-existing", dest="skip_existing", action="store_false",
+                    help="關閉跳過：即使已完成也重跑")
+    ap.add_argument("--force", action="store_true",
+                    help="等同於 --no-skip-existing（保留給你習慣用的命名）")
+
+
     args = ap.parse_args()
 
     conn = SGConn(site=args.site, script_name=args.script_name, api_key=args.api_key)
@@ -277,6 +388,12 @@ def main():
     proj_display_to_field = pick_fields_by_displays(sg, "Project", PROJECT_FIELD_DISPLAY_NAMES)
     # 只取 field_name list 去 find
     project_fields = list(proj_display_to_field.values())
+
+    # ✅ 額外抓 Project Description（不在你那份 UI 清單裡）
+    project_desc_field = pick_project_description_field(sg)
+    if project_desc_field and project_desc_field not in project_fields:
+        project_fields.append(project_desc_field)
+
 
     # 2) Versions 需要的欄位：
     # - image: thumbnail url（標準）
@@ -315,12 +432,22 @@ def main():
         proj_dir = type_dir / norm_name(pname)
         safe_mkdir(proj_dir)
 
+        # 斷點續跑：已完成就跳過（避免中斷後重來）
+        if is_project_done(proj_dir):
+            print(f"[{i}/{len(projects)}] {ptype} / {pname} -> SKIP (already done)")
+            continue
+
+        # 先算好 description（Project 層級）
+        proj_description = stringify_field_value(proj.get(project_desc_field)) if project_desc_field else None
+
+
         # Project meta（把 display name 對回去）
         project_meta = {
             "project_id": pid,
             "project_name": pname,
             "project_type": ptype,
             "project_url": f"{args.site}/page/project_overview?project_id={pid}",
+            "description": proj_description,
             "project_fields": {},
         }
         for dn, fn in proj_display_to_field.items():
@@ -346,6 +473,7 @@ def main():
                 "updated_at": stringify_field_value(latest.get("updated_at")),
                 "status": status,
                 "task": task_name,
+                "description": proj_description,
                 "artist": artist,
                 "asset_kind": kind,
                 "asset_path": str(asset_path) if asset_path else None,
