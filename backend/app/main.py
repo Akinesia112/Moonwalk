@@ -12,10 +12,13 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from autogen_core import SingleThreadedAgentRuntime
-from core.registor_agent import register_evaluation_agents
+from agents.registor_agent import register_evaluation_agents
 import shared
 from shared import model_client
 from config import Config
+from routes.analysis import router as analysis_router
+from routes.feedback import router as feedback_router
+from routes.spec import router as spec_router
 from routes.auth import router as auth_router
 
 @asynccontextmanager
@@ -76,10 +79,10 @@ def create_app(config_class=Config) -> FastAPI:
     setattr(config_class, "METADATA_FILE", getattr(config_class, "METADATA_FILE", "metadata.json"))
 
     # --- Register routers ------------------------------------------------- #
-    from routes.style import router as style_router
     app.include_router(auth_router)
-    app.include_router(style_router)
-
+    app.include_router(spec_router)
+    app.include_router(analysis_router)
+    app.include_router(feedback_router)
     return app
 
 app = create_app()
