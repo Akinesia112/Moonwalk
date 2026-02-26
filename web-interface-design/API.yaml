@@ -1,0 +1,2483 @@
+openapi: 3.0.3
+info:
+  title: Moonwalk API
+  description: |-
+    API for the Moonwalk web interface, covering all interactions for search, combination, modification, suggestion, and understanding features. This includes endpoints for uploading and managing references/artworks, running AI analyses, saving annotations and feedback, and recording decisions.
+  version: 1.0.0
+servers:
+  - url: http://140.112.29.139:5333
+    description: Local server
+tags:
+  - name: search
+    description: Search apis for fundamental features
+  - name: combination
+    description: Combination apis for combine images
+  - name: Modification
+    description: Modification apis for modify images
+  - name: suggestion
+    description: Recommandation based on generation or selection
+  - name: Understanding
+    description: Understanding the design idea
+
+paths:
+
+  # ============================================================
+  #  TAG: search — 搜尋 / 上傳 / 取得基本資料
+  # ============================================================
+
+  /search/upload:
+    post:
+      tags:
+        - search
+      summary: Upload an image and an instruction
+      description: |-
+        C02「上傳參考」按鈕 / C02 上傳更多初始參考 / C04 拖拉或點擊上傳創作檔案
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: "reference | artwork | seed"
+                image:
+                  type: string
+                  format: binary
+                  description: "JPG, PNG, MP4, MOV, EXR"
+                instruction:
+                  type: string
+                  description: "User instruction or note attached to the upload"
+                project_id:
+                  type: string
+                shot_id:
+                  type: string
+                priority:
+                  type: string
+                  enum: [main, secondary, supplementary]
+                category:
+                  type: string
+                  enum: [Lighting, Color, Composition, Style, Texture, Motion, Mood, VFX]
+      responses:
+        "200":
+          description: Upload success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  file_url:
+                    type: string
+                  thumbnail_url:
+                    type: string
+
+  /search/url:
+    post:
+      tags:
+        - search
+      summary: Import a reference image via URL
+      description: |-
+        C02「匯入 URL」按鈕 — scrape/download image from URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                instruction:
+                  type: string
+                project_id:
+                  type: string
+                category:
+                  type: string
+      responses:
+        "200":
+          description: Import success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  file_url:
+                    type: string
+                  thumbnail_url:
+                    type: string
+
+  /search/references:
+    get:
+      tags:
+        - search
+      summary: Get all references for a project
+      description: |-
+        C02 Reference Grid / C03 References 唯讀顯示 / C04 Main References /
+        C05 References per artwork / C06 Refs Row
+      parameters:
+        - name: project_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: pinned_only
+          in: query
+          schema:
+            type: boolean
+            description: "true = only main references"
+        - name: artwork_id
+          in: query
+          schema:
+            type: string
+            description: "filter references linked to a specific artwork"
+      responses:
+        "200":
+          description: Reference list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    title:
+                      type: string
+                    file_url:
+                      type: string
+                    thumbnail_url:
+                      type: string
+                    priority:
+                      type: string
+                      enum: [main, secondary, supplementary]
+                    category:
+                      type: string
+                      enum: [Lighting, Color, Composition, Style, Texture, Motion, Mood, VFX]
+                    note:
+                      type: string
+                    is_pinned:
+                      type: boolean
+                    confidentiality:
+                      type: string
+                    uploaded_by:
+                      type: string
+                    created_at:
+                      type: string
+
+  /search/references/{ref_id}:
+    get:
+      tags:
+        - search
+      summary: Get single reference detail
+      description: |-
+        C02 點擊 Reference 卡片取得完整資訊
+      parameters:
+        - name: ref_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reference detail
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /search/artworks:
+    get:
+      tags:
+        - search
+      summary: Get all artworks (shots) for a project
+      description: |-
+        C04 已上傳作品列表 / C05 Artworks scrollable list /
+        C06 Artworks 12 shots list / C07 Reviewed Artworks list
+      parameters:
+        - name: project_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            description: "filter by status (e.g. reviewed)"
+      responses:
+        "200":
+          description: Artwork list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    shot_id:
+                      type: string
+                    name:
+                      type: string
+                    version:
+                      type: integer
+                    file_url:
+                      type: string
+                    file_type:
+                      type: string
+                    thumbnail_url:
+                      type: string
+                    artist_note:
+                      type: string
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                    status:
+                      type: string
+                    uploaded_by:
+                      type: string
+
+  /search/artworks/{artwork_id}:
+    get:
+      tags:
+        - search
+      summary: Get single artwork detail
+      description: |-
+        C04 / C05 / C06 載入單一作品完整資訊
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Artwork detail
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /search/projects:
+    get:
+      tags:
+        - search
+      summary: Get all projects for the user
+      description: |-
+        Dashboard ProjectSwitcher 下拉選單
+      responses:
+        "200":
+          description: Project list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    client:
+                      type: string
+                    status:
+                      type: string
+
+  # ============================================================
+  #  TAG: combination — 組合 / 比對 / 多 Agent 分析
+  # ============================================================
+
+  /combination/compare:
+    post:
+      tags:
+        - combination
+      summary: Compare artwork against reference
+      description: |-
+        C05 Split/Wipe/Side-by-side comparison view /
+        C06 Supervisor Canvas artwork+ref overlay
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                artwork_id:
+                  type: string
+                reference_id:
+                  type: string
+                mode:
+                  type: string
+                  enum: [split, wipe, side_by_side]
+      responses:
+        "200":
+          description: Comparison result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artwork_url:
+                    type: string
+                  reference_url:
+                    type: string
+
+  /combination/analyze:
+    post:
+      tags:
+        - combination
+      summary: Run multi-agent AI analysis (8 metrics x 2 agents)
+      description: |-
+        C04「開始分析 Analyze」按鈕 / C04「Re-analyze」按鈕
+        Triggers 16 agents in parallel:
+        Composition_J/K, Light_J/K, Color_J/K, Texture_J/K,
+        Motion_J/K, Depth_J/K, Exposure_J/K, Style_J/K
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                artwork_id:
+                  type: string
+                reference_ids:
+                  type: array
+                  items:
+                    type: string
+                brief_context:
+                  type: object
+                  description: "All spec/brief fields for analysis context"
+      responses:
+        "200":
+          description: Multi-agent analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metrics:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        status:
+                          type: string
+                          enum: [red, yellow, green]
+                        ref_basis:
+                          type: string
+                        agent_opinions:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              agent:
+                                type: string
+                              severity:
+                                type: string
+                              confidence:
+                                type: number
+                              opinion:
+                                type: string
+                        debate:
+                          type: string
+                        consensus:
+                          type: string
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                        severity:
+                          type: string
+                          enum: [P0, P1, P2]
+                        title:
+                          type: string
+                        summary:
+                          type: string
+                        recommended_edit:
+                          type: object
+                          properties:
+                            action:
+                              type: string
+                            rationale:
+                              type: string
+                            acceptance_criteria:
+                              type: string
+                            estimated_cost:
+                              type: string
+
+  /combination/analyze_feedback:
+    post:
+      tags:
+        - combination
+      summary: AI synthesize all feedback items
+      description: |-
+        C06「AI 分析」快捷按鈕 — Feedback_Analysis_Agent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback_items:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Feedback synthesis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key_findings:
+                    type: array
+                    items:
+                      type: string
+                  conflicts:
+                    type: array
+                    items:
+                      type: string
+                  suggested_order:
+                    type: array
+                    items:
+                      type: string
+
+  /combination/deltas/{artwork_id}/{ref_id}:
+    get:
+      tags:
+        - combination
+      summary: Get delta (gap) list between artwork and reference
+      description: |-
+        C05 Delta List — computed by Comparison_Agent
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ref_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Delta list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum: [composition, lighting, color, texture, depth, motion, style, exposure]
+                    severity:
+                      type: string
+                      enum: [P0, P1, P2]
+                    detail:
+                      type: string
+
+    post:
+      tags:
+        - combination
+      summary: Re-trigger delta comparison analysis
+      description: |-
+        C05 Re-run Comparison_Agent for this pair
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                brief_context:
+                  type: object
+      responses:
+        "200":
+          description: New delta list
+
+  /combination/metrics/{artwork_id}:
+    get:
+      tags:
+        - combination
+      summary: Get 8-metric AI analysis results for an artwork
+      description: |-
+        C04 Overall AI Feedback Metrics (8 紅/黃/綠燈) /
+        C06 Overall AI Feedback Metrics (same)
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Metrics array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    status:
+                      type: string
+                      enum: [red, yellow, green]
+                    agent_opinions:
+                      type: array
+                      items:
+                        type: object
+                    debate:
+                      type: string
+                    consensus:
+                      type: string
+
+  /combination/metrics/{artwork_id}/{metric_id}:
+    get:
+      tags:
+        - combination
+      summary: Get single metric detail (agent opinions + debate)
+      description: |-
+        C04 / C06 點擊 Metric → Detail Dialog
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: metric_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Metric detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  analysis:
+                    type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  agent_opinions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        agent:
+                          type: string
+                        severity:
+                          type: string
+                        confidence:
+                          type: number
+                        opinion:
+                          type: string
+                  debate:
+                    type: string
+                  consensus:
+                    type: string
+
+  /combination/canvas/submit:
+    post:
+      tags:
+        - combination
+      summary: Submit canvas annotations for AI summary (Review_Summary_Agent)
+      description: |-
+        C06 Canvas「Submit All to Agent」按鈕 —
+        sends brush strokes, shapes, text annotations, eraser data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                artwork_id:
+                  type: string
+                canvas_annotations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [brush, eraser, circle, rect, text]
+                      points:
+                        type: array
+                        items:
+                          type: object
+                      text:
+                        type: string
+                      color:
+                        type: string
+                text_annotations:
+                  type: array
+                  items:
+                    type: object
+                labels:
+                  type: array
+                  items:
+                    type: string
+                inline_specs:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: AI summary of canvas review
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                  key_points:
+                    type: array
+                    items:
+                      type: string
+
+  # ============================================================
+  #  TAG: Modification — 修改 / 更新 / 刪除 / 提交
+  # ============================================================
+
+  /Modification/reference/{ref_id}:
+    put:
+      tags:
+        - Modification
+      summary: Update reference metadata
+      description: |-
+        C02 Reference Grid 內 Category 下拉 / Priority 下拉 / Note 輸入 /
+        C02 Seed 卡片 Priority / Category / Note
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priority:
+                  type: string
+                  enum: [main, secondary, supplementary]
+                category:
+                  type: string
+                  enum: [Lighting, Color, Composition, Style, Texture, Motion, Mood, VFX]
+                note:
+                  type: string
+                is_pinned:
+                  type: boolean
+                confidentiality:
+                  type: string
+      responses:
+        "200":
+          description: Updated reference
+
+    delete:
+      tags:
+        - Modification
+      summary: Delete a reference
+      description: |-
+        C02 刪除 reference
+      responses:
+        "200":
+          description: Deleted
+
+  /Modification/references/seed_to_ref:
+    post:
+      tags:
+        - Modification
+      summary: Convert seed images to formal references
+      description: |-
+        C02「加入下方 References」按鈕 — seed → reference
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                seeds:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      file_url:
+                        type: string
+                      priority:
+                        type: string
+                      category:
+                        type: string
+                      note:
+                        type: string
+      responses:
+        "200":
+          description: Created references
+
+  /Modification/references/batch:
+    put:
+      tags:
+        - Modification
+      summary: Batch update all references metadata
+      description: |-
+        C02 頁面層級「Submit」按鈕 — 一次存所有 ref 修改
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                references:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      priority:
+                        type: string
+                      category:
+                        type: string
+                      note:
+                        type: string
+      responses:
+        "200":
+          description: Batch updated
+
+  /Modification/project:
+    post:
+      tags:
+        - Modification
+      summary: Create a new project
+      description: |-
+        Dashboard 建立新專案
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                client:
+                  type: string
+                director:
+                  type: string
+                supervisor:
+                  type: string
+                confidentiality:
+                  type: string
+                  enum: [public, internal, client-sensitive, nda-strict]
+      responses:
+        "200":
+          description: Created project
+
+    put:
+      tags:
+        - Modification
+      summary: Update project basic info
+      description: |-
+        C01 修改專案名稱/客戶等
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                name:
+                  type: string
+                client:
+                  type: string
+                director:
+                  type: string
+                supervisor:
+                  type: string
+      responses:
+        "200":
+          description: Updated project
+
+  /Modification/project/brief:
+    post:
+      tags:
+        - Modification
+      summary: Save project brief (first time or update)
+      description: |-
+        C01「Submit & Save to DB」按鈕 — 儲存完整 brief
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                selling_points:
+                  type: string
+                keywords:
+                  type: string
+                restrictions:
+                  type: string
+                style:
+                  type: string
+                mood:
+                  type: string
+                worldview:
+                  type: string
+                rhythm:
+                  type: string
+                  enum: [fast, medium, slow]
+                supervisor_spec:
+                  type: string
+      responses:
+        "200":
+          description: Brief saved
+
+    put:
+      tags:
+        - Modification
+      summary: Update project brief
+      description: |-
+        C01 修改後再次 Submit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Brief updated
+
+  /Modification/project/brief/analyze:
+    post:
+      tags:
+        - Modification
+      summary: Trigger Spec analysis (Spec_Analysis_Agent)
+      description: |-
+        C01「開始分析 Spec」按鈕
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                brief:
+                  type: object
+                  description: "Complete brief data"
+      responses:
+        "200":
+          description: Spec analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ambiguous_items:
+                    type: array
+                    items:
+                      type: string
+                  missing_items:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+
+  /Modification/artwork/{artwork_id}:
+    put:
+      tags:
+        - Modification
+      summary: Update artwork metadata (artist note, tags)
+      description: |-
+        C04 Artist 備註 textarea / tags 修改
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                artist_note:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Updated artwork
+
+    delete:
+      tags:
+        - Modification
+      summary: Delete an artwork
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /Modification/artwork/{artwork_id}/ref:
+    post:
+      tags:
+        - Modification
+      summary: Link a reference to an artwork
+      description: |-
+        C04「Add」按鈕 — 將 reference 關聯到 artwork
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference_id:
+                  type: string
+      responses:
+        "200":
+          description: Linked
+
+    delete:
+      tags:
+        - Modification
+      summary: Unlink a reference from an artwork
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Unlinked
+
+  /Modification/artwork/{artwork_id}/canvas:
+    post:
+      tags:
+        - Modification
+      summary: Save canvas annotations (drawing overlay)
+      description: |-
+        C06 Canvas 繪圖/文字/圈選/橡皮擦 — 儲存塗改痕跡
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                annotations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [brush, eraser, circle, rect, text]
+                      points:
+                        type: array
+                        items:
+                          type: object
+                      text:
+                        type: string
+                      color:
+                        type: string
+      responses:
+        "200":
+          description: Canvas saved
+
+  /Modification/artwork/{artwork_id}/canvas/snapshot:
+    post:
+      tags:
+        - Modification
+      summary: Upload canvas snapshot PNG
+      description: |-
+        C06 Submit 時匯出 canvas 為 PNG 存檔
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                snapshot:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Snapshot saved
+
+  /Modification/artwork/{artwork_id}/feedback:
+    post:
+      tags:
+        - Modification
+      summary: Add feedback item to artwork
+      description: |-
+        C06「新增回饋」input / C06 勾選 Metric → 自動加入 feedback
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                source:
+                  type: string
+                  enum: [AI, Supervisor, Client]
+                priority:
+                  type: string
+                  enum: [P0, P1, P2]
+      responses:
+        "200":
+          description: Feedback added
+
+  /Modification/feedback/{feedback_id}:
+    put:
+      tags:
+        - Modification
+      summary: Update feedback item (addressed / supplement / priority)
+      description: |-
+        C06 Mark Addressed 綠勾 / 修改 supplement 或 priority
+      parameters:
+        - name: feedback_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                addressed:
+                  type: boolean
+                supplement:
+                  type: string
+                priority:
+                  type: string
+      responses:
+        "200":
+          description: Updated
+
+    delete:
+      tags:
+        - Modification
+      summary: Delete feedback item
+      description: |-
+        C06 Delete (X) 按鈕
+      parameters:
+        - name: feedback_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /Modification/artwork/{artwork_id}/annotations:
+    post:
+      tags:
+        - Modification
+      summary: Add text annotation to artwork
+      description: |-
+        C06「新增註解」input
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        "200":
+          description: Annotation added
+
+  /Modification/artwork/{artwork_id}/labels:
+    put:
+      tags:
+        - Modification
+      summary: Update labels for artwork
+      description: |-
+        C06 新增/刪除 Labels (Tags)
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                labels:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Labels updated
+
+  /Modification/artwork/{artwork_id}/inline_specs:
+    post:
+      tags:
+        - Modification
+      summary: Add inline spec to artwork
+      description: |-
+        C06 Canvas Specs Panel「新增 Spec」
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        "200":
+          description: Spec added
+
+  /Modification/artwork/{artwork_id}/reflection:
+    put:
+      tags:
+        - Modification
+      summary: Save per-artwork creation reflection notes
+      description: |-
+        C04「Save」按鈕 — 儲存創作反思筆記
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Notes saved
+
+  /Modification/delta/{delta_id}/annotation:
+    put:
+      tags:
+        - Modification
+      summary: Save annotation text for a delta
+      description: |-
+        C05「寫註解」textarea per delta
+      parameters:
+        - name: delta_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                annotation_text:
+                  type: string
+      responses:
+        "200":
+          description: Annotation saved
+
+  /Modification/delta/{delta_id}/escalate:
+    post:
+      tags:
+        - Modification
+      summary: Escalate delta to supervisor/director
+      description: |-
+        C05「上報導演」按鈕
+      parameters:
+        - name: delta_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Escalated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  escalation_id:
+                    type: string
+                  status:
+                    type: string
+
+  /Modification/reflection/notes:
+    put:
+      tags:
+        - Modification
+      summary: Save artist reflection notes
+      description: |-
+        C03「Save」按鈕 — 儲存理解筆記
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Notes saved
+
+  /Modification/reflection/workflow:
+    put:
+      tags:
+        - Modification
+      summary: Update workflow nodes (reorder / edit text / delete)
+      description: |-
+        C03 心智圖上下移動排序 / 編輯文字 / 刪除節點
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                nodes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      text:
+                        type: string
+                      priority:
+                        type: integer
+                      done:
+                        type: boolean
+      responses:
+        "200":
+          description: Workflow updated
+
+    post:
+      tags:
+        - Modification
+      summary: Add new workflow node
+      description: |-
+        C03「新增工作項」按鈕
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                text:
+                  type: string
+      responses:
+        "200":
+          description: Node added
+
+  /Modification/reflection/submit:
+    post:
+      tags:
+        - Modification
+      summary: Submit complete reflection
+      description: |-
+        C03「Ready - Submit & Continue」按鈕 —
+        包含筆記 + 工作流 + 對話紀錄 + 勾選問題
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                notes:
+                  type: string
+                workflow_nodes:
+                  type: array
+                  items:
+                    type: object
+                chat_history:
+                  type: array
+                  items:
+                    type: object
+                checked_questions:
+                  type: array
+                  items:
+                    type: string
+                status:
+                  type: string
+                  default: submitted
+      responses:
+        "200":
+          description: Reflection submitted
+
+  /Modification/compare/submit:
+    post:
+      tags:
+        - Modification
+      summary: Submit all comparison results
+      description: |-
+        C05「Submit」按鈕 — 批次存 delta annotations + escalations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                artwork_id:
+                  type: string
+                deltas:
+                  type: array
+                  items:
+                    type: object
+                annotations:
+                  type: array
+                  items:
+                    type: object
+                escalations:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Comparison submitted
+
+  /Modification/review/submit:
+    post:
+      tags:
+        - Modification
+      summary: Submit entire QA review
+      description: |-
+        C06「Submit」按鈕 — feedback + annotations + canvas + labels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                artwork_id:
+                  type: string
+                feedback_items:
+                  type: array
+                  items:
+                    type: object
+                annotations:
+                  type: array
+                  items:
+                    type: object
+                labels:
+                  type: array
+                  items:
+                    type: string
+                canvas_annotations:
+                  type: array
+                  items:
+                    type: object
+                checked_metrics:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Review submitted
+
+  /Modification/decision:
+    post:
+      tags:
+        - Modification
+      summary: Record a new decision
+      description: |-
+        C07「記錄新決策」表單
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                issue:
+                  type: string
+                parties:
+                  type: array
+                  items:
+                    type: string
+                resolution:
+                  type: string
+                final_authority:
+                  type: string
+                rationale:
+                  type: string
+      responses:
+        "200":
+          description: Decision recorded
+
+  /Modification/feedback/final:
+    post:
+      tags:
+        - Modification
+      summary: Send final feedback to artist
+      description: |-
+        C07「送出給 Artist」按鈕 — status=sent + notify artist
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                shot_id:
+                  type: string
+                synthesis_text:
+                  type: string
+      responses:
+        "200":
+          description: Final feedback sent
+
+  /Modification/feedback/draft:
+    put:
+      tags:
+        - Modification
+      summary: Save final feedback draft
+      description: |-
+        C07「儲存草稿」按鈕
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                shot_id:
+                  type: string
+                synthesis_text:
+                  type: string
+                status:
+                  type: string
+                  default: draft
+      responses:
+        "200":
+          description: Draft saved
+
+  # ============================================================
+  #  TAG: suggestion — AI Agent 對話 / 推薦
+  # ============================================================
+
+  /suggestion/chat/brief:
+    post:
+      tags:
+        - suggestion
+      summary: Brief Clarification Agent chat
+      description: |-
+        C01 右側 AI 追問助手 Chatbot 每次送出訊息
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                message:
+                  type: string
+                history:
+                  type: array
+                  items:
+                    type: object
+                brief_context:
+                  type: object
+      responses:
+        "200":
+          description: Agent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+
+  /suggestion/chat/reference:
+    post:
+      tags:
+        - suggestion
+      summary: Reference Clarification Agent chat
+      description: |-
+        C02 右側 AI Reference 助手 Chatbot /
+        C02 點擊 Reference 卡片 → 自動注入 /
+        C02 快捷按鈕「光影方向」「找更多 ref」
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                message:
+                  type: string
+                clicked_ref_id:
+                  type: string
+                  description: "If triggered by clicking a ref card"
+                history:
+                  type: array
+                  items:
+                    type: object
+                all_refs_context:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Agent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+
+  /suggestion/chat/reflection:
+    post:
+      tags:
+        - suggestion
+      summary: Creative Exploration Agent chat
+      description: |-
+        C03 右側 Agent Chatbot 每次送出訊息 /
+        C03 點擊 Spec 項目 → 自動注入 /
+        C03 點擊 Reference → 自動注入 (含圖) /
+        C03「Agent分析排序」按鈕 → 自動注入 /
+        C03「Submit to Agent」(筆記) → 注入 /
+        C03 勾選 Project-Based 問題 → 注入 /
+        C03 Response Mode 按鈕 (換句話說 / 講邏輯 / Evidence Binding)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                message:
+                  type: string
+                response_mode:
+                  type: string
+                  enum: [rephrase, logic, evidence]
+                clicked_ref_id:
+                  type: string
+                clicked_spec_field:
+                  type: string
+                history:
+                  type: array
+                  items:
+                    type: object
+                specs_context:
+                  type: object
+                refs_context:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Agent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+
+  /suggestion/chat/analysis:
+    post:
+      tags:
+        - suggestion
+      summary: Analysis Assistant Agent chat
+      description: |-
+        C04 右側 AI 分析助手 Chatbot 每次送出訊息 /
+        C04「Submit to Agent」(筆記) → 注入 /
+        C04 勾選 Metric checkbox → 注入聊天
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                artwork_id:
+                  type: string
+                message:
+                  type: string
+                history:
+                  type: array
+                  items:
+                    type: object
+                metrics_context:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Agent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+
+  /suggestion/chat/compare:
+    post:
+      tags:
+        - suggestion
+      summary: Comparison Assistant Agent chat
+      description: |-
+        C05 右側 AI 比對助手 Chatbot 每次送出訊息 /
+        C05 快捷按鈕「刻意選擇」「整理回饋」 /
+        C05 勾選 Delta → 注入聊天
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                message:
+                  type: string
+                history:
+                  type: array
+                  items:
+                    type: object
+                delta_context:
+                  type: array
+                  items:
+                    type: object
+                artwork_ref_pair:
+                  type: object
+                  properties:
+                    artwork_id:
+                      type: string
+                    ref_id:
+                      type: string
+      responses:
+        "200":
+          description: Agent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+
+  /suggestion/chat/review:
+    post:
+      tags:
+        - suggestion
+      summary: Review Assistant Agent chat
+      description: |-
+        C06 右側 AI 助手 Chatbot 每次送出訊息 /
+        C06 快捷按鈕「釐清模糊詞」「轉建議」「語氣風格」「AI 分析」 /
+        C06 勾選 Metric → 注入聊天
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                artwork_id:
+                  type: string
+                message:
+                  type: string
+                tone_style:
+                  type: string
+                  enum: [professional, encouraging, concise, detailed]
+                history:
+                  type: array
+                  items:
+                    type: object
+                feedback_context:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Agent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+
+  /suggestion/chat/decision:
+    post:
+      tags:
+        - suggestion
+      summary: Decision Support Agent chat
+      description: |-
+        C07 AI Decision 助手 Chatbot 每次送出訊息
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                message:
+                  type: string
+                history:
+                  type: array
+                  items:
+                    type: object
+                decision_log:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Agent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+
+  /suggestion/questions/{project_id}:
+    get:
+      tags:
+        - suggestion
+      summary: Get AI-generated project-based questions
+      description: |-
+        C03 右側 Agent Panel 的 8 題 checkbox —
+        由 Question_Generator_Agent 根據 Spec+Ref 自動生成
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Generated questions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        text:
+                          type: string
+
+    post:
+      tags:
+        - suggestion
+      summary: Re-generate project-based questions
+      description: |-
+        當 Spec 或 Ref 更新後重新生成問題
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Regenerated questions
+
+  /suggestion/polish:
+    post:
+      tags:
+        - suggestion
+      summary: AI polish feedback text (Feedback_Polisher_Agent)
+      description: |-
+        C06 回饋項目的「AI 潤稿版本」
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                raw_text:
+                  type: string
+                tone_style:
+                  type: string
+                  enum: [professional, encouraging, concise, detailed]
+      responses:
+        "200":
+          description: Polished text
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  polished_text:
+                    type: string
+
+  /suggestion/synthesize_feedback:
+    post:
+      tags:
+        - suggestion
+      summary: AI synthesize all feedback items
+      description: |-
+        C06「AI 分析」快捷按鈕 — Feedback_Analysis_Agent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback_items:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Synthesis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key_findings:
+                    type: array
+                    items:
+                      type: string
+                  conflicts:
+                    type: array
+                    items:
+                      type: string
+                  suggested_order:
+                    type: array
+                    items:
+                      type: string
+
+  # ============================================================
+  #  TAG: Understanding — 讀取 / 理解設計意圖
+  # ============================================================
+
+  /Understanding/brief/{project_id}:
+    get:
+      tags:
+        - Understanding
+      summary: Get project brief
+      description: |-
+        C01 表單預填 / C03 Supervisor Spec 唯讀顯示 /
+        C06 Specs Panel 內容
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Brief data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  selling_points:
+                    type: string
+                  keywords:
+                    type: string
+                  restrictions:
+                    type: string
+                  style:
+                    type: string
+                  mood:
+                    type: string
+                  worldview:
+                    type: string
+                  rhythm:
+                    type: string
+                  supervisor_spec:
+                    type: string
+
+  /Understanding/brief/{project_id}/analysis:
+    get:
+      tags:
+        - Understanding
+      summary: Get previous spec analysis results
+      description: |-
+        C01 載入先前的 Spec 分析結果
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ambiguous_items:
+                    type: array
+                    items:
+                      type: string
+                  missing_items:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+
+  /Understanding/reflection/{project_id}/workflow:
+    get:
+      tags:
+        - Understanding
+      summary: Get saved workflow / mind map nodes
+      description: |-
+        C03 Feedback 心智圖 / 工作流列表
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workflow nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    text:
+                      type: string
+                    priority:
+                      type: integer
+                    done:
+                      type: boolean
+
+  /Understanding/reflection/{project_id}/notes:
+    get:
+      tags:
+        - Understanding
+      summary: Get artist reflection notes
+      description: |-
+        C03「我的理解筆記」textarea 預載 /
+        C06 Artist Creation Intentions 唯讀顯示
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: string
+
+  /Understanding/artwork/{artwork_id}/analysis:
+    get:
+      tags:
+        - Understanding
+      summary: Get AI analysis results for artwork (issues P0/P1/P2)
+      description: |-
+        C04 載入先前的 AI 分析結果
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Analysis issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                    severity:
+                      type: string
+                    title:
+                      type: string
+                    summary:
+                      type: string
+
+  /Understanding/artwork/{artwork_id}/reflection:
+    get:
+      tags:
+        - Understanding
+      summary: Get per-artwork creation reflection notes
+      description: |-
+        C04 我的創作反思筆記 textarea 預載
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: string
+
+  /Understanding/artwork/{artwork_id}/artist_notes:
+    get:
+      tags:
+        - Understanding
+      summary: Get artist creation intentions for a shot
+      description: |-
+        C06 Artist Creation Intentions (唯讀, from C03)
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Artist intentions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artist:
+                    type: string
+                  notes:
+                    type: string
+                  intentions:
+                    type: array
+                    items:
+                      type: string
+                  timestamp:
+                    type: string
+
+  /Understanding/artwork/{artwork_id}/feedback:
+    get:
+      tags:
+        - Understanding
+      summary: Get all feedback items for artwork
+      description: |-
+        C06 回饋清單 Panel 預載
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Feedback list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    text:
+                      type: string
+                    source:
+                      type: string
+                    priority:
+                      type: string
+                    supplement:
+                      type: string
+                    addressed:
+                      type: boolean
+                    ai_draft:
+                      type: string
+
+  /Understanding/artwork/{artwork_id}/canvas:
+    get:
+      tags:
+        - Understanding
+      summary: Get saved canvas annotations
+      description: |-
+        C06 Canvas 重新載入時恢復先前的塗改記錄
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canvas annotations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    points:
+                      type: array
+                      items:
+                        type: object
+                    text:
+                      type: string
+                    color:
+                      type: string
+
+  /Understanding/artwork/{artwork_id}/labels:
+    get:
+      tags:
+        - Understanding
+      summary: Get labels for artwork
+      description: |-
+        C06 Labels 區域預載
+      parameters:
+        - name: artwork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Labels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /Understanding/decisions/{project_id}:
+    get:
+      tags:
+        - Understanding
+      summary: Get Decision Log
+      description: |-
+        C07 Decision Log 歷史決策列表
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Decision list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    issue:
+                      type: string
+                    parties:
+                      type: array
+                      items:
+                        type: string
+                    resolution:
+                      type: string
+                    final_authority:
+                      type: string
+                    rationale:
+                      type: string
+                    date:
+                      type: string
+                    status:
+                      type: string
+
+  /Understanding/feedback/{project_id}/final:
+    get:
+      tags:
+        - Understanding
+      summary: Get final feedback draft
+      description: |-
+        C07 導演編輯的最終回饋綜合
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Final feedback
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  synthesis_text:
+                    type: string
+                  status:
+                    type: string
+
+  /Understanding/feedback/{project_id}/synthesis/{shot_id}:
+    get:
+      tags:
+        - Understanding
+      summary: Get three-column feedback synthesis
+      description: |-
+        C07 最終回饋綜合三欄 (Supervisor / AI / Client)
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: shot_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Three-source synthesis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  supervisor_feedback:
+                    type: string
+                  ai_feedback:
+                    type: string
+                  client_feedback:
+                    type: string
+
+  /Understanding/project/{project_id}/stats:
+    get:
+      tags:
+        - Understanding
+      summary: Get project dashboard statistics
+      description: |-
+        Dashboard 4 張 Stats Cards (Active Shots, Pending Reviews, AI Queue, Recent Feedback)
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_shots:
+                    type: integer
+                  pending_reviews:
+                    type: integer
+                  ai_queue:
+                    type: integer
+                  recent_feedback:
+                    type: integer
+
+  /Understanding/project/{project_id}/activity:
+    get:
+      tags:
+        - Understanding
+      summary: Get recent activity timeline
+      description: |-
+        Dashboard Recent Activity Timeline
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Activity list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    user:
+                      type: string
+                    action:
+                      type: string
+                    target:
+                      type: string
+                    timestamp:
+                      type: string
+
+  /Understanding/notifications:
+    get:
+      tags:
+        - Understanding
+      summary: Get user notifications
+      description: |-
+        TopBar Bell 通知圖標
+      responses:
+        "200":
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    message:
+                      type: string
+                    read:
+                      type: boolean
+                    timestamp:
+                      type: string
