@@ -1,0 +1,4 @@
+[00:00:04.973] Server  LOG      ✓ Ready in 3.3s
+[00:00:08.390] Server  LOG      ○ Compiling /kickoff ...
+[00:00:24.827] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:26.510] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg

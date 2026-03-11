@@ -1,114 +1,83 @@
-from core.agent import EvaluationAgent, UserAgent
-from core.reply import ReplyAgent# Make sure to import from your actual agent file
-from autogen_core.models import SystemMessage, ChatCompletionClient
+from .agentbase import EvaluationAgent, UserAgent, EvaluationMessage, EvaluationResponse
+from .assistant_agent import ReplyAgent
+from autogen_core.models import ChatCompletionClient
 from autogen_core import TypeSubscription, TopicId
-from utils.io import read_prompt, read_prompt_list
-from prompts.prompt_config import StylePrompt
+from ..utils.io import read_prompt, read_prompt_list
+from ..prompt.prompt_config import StylePrompt
 
-# It's good practice to define topic types as constants
+# --- Topic type constants ---
 USER_TOPIC = "user"
 PROFESSIONAL_ARTIST_TOPIC = "professional_artist"
 TRENDING_ARTIST_TOPIC = "trending_artist"
 FANS_AGENT_TOPIC = "fans_agent"
+DIRECTOR_TOPIC = "director"
+JUNIOR_ARTIST_TOPIC = "junior_artist"
+SENIOR_ARTIST_TOPIC = "senior_artist"
+SUPERVISOR_TOPIC = "supervisor"
 
-# --- Define the Persona for Each Agent ---
-# You can load these from files or define them directly.
-# professional_artist_prompt =  read_prompt(StylePrompt.AGENT_PROFESSIONAL.value)
-# trending_artist_prompt = read_prompt(StylePrompt.AGENT_TRENDING.value)
-# fans_agent_prompt = read_prompt(StylePrompt.AGENT_FANS.value)
+# --- Load prompts ---
+professional_artist_prompt = read_prompt_list(StylePrompt.AGENT_PROFESSIONAL.value)
+trending_artist_prompt     = read_prompt_list(StylePrompt.AGENT_TRENDING.value)
+fans_agent_prompt          = read_prompt_list(StylePrompt.AGENT_FANS.value)
+director_prompt            = read_prompt_list(StylePrompt.AGENT_DIRECTOR.value)
+junior_artist_prompt       = read_prompt_list(StylePrompt.AGENT_JUNIOR_ARTIST.value)
+senior_artist_prompt       = read_prompt_list(StylePrompt.AGENT_SENIOR_ARTIST.value)
+supervisor_prompt          = read_prompt_list(StylePrompt.AGENT_SUPERVISOR.value)
 
-professional_artist_prompt= read_prompt_list("fans")
-trending_artist_prompt= read_prompt_list("trending")
-fans_agent_prompt= read_prompt_list("professional")
+
+async def _register_agent(runtime, topic_type: str, name: str, prompt, model_client):
+    """Helper to register a single EvaluationAgent."""
+    agent_type = await EvaluationAgent.register(
+        runtime,
+        type=topic_type,
+        factory=lambda n=name, p=prompt, t=topic_type: EvaluationAgent(
+            name=n,
+            system_message=p,
+            model_client=model_client,
+            agent_topic_type=t,
+            user_topic_type=USER_TOPIC,
+        ),
+    )
+    await runtime.add_subscription(
+        TypeSubscription(topic_type=topic_type, agent_type=agent_type.type)
+    )
+    print(f"Registered agent: {agent_type.type}")
+    return agent_type
 
 
 async def register_evaluation_agents(runtime, model_client: ChatCompletionClient):
     """
-    Registers the three evaluation agents and the user agent with the runtime.
+    Registers all evaluation agents and the reply agent with the runtime.
     """
-    
-    # 1. Register the Professional Artist Agent
-    professional_agent_type = await EvaluationAgent.register(
-        runtime,
-        type=PROFESSIONAL_ARTIST_TOPIC,
-        factory=lambda: EvaluationAgent(
-            name="Professional_Artist",
-            system_message=professional_artist_prompt,
-            model_client=model_client,
-            agent_topic_type=PROFESSIONAL_ARTIST_TOPIC,
-            user_topic_type=USER_TOPIC,
-        ),
-    )
-    # This agent will listen for messages published on its specific topic
-    await runtime.add_subscription(
-        TypeSubscription(topic_type=PROFESSIONAL_ARTIST_TOPIC, agent_type=professional_agent_type.type)
-    )
-    print(f"Registered agent: {professional_agent_type.type}")
 
-    # 2. Register the Trending Artist Agent
-    trending_agent_type = await EvaluationAgent.register(
-        runtime,
-        type=TRENDING_ARTIST_TOPIC,
-        factory=lambda: EvaluationAgent(
-            name="Trending_Artist",
-            system_message=trending_artist_prompt,
-            model_client=model_client,
-            agent_topic_type=TRENDING_ARTIST_TOPIC,
-            user_topic_type=USER_TOPIC,
-        ),
-    )
-    await runtime.add_subscription(
-        TypeSubscription(topic_type=TRENDING_ARTIST_TOPIC, agent_type=trending_agent_type.type)
-    )
-    print(f"Registered agent: {trending_agent_type.type}")
+    # 1. Professional Artist
+    await _register_agent(runtime, PROFESSIONAL_ARTIST_TOPIC, "Professional_Artist", professional_artist_prompt, model_client)
 
-    # 3. Register the Fans Agent
-    fans_agent_type = await EvaluationAgent.register(
-        runtime,
-        type=FANS_AGENT_TOPIC,
-        factory=lambda: EvaluationAgent(
-            name="Fans_Agent",
-            system_message=fans_agent_prompt,
-            model_client=model_client,
-            agent_topic_type=FANS_AGENT_TOPIC,
-            user_topic_type=USER_TOPIC,
-        ),
-    )
-    await runtime.add_subscription(
-        TypeSubscription(topic_type=FANS_AGENT_TOPIC, agent_type=fans_agent_type.type)
-    )
-    print(f"Registered agent: {fans_agent_type.type}")
-    
-    
-        # Register a reply agent
+    # 2. Trending Artist
+    await _register_agent(runtime, TRENDING_ARTIST_TOPIC, "Trending_Artist", trending_artist_prompt, model_client)
+
+    # 3. Fans Agent
+    await _register_agent(runtime, FANS_AGENT_TOPIC, "Fans_Agent", fans_agent_prompt, model_client)
+
+    # 4. Director
+    await _register_agent(runtime, DIRECTOR_TOPIC, "Director", director_prompt, model_client)
+
+    # 5. Junior Artist
+    await _register_agent(runtime, JUNIOR_ARTIST_TOPIC, "Junior_Artist", junior_artist_prompt, model_client)
+
+    # 6. Senior Artist
+    await _register_agent(runtime, SENIOR_ARTIST_TOPIC, "Senior_Artist", senior_artist_prompt, model_client)
+
+    # 7. Supervisor
+    await _register_agent(runtime, SUPERVISOR_TOPIC, "Supervisor", supervisor_prompt, model_client)
+
+    # 8. Reply Agent — collects all responses back to the API
     reply_agent_type = await ReplyAgent.register(
         runtime,
-        type=USER_TOPIC,  # Using the core agent topic type.
-        factory=lambda: ReplyAgent(
-            description="A reply agent.",
-        )
+        type=USER_TOPIC,
+        factory=lambda: ReplyAgent(description="A reply agent."),
     )
-    
-    await runtime.add_subscription(TypeSubscription(topic_type=USER_TOPIC, agent_type=reply_agent_type.type))
-
-    # 4. Register the User Agent
-    # user_agent_type = await UserAgent.register(
-    #     runtime,
-    #     type=USER_TOPIC,
-    #     factory=lambda: UserAgent(
-    #         description="A user agent to proxy for the real user.",
-    #         user_topic_type=USER_TOPIC,
-    #         # The UserAgent needs to know which agents it can talk to.
-    #         # We can pass a list of available evaluation agents.
-    #         agent_topic_types=[
-    #             PROFESSIONAL_ARTIST_TOPIC,
-    #             TRENDING_ARTIST_TOPIC,
-    #             FANS_AGENT_TOPIC
-    #         ]
-    #     ),
-    # )
-    # # The user agent listens for messages published to its own topic
-    # await runtime.add_subscription(
-    #     TypeSubscription(topic_type=USER_TOPIC, agent_type=user_agent_type.type)
-    # )
-    # print(f"Registered agent: {user_agent_type.type}")
+    await runtime.add_subscription(
+        TypeSubscription(topic_type=USER_TOPIC, agent_type=reply_agent_type.type)
+    )
+    print(f"Registered agent: {reply_agent_type.type}")
