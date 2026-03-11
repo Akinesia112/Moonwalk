@@ -21,6 +21,7 @@ from routes.feedback import router as feedback_router
 from routes.spec import router as spec_router
 from routes.auth import router as auth_router
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
