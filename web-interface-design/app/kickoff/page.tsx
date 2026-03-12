@@ -32,7 +32,6 @@ interface BriefForm {
   style: string
   mood: string
   worldview: string
-  rhythm: string
   supervisor_spec: string
 }
 
@@ -40,7 +39,7 @@ const INITIAL_BRIEF: BriefForm = {
   project_name: "", client: "", director: "", supervisor: "",
   confidentiality: "internal", selling_points: "", keywords: "",
   restrictions: "", style: "", mood: "", worldview: "",
-  rhythm: "", supervisor_spec: "",
+  supervisor_spec: "",
 }
 
 // ── API helpers ─────────────────────────────────────────────────
@@ -94,7 +93,7 @@ export default function KickoffPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       role: "ai",
-      content: "您好！我是 AI 追問助手。請填寫左側表單，我會根據您填入的內容追問、釐清模糊的規格。\n\n可以先告訴我：\n1. 交付日期是什麼時候？\n2. 主要的參考風格有確定了嗎？\n3. 「溫暖氛圍」具體是指色溫 3200K 還是視覺上的暖色調？",
+      content: "您好！我是 AI 追問助手。\n\n請填寫左側表單（標示 * 為必填），填完後點「開始分析 Spec」，我會根據您填入的內容做摘要並追問不清楚的地方。\n\n也可以直接在這裡輸入問題。",
     },
   ])
   const [inputMessage, setInputMessage] = useState("")
@@ -138,29 +137,68 @@ export default function KickoffPage() {
     }
   }
 
+  // ── Required fields check ───────────────────────────────────
+  const REQUIRED_FIELDS: (keyof BriefForm)[] = [
+    "project_name", "client", "director", "supervisor",
+    "confidentiality", "selling_points", "keywords", "style", "mood"
+  ]
+  const missingRequired = REQUIRED_FIELDS.filter(f => !brief[f]?.trim())
+
   // ── Analyze Spec ─────────────────────────────────────────────
   const handleAnalyzeSpec = async () => {
+    if (missingRequired.length > 0) {
+      const labels: Record<string, string> = {
+        project_name: "專案名稱", client: "客戶", director: "導演/創意總監",
+        supervisor: "Supervisor", confidentiality: "密等",
+        selling_points: "產品賣點", keywords: "情緒關鍵詞",
+        style: "風格關鍵字", mood: "色調/氛圍",
+      }
+      setSaveError(`請先填寫必填欄位：${missingRequired.map(f => labels[f]).join("、")}`)
+      return
+    }
     setAnalyzingSpec(true)
     setSaveError("")
     try {
       const result = await apiAnalyzeBrief(brief)
       setSpecAnalyzed(true)
 
-      const ambiguous = result.ambiguous_items?.length
-        ? `\n**模糊項目：**\n${result.ambiguous_items.map((s: string) => `- ${s}`).join("\n")}`
-        : ""
-      const missing = result.missing_items?.length
-        ? `\n**缺少項目：**\n${result.missing_items.map((s: string) => `- ${s}`).join("\n")}`
-        : ""
-      const suggestions = result.suggestions?.length
-        ? `\n**建議：**\n${result.suggestions.map((s: string) => `- ${s}`).join("\n")}`
-        : ""
+      // ── Build filled content overview ────────────────────────
+      const FIELD_LABELS: Record<string, string> = {
+        project_name: "專案名稱", client: "客戶",
+        director: "導演/創意總監", supervisor: "Supervisor",
+        confidentiality: "密等", selling_points: "產品賣點/重點訊息",
+        keywords: "情緒關鍵詞", restrictions: "禁忌事項",
+        style: "風格關鍵字", mood: "色調/氛圍",
+        worldview: "世界觀", supervisor_spec: "Supervisor Spec",
+      }
+      const filledLines = Object.entries(FIELD_LABELS)
+        .filter(([k]) => brief[k as keyof typeof brief]?.trim())
+        .map(([k, label]) => `  ${label}：${brief[k as keyof typeof brief]}`)
+      const emptyLabels = Object.entries(FIELD_LABELS)
+        .filter(([k]) => !brief[k as keyof typeof brief]?.trim())
+        .map(([, label]) => label)
 
-      const summary = `Spec 分析完成！${ambiguous}${missing}${suggestions}${
-        !ambiguous && !missing ? "\n\n✅ 所有必填項目已填寫完成，可以 Submit 了。" : ""
+      const overviewText = [
+        filledLines.length ? `📝 **填寫內容：**\n${filledLines.join("\n")}` : "",
+        emptyLabels.length ? `⬜ **未填寫：** ${emptyLabels.join("、")}` : "",
+      ].filter(Boolean).join("\n\n")
+
+      const summaryText = result.summary
+        ? `\n\n📋 **創意摘要：**\n${result.summary}` : ""
+      const ambiguousText = result.ambiguous_items?.length
+        ? `\n\n⚠️ **需要釐清（根據您填入的內容）：**\n${result.ambiguous_items.map((s: string) => `- ${s}`).join("\n")}`
+        : ""
+      const missingText = result.missing_items?.length
+        ? `\n\n❌ **必填欄位尚未填寫：**\n${result.missing_items.map((s: string) => `- ${s}`).join("\n")}`
+        : ""
+      const suggestionsText = result.suggestions?.length
+        ? `\n\n💡 **建議：**\n${result.suggestions.map((s: string) => `- ${s}`).join("\n")}`
+        : ""
+      const allDone = !result.ambiguous_items?.length && !result.missing_items?.length
+      const finalMsg = `Spec 分析完成！\n\n${overviewText}${summaryText}${ambiguousText}${missingText}${suggestionsText}${
+        allDone ? "\n\n✅ 所有必填項目已填寫完成，可以 Submit 了。" : ""
       }`
-
-      setChatMessages(prev => [...prev, { role: "ai", content: summary }])
+      setChatMessages(prev => [...prev, { role: "ai", content: finalMsg }])
     } catch (e) {
       setSaveError(`分析失敗：${e}`)
     } finally {
@@ -185,6 +223,33 @@ export default function KickoffPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // ── Markdown renderer ────────────────────────────────────────
+  const renderMarkdown = (text: string) => {
+    return text.split("\n").map((line, i) => {
+      const parseInline = (s: string): React.ReactNode[] => {
+        const parts: React.ReactNode[] = []
+        const re = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g
+        let last = 0, m: RegExpExecArray | null
+        while ((m = re.exec(s)) !== null) {
+          if (m.index > last) parts.push(s.slice(last, m.index))
+          if (m[2]) parts.push(<strong key={m.index}>{m[2]}</strong>)
+          else if (m[3]) parts.push(<em key={m.index}>{m[3]}</em>)
+          else if (m[4]) parts.push(<code key={m.index} className="bg-muted px-1 rounded text-xs">{m[4]}</code>)
+          last = m.index + m[0].length
+        }
+        if (last < s.length) parts.push(s.slice(last))
+        return parts
+      }
+      if (line.startsWith("### ") || line.startsWith("## ") || line.startsWith("# "))
+        return <p key={i} className="font-bold text-sm mt-2">{parseInline(line.replace(/^#+\s/, ""))}</p>
+      if (line.startsWith("- "))
+        return <p key={i} className="text-sm pl-3 before:content-['•'] before:mr-2 before:text-teal-500">{parseInline(line.slice(2))}</p>
+      if (line.trim() === "---") return <hr key={i} className="border-border my-2" />
+      if (line.trim() === "")   return <div key={i} className="h-2" />
+      return <p key={i} className="text-sm">{parseInline(line)}</p>
+    })
   }
 
   // ── Render ───────────────────────────────────────────────────
@@ -232,26 +297,26 @@ export default function KickoffPage() {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="project-name">專案名稱 *</Label>
+                        <Label htmlFor="project-name">專案名稱 <span className="text-red-500">*</span></Label>
                         <Input id="project-name" placeholder="輸入專案名稱" value={brief.project_name} onChange={setField("project_name")} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="client">客戶 *</Label>
+                        <Label htmlFor="client">客戶 <span className="text-red-500">*</span></Label>
                         <Input id="client" placeholder="客戶名稱" value={brief.client} onChange={setField("client")} />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="director">導演/創意總監</Label>
+                        <Label htmlFor="director">導演/創意總監 <span className="text-red-500">*</span></Label>
                         <Input id="director" placeholder="導演名稱" value={brief.director} onChange={setField("director")} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="supervisor">Supervisor</Label>
+                        <Label htmlFor="supervisor">Supervisor <span className="text-red-500">*</span></Label>
                         <Input id="supervisor" placeholder="負責 Supervisor" value={brief.supervisor} onChange={setField("supervisor")} />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confidentiality">密等 Confidentiality</Label>
+                      <Label htmlFor="confidentiality">密等 Confidentiality <span className="text-red-500">*</span></Label>
                       <Select value={brief.confidentiality} onValueChange={setSelectField("confidentiality")}>
                         <SelectTrigger id="confidentiality"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -276,11 +341,11 @@ export default function KickoffPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="selling-points">產品賣點/重點訊息</Label>
+                      <Label htmlFor="selling-points">產品賣點/重點訊息 <span className="text-red-500">*</span></Label>
                       <Textarea id="selling-points" placeholder="客戶想強調的產品特色..." rows={2} value={brief.selling_points} onChange={setField("selling_points")} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="keywords">情緒關鍵詞</Label>
+                      <Label htmlFor="keywords">情緒關鍵詞 <span className="text-red-500">*</span></Label>
                       <Input id="keywords" placeholder="例如：活潑、詭譎、溫暖、未來感..." value={brief.keywords} onChange={setField("keywords")} />
                     </div>
                     <div className="space-y-2">
@@ -289,11 +354,11 @@ export default function KickoffPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="style">風格關鍵字</Label>
+                        <Label htmlFor="style">風格關鍵字 <span className="text-red-500">*</span></Label>
                         <Input id="style" placeholder="寫實、插畫、賽博龐克..." value={brief.style} onChange={setField("style")} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="mood">色調/氛圍</Label>
+                        <Label htmlFor="mood">色調/氛圍 <span className="text-red-500">*</span></Label>
                         <Input id="mood" placeholder="暖色調、冷色調、高對比..." value={brief.mood} onChange={setField("mood")} />
                       </div>
                     </div>
@@ -301,17 +366,7 @@ export default function KickoffPage() {
                       <Label htmlFor="worldview">世界觀/概念</Label>
                       <Textarea id="worldview" placeholder="描述整體的視覺世界觀..." rows={2} value={brief.worldview} onChange={setField("worldview")} />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="rhythm">節奏（若為影片）</Label>
-                      <Select value={brief.rhythm} onValueChange={setSelectField("rhythm")}>
-                        <SelectTrigger id="rhythm"><SelectValue placeholder="選擇節奏風格" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fast">快節奏 Fast-paced</SelectItem>
-                          <SelectItem value="medium">中速 Medium</SelectItem>
-                          <SelectItem value="slow">慢節奏 Slow/Cinematic</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+
                     <div className="border-t border-teal-500/20 pt-4 space-y-2">
                       <Label htmlFor="director-spec">Supervisor Spec 額外補充說明</Label>
                       <Textarea
@@ -406,7 +461,10 @@ export default function KickoffPage() {
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className={`rounded-lg p-3 max-w-[85%] ${msg.role === "ai" ? "bg-muted" : "bg-primary text-primary-foreground"}`}>
-                                  <p className="text-sm whitespace-pre-line">{msg.content}</p>
+                                  {msg.role === "ai"
+                                    ? <div className="space-y-0.5">{renderMarkdown(msg.content)}</div>
+                                    : <p className="text-sm whitespace-pre-line">{msg.content}</p>
+                                  }
                                 </div>
                               </div>
                             ))}

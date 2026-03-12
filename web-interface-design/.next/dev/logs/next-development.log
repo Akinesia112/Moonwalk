@@ -1,4 +1,39 @@
-[00:00:04.973] Server  LOG      ✓ Ready in 3.3s
-[00:00:08.390] Server  LOG      ○ Compiling /kickoff ...
-[00:00:24.827] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:26.510] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:00:06.330] Server  LOG      ✓ Ready in 4.4s
+[00:00:09.555] Server  LOG      ○ Compiling /kickoff ...
+[00:00:18.836] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:20.074] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:00:51.544] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:52.409] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:15:21.698] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:15:22.445] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:22:30.470] Server  LOG      ✓ Compiled in 1300ms
+[00:24:02.709] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:24:03.411] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:24:35.744] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:24:36.166] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:24:40.896] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:24:41.227] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:35:19.308] Server  LOG      ✓ Compiled in 6.3s
+[00:35:21.831] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:42:24.611] Server  LOG      ✓ Compiled in 2s
+[00:42:29.016] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:54:30.091] Server  LOG      ✓ Compiled in 2.2s
+[00:54:31.791] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:54:43.501] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:54:43.933] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:54:47.713] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:54:48.041] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[00:55:08.461] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:55:08.935] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:06:42.993] Server  LOG      ✓ Compiled in 4.2s
+[01:06:45.511] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:07:19.610] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:07:19.611] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:08:04.792] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:08:05.231] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:10:20.780] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:10:20.780] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:10:26.047] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:10:26.047] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:10:28.990] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg
+[01:10:28.990] Browser LOG     Image URL being set: http://localhost:3000/placeholder.svg

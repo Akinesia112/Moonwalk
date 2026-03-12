@@ -206,14 +206,86 @@ async def update_brief(body: BriefBody):
 
 @router.post("/Modification/project/brief/analyze")
 async def analyze_brief(body: BriefAnalyzeBody):
+    brief = body.brief or {}
+    if isinstance(brief, dict):
+        REQUIRED = {
+            "project_name": "專案名稱", "client": "客戶",
+            "director": "導演/創意總監", "supervisor": "Supervisor",
+            "confidentiality": "密等", "selling_points": "產品賣點/重點訊息",
+            "keywords": "情緒關鍵詞", "style": "風格關鍵字", "mood": "色調/氛圍",
+        }
+        OPTIONAL = {
+            "restrictions": "禁忌事項", "worldview": "世界觀",
+            "supervisor_spec": "Supervisor Spec",
+        }
+        filled_req, missing_req, filled_opt = [], [], []
+        for key, label in REQUIRED.items():
+            val = str(brief.get(key, "")).strip()
+            if val:
+                filled_req.append(f"  {label}: {val}")
+            else:
+                missing_req.append(label)
+        for key, label in OPTIONAL.items():
+            val = str(brief.get(key, "")).strip()
+            if val:
+                filled_opt.append(f"  {label}: {val}")
+
+        brief_str = ""
+        if filled_req:
+            brief_str += "【已填寫必填欄位】\n" + "\n".join(filled_req)
+        if missing_req:
+            brief_str += "\n【未填寫必填欄位】" + "、".join(missing_req)
+        if filled_opt:
+            brief_str += "\n【已填寫選填欄位】\n" + "\n".join(filled_opt)
+    else:
+        brief_str = str(brief)
+        missing_req = []
+
+    prompt = (
+        "You are a senior VFX Creative Director analyzing a project brief. Pure text stage — no images yet.\n\n"
+        f"Brief:\n{brief_str}\n\n"
+        "Return ONLY a valid JSON object (no markdown, no extra text, no code fences):\n"
+        '{"summary": "...", "ambiguous_items": [...], "missing_items": [...], "suggestions": [...]}\n\n'
+        "Rules for each field:\n\n"
+        "- summary: 2-3 sentences. Describe the CREATIVE INTENT and EMOTIONAL CORE. "
+        "Identify any inherent tensions (e.g. '寫實又抽象' suggests the tension between documentation and interpretation — "
+        "like Terrence Malick's 《樹》 which uses handheld documentary texture to film surreal sequences). "
+        "Quote the user's actual words.\n\n"
+        "- ambiguous_items: List entries that are creatively DANGEROUS if left undefined in production. "
+        "Format each as: '「[user's exact word]」— [specific production consequence if undefined]'. "
+        "Examples of good ambiguous_items:\n"
+        "  '「飄啊」— 未定義：是攝影機飄移（如《鳥人》長鏡頭）、角色動態飄（慢動作）、還是色彩飄（低飽和記憶感）？合成師無法決定'\n"
+        "  '「溫暖而寒冷」— 矛盾未解：打光師在佈光時需要知道哪個優先。《讓子彈飛》是暖色調+冷敘事；《刺客聶隱娘》是冷光源+溫人物關係——這兩個方向完全不同'\n"
+        "  '「寫實」— 未區分：是《奧本海默》的實拍質感（grain, no CG glow），還是《1917》那種高度設計但無縫的寫實？前者排斥特效，後者接受'\n\n"
+        "- missing_items: Only list REQUIRED fields that are completely empty. Use the exact field label names.\n\n"
+        "- suggestions: 2-4 suggestions that are PRODUCTION-SPECIFIC. Each must:\n"
+        "  1. Quote the user's exact words\n"
+        "  2. Name a specific film/scene as reference anchor\n"
+        "  3. State which department (打光/動態/合成/剪輯) needs this clarified\n"
+        "  Example: '「詭譎」建議定義為「現實邏輯慢慢崩解」（參考《遺傳厄運》的構圖節奏）而非jump scare式恐嚇，因為前者靠構圖和剪輯節奏執行，後者靠音效和攝影機快速移動——剪輯師需要明確方向'\n\n"
+        "All text in Traditional Chinese."
+    )
+    raw = await _agent_chat(prompt, [DIRECTOR_TOPIC])
+
+    import json, re as _re
+    ambiguous, missing, suggestions, summary = [], missing_req, [], ""
+    try:
+        match = _re.search(r"\{[\s\S]*\}", raw)
+        if match:
+            parsed = json.loads(match.group())
+            ambiguous = parsed.get("ambiguous_items", [])
+            missing = parsed.get("missing_items", missing_req)
+            suggestions = parsed.get("suggestions", [])
+            summary = parsed.get("summary", "")
+    except Exception:
+        suggestions = [raw[:400]] if raw else []
+
     return {
-        "ambiguous_items": ["風格描述較模糊，建議補充具體視覺參考", "節奏快慢需要更明確的定義"],
-        "missing_items": ["色彩方向尚未指定", "目標受眾未說明"],
-        "suggestions": ["建議加入 3-5 張視覺參考圖", "請確認 Supervisor Spec 與客戶期望一致"],
+        "ambiguous_items": ambiguous,
+        "missing_items": missing,
+        "suggestions": suggestions,
+        "summary": summary,
     }
-
-
-# ── Modification: Artwork ────────────────────────────────────────
 
 @router.put("/Modification/artwork/{artwork_id}")
 async def update_artwork(artwork_id: str, body: ArtworkUpdateBody):
@@ -448,20 +520,43 @@ async def chat_brief(body: ChatBody):
     else:
         brief_str = "（表單尚未填寫任何內容）"
 
-    prompt = (
-        "You are a Brief Clarification assistant for a VFX/CG production project.\n"
-        "Help the director/supervisor refine and clarify their brief.\n\n"
-        f"Current brief:\n{brief_str}\n"
-        f"{history_str}\n\n"
-        f"User message: {body.message}\n\n"
-        "Instructions:\n"
-        "- Reference the ACTUAL content the user filled in — quote their specific words\n"
-        "- For empty fields, ask the user to fill them with concrete examples\n"
-        "- For vague short entries (e.g. 'ss', 'sss'), ask for clarification\n"
-        "- Identify ambiguous terms and ask for specific definitions\n"
-        "- Max 3 follow-up questions per response, be concise\n"
-        "- Respond in the same language as the user (Chinese if they wrote Chinese)"
-    )
+    prompt = f"""You are a senior VFX Creative Director conducting a brief clarification session. Pure text only — no images at this stage.
+
+Current brief:
+{brief_str}
+{history_str}
+
+User message: {body.message}
+
+---
+REFERENCE EXAMPLES — use these to calibrate your questions:
+
+EMOTIONAL ARCHITECTURE examples:
+- If brief says「哀傷」→ ask: 是《異形：契約》那種角色沉默承受的哀傷（觀眾看出來但角色不說），還是《鬼滅之刃》那種角色當場崩潰的外顯哀傷？
+- If brief says「壓迫」→ ask: 是《囚徒》那種封閉空間的物理壓迫（低天花板、窄景框），還是《黑天鵝》那種從內部滋生的心理壓迫（失真鏡頭、聲音設計）？
+- If brief says「詭譎」→ ask: 是《遺傳厄運》那種現實邏輯慢慢崩解的詭譎，還是《牠》那種直接打你臉的恐嚇式詭譎？前者靠構圖節奏，後者靠jump cut和音效。
+
+VISUAL CONTRADICTION examples:
+- If brief says「寫實又抽象」→ ask: 像《樹》（Terrence Malick）那樣用紀錄片手持鏡頭拍超現實序列（寫實執行、抽象邏輯），還是像《沈默的羔羊》那樣寫實場景裡一個構圖角度讓人感到不對？
+- If brief says「溫暖而寒冷」→ ask: 像《讓子彈飛》的暖色調配冰冷敘事，還是像《刺客聶隱娘》的冷色光源但溫熱的人物關係？打光師需要一個明確答案。
+
+PRODUCTION ANCHOR examples:
+- If brief says「寫實」→ ask: 是《奧本海默》那種實拍質感（grain, lens flare, no CG glow），還是《1917》那種在視覺上無縫但其實高度設計的寫實？
+- If brief says「飄」→ ask: 是攝影機在飄（《鳥人》的長鏡頭漂移），是角色動態在飄（《悲情城市》的行走節奏），還是色彩在飄（褪色、低飽和像記憶中的畫面）？
+
+REJECTION CRITERIA examples:
+- 如果做出來像《咒》那樣的偽紀錄片風格，導演會接受嗎？
+- 如果場景出現直接的超自然視覺特效（發光、煙霧），還是要保持一切可以被「理性解釋」的模糊空間？
+
+---
+Your task: Based on the brief above and the user's message, ask 2 questions ONLY.
+
+Rules:
+- Each question must DIRECTLY reference their exact words from the brief
+- Model your questions after the examples above — anchor abstract words to specific films, scenes, or technical decisions
+- Every question must produce a production-actionable answer (打光師/動態師/合成師 can use it immediately)
+- No generic questions. No suggestions. No advice. Questions only.
+- Respond entirely in Traditional Chinese."""
     reply = await _agent_chat(prompt, [DIRECTOR_TOPIC, SUPERVISOR_TOPIC])
     return {"reply": reply}
 
@@ -469,20 +564,66 @@ async def chat_brief(body: ChatBody):
 @router.post("/suggestion/chat/reference")
 async def chat_reference(body: ChatBody):
     history_str = _build_history_str(body.history)
+
+    # Format refs with index
     refs_str = ""
     if body.all_refs_context:
-        refs_str = "\nCurrent references:\n" + "\n".join(
-            [f"- [{r.get('category','')}] {r.get('title','')}: {r.get('note','')}" for r in body.all_refs_context]
-        )
-    clicked_str = f"\nUser clicked on reference ID: {body.clicked_ref_id}" if body.clicked_ref_id else ""
-    prompt = f"""You are a Reference Clarification assistant helping organize and clarify visual references.
+        lines = []
+        for i, r in enumerate(body.all_refs_context):
+            title = r.get("title", "untitled")
+            cat = r.get("category", "")
+            note = r.get("note", "").strip()
+            pinned = "⭐ Main Ref" if r.get("is_pinned") else "Secondary"
+            note_str = f'  Note: "{note}"' if note else "  Note: （未填寫）"
+            lines.append(f"  [{i+1}] {title} | {cat} | {pinned}\n{note_str}")
+        refs_str = "Current reference set:\n" + "\n".join(lines)
+
+    clicked_str = ""
+    if body.clicked_ref_id and body.all_refs_context:
+        clicked = next((r for r in body.all_refs_context if r.get("id") == body.clicked_ref_id), None)
+        if clicked:
+            clicked_str = f'\nUser is asking specifically about: "{clicked.get("title","")}" ({clicked.get("category","")}) — Note: "{clicked.get("note","")}"'
+
+    prompt = f"""You are a senior VFX Art Director helping a team organize and sharpen their visual reference set.
+
 {refs_str}{clicked_str}
 {history_str}
 
 User message: {body.message}
 
-Help the user clarify what each reference should be used for, identify gaps, and suggest how to better organize references.
-Respond in the same language as the user's message."""
+---
+REFERENCE ANALYSIS FRAMEWORK — use these to guide your responses:
+
+NOTE QUALITY — When a note is vague or empty, ask for specifics:
+- Bad note: "光影參考" → Ask: 是主光方向（key light angle）、還是光質（硬光/軟光）、還是光源色溫？
+- Bad note: "氛圍" → Ask: 是整體色調、還是特定場景的情緒、還是景深與霧感的設計？
+- Good note example: "主光從右側45度，硬光，陰影邊緣銳利，類似《教父》的倫勃朗打光"
+- Good note example: "參考這個構圖的前中後景分離方式，不是要抄光影"
+
+CATEGORY GAPS — Assess if the ref set covers all needed dimensions:
+- Lighting ref without Color ref = 打光師知道方向，但調色師沒有目標
+- Mood ref without Composition ref = 氛圍對了，但鏡頭語言沒有依據
+- Style ref without Texture ref = 整體風格有了，但材質細節沒有標準
+
+MAIN REF vs SECONDARY logic:
+- Main Ref = 整個作品要對齊的核心視覺標準，通常1-3張，每個 department 最多2張
+- Secondary = 某個局部細節的參考，例如「只看這張的金屬材質，其他不管」
+- Red flag: 10張都是 Main Ref = 沒有優先順序，team 會迷失
+
+CONFLICT DETECTION:
+- 如果有兩張 Lighting refs 方向矛盾（一張強調硬光、一張強調柔光），要指出並問哪個優先
+- 如果 Style ref 是寫實主義但 Color ref 是高飽和動漫色，要問這個反差是刻意的嗎？
+
+SPECIFIC EXAMPLES for common situations:
+- "這張 ref 我想看的是構圖" → 問: 是前中後景的空間感（如《英雄》的空間層次），還是主體在畫面中的位置（如《2001》的中心構圖），還是鏡頭焦距帶來的壓縮感？
+- "幫我找缺口" → 逐一檢查 category，找出哪些 VFX 製作環節（打光/合成/動態/材質）沒有對應的 ref
+- "這張要 Main 還是 Secondary" → 問: 這張的哪個部分是你要對齊的？如果只有一個局部，應該是 Secondary 並在 note 寫清楚
+
+Rules:
+- Always reference the user's ACTUAL ref titles and notes in your response
+- Max 2 questions per response
+- Be specific enough that a junior artist can act on the answer immediately
+- Respond in Traditional Chinese"""
     reply = await _agent_chat(prompt, [DIRECTOR_TOPIC, PROFESSIONAL_ARTIST_TOPIC])
     return {"reply": reply}
 
