@@ -391,23 +391,67 @@ function Label({ className, ...props }) {
 
 __turbopack_context__.s([
     "ScrollArea",
-    ()=>ScrollArea
+    ()=>ScrollArea,
+    "ScrollBar",
+    ()=>ScrollBar
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@radix-ui/react-scroll-area/dist/index.mjs [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/lib/utils.ts [app-ssr] (ecmascript)");
+"use client";
 ;
 ;
-function ScrollArea({ className, children, ...props }) {
-    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("relative overflow-auto", className),
+;
+;
+const ScrollArea = /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["forwardRef"](({ className, children, ...props }, ref)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Root"], {
+        ref: ref,
+        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("relative overflow-hidden", className),
         ...props,
-        children: children
+        children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Viewport"], {
+                className: "h-full w-full rounded-[inherit]",
+                children: children
+            }, void 0, false, {
+                fileName: "[project]/app/components/ui/scroll-area.tsx",
+                lineNumber: 11,
+                columnNumber: 5
+            }, ("TURBOPACK compile-time value", void 0)),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ScrollBar, {}, void 0, false, {
+                fileName: "[project]/app/components/ui/scroll-area.tsx",
+                lineNumber: 14,
+                columnNumber: 5
+            }, ("TURBOPACK compile-time value", void 0)),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Corner"], {}, void 0, false, {
+                fileName: "[project]/app/components/ui/scroll-area.tsx",
+                lineNumber: 15,
+                columnNumber: 5
+            }, ("TURBOPACK compile-time value", void 0))
+        ]
+    }, void 0, true, {
+        fileName: "[project]/app/components/ui/scroll-area.tsx",
+        lineNumber: 10,
+        columnNumber: 3
+    }, ("TURBOPACK compile-time value", void 0)));
+ScrollArea.displayName = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Root"].displayName;
+const ScrollBar = /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["forwardRef"](({ className, orientation = "vertical", ...props }, ref)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollAreaScrollbar"], {
+        ref: ref,
+        orientation: orientation,
+        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("flex touch-none select-none transition-colors", orientation === "vertical" && "h-full w-2.5 border-l border-l-transparent p-[1px]", orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent p-[1px]", className),
+        ...props,
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollAreaThumb"], {
+            className: "relative flex-1 rounded-full bg-border"
+        }, void 0, false, {
+            fileName: "[project]/app/components/ui/scroll-area.tsx",
+            lineNumber: 35,
+            columnNumber: 5
+        }, ("TURBOPACK compile-time value", void 0))
     }, void 0, false, {
         fileName: "[project]/app/components/ui/scroll-area.tsx",
-        lineNumber: 4,
-        columnNumber: 10
-    }, this);
-}
+        lineNumber: 24,
+        columnNumber: 3
+    }, ("TURBOPACK compile-time value", void 0)));
+ScrollBar.displayName = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$radix$2d$ui$2f$react$2d$scroll$2d$area$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollAreaScrollbar"].displayName;
 ;
 }),
 "[project]/app/components/ui/avatar.tsx [app-ssr] (ecmascript)", ((__turbopack_context__) => {
@@ -477,7 +521,7 @@ function UserNav() {
         className: "h-8 w-8",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AvatarImage"], {
-                src: "/placeholder.svg",
+                src: "",
                 alt: "User"
             }, void 0, false, {
                 fileName: "[project]/app/components/user-nav.tsx",
@@ -1188,6 +1232,7 @@ function ReferenceHubContent() {
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [submitting, setSubmitting] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [submitted, setSubmitted] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const submitTimer = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
     const [saveStates, setSaveStates] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({});
     // Upload area state
     const [uploadCategory, setUploadCategory] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("Lighting");
@@ -1196,22 +1241,24 @@ function ReferenceHubContent() {
     const [urlInput, setUrlInput] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
     const [uploading, setUploading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const fileInputRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
-    const [chatWidth, setChatWidth] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(380) // px, resizable
-    ;
-    const resizing = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(false);
-    const resizeStartX = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(0);
-    const resizeStartW = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(0);
-    const onResizeMouseDown = (e)=>{
-        resizing.current = true;
-        resizeStartX.current = e.clientX;
-        resizeStartW.current = chatWidth;
+    const [panelW, setPanelW] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(400);
+    const panelRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const resizeDir = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])("");
+    const resizeStart = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])({
+        x: 0,
+        w: 400
+    });
+    const startResize = (e)=>{
+        e.preventDefault();
+        resizeStart.current = {
+            x: e.clientX,
+            w: panelW
+        };
         const onMove = (ev)=>{
-            if (!resizing.current) return;
-            const delta = resizeStartX.current - ev.clientX;
-            setChatWidth(Math.max(280, Math.min(700, resizeStartW.current + delta)));
+            const dx = ev.clientX - resizeStart.current.x;
+            setPanelW(Math.max(280, Math.min(700, resizeStart.current.w - dx)));
         };
         const onUp = ()=>{
-            resizing.current = false;
             window.removeEventListener("mousemove", onMove);
             window.removeEventListener("mouseup", onUp);
         };
@@ -1230,14 +1277,59 @@ function ReferenceHubContent() {
     const [chatLoading, setChatLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [clickedRef, setClickedRef] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const chatScrollRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
-    // ── Load refs (skip mock data, start fresh) ───────────────
+    const chatScrollBottom = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
+    // Restore sessionStorage + clear stale states on mount (client-only)
+    const [hydrated, setHydrated] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        // Don't pre-load mock refs — grid only shows what user uploads this session
-        setLoading(false);
+        try {
+            const savedChat = sessionStorage.getItem("refhub_chat");
+            if (savedChat) setChatMessages(JSON.parse(savedChat));
+        } catch  {}
+        setSaveStates({});
+        setSubmitted(false);
+        setHydrated(true);
+        return ()=>{
+            if (submitTimer.current) clearTimeout(submitTimer.current);
+        };
     }, []);
+    // ── Load refs from API (persisted) ───────────────────────
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        apiFetch(`/search/references?project_id=${PROJECT_ID}`).then((data)=>{
+            const MOCK_IDS = [
+                "ref_001",
+                "ref_002",
+                "ref_003"
+            ];
+            const valid = data.filter((r)=>!MOCK_IDS.includes(r.id) && (r.file_url?.trim() || r.thumbnail_url?.trim()) // must have non-empty image src
+            );
+            setRefs(valid.map((r)=>{
+                // For relative /uploads paths add API base; for empty thumbnail use file_url
+                const rawThumb = r.thumbnail_url || r.file_url || "";
+                const thumb = rawThumb.startsWith("/") ? `${API}${rawThumb}` : rawThumb;
+                // Only use as preview if it looks like an image (not a web page URL)
+                const isImg = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(rawThumb) || rawThumb.startsWith(API);
+                return {
+                    ...r,
+                    localPreview: isImg ? thumb : undefined
+                };
+            }));
+        }).catch(()=>setRefs([])).finally(()=>setLoading(false));
+    }, []);
+    // Persist chat to sessionStorage (only after hydrated)
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (!hydrated) return;
+        try {
+            sessionStorage.setItem("refhub_chat", JSON.stringify(chatMessages));
+        } catch  {}
+    }, [
+        chatMessages,
+        hydrated
+    ]);
     // Auto-scroll chat
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+        chatScrollBottom.current?.scrollIntoView({
+            behavior: "smooth"
+        });
     }, [
         chatMessages,
         chatLoading
@@ -1294,10 +1386,8 @@ function ReferenceHubContent() {
         if (!urlInput.trim()) return;
         setUploading(true);
         const url = urlInput.trim();
+        const isImageUrl = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(url);
         try {
-            // Try to load image URL directly as thumbnail (works for direct image links)
-            const isImageUrl = /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url);
-            const thumbnailSrc = isImageUrl ? url : `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
             const result = await apiFetch("/search/url", {
                 method: "POST",
                 body: JSON.stringify({
@@ -1308,15 +1398,14 @@ function ReferenceHubContent() {
                     instruction: uploadNote
                 })
             });
-            const name = url.split("/").pop()?.split("?")[0] || url;
             const newRef = {
                 id: result.id || `url_${Date.now()}`,
-                title: name,
+                title: result.title || url.split("/").pop()?.split("?")[0]?.slice(0, 60) || "URL Import",
                 confidentiality: "internal",
                 is_pinned: uploadPriority === "main",
                 category: uploadCategory,
                 note: uploadNote,
-                thumbnail_url: isImageUrl ? url : "",
+                thumbnail_url: result.thumbnail_url || "",
                 file_url: url,
                 priority: uploadPriority,
                 localPreview: isImageUrl ? url : undefined
@@ -1328,24 +1417,24 @@ function ReferenceHubContent() {
             setUrlInput("");
             setUploadNote("");
         } catch  {
-            // Fallback: still add with URL as preview if it looks like an image
-            const isImageUrl = /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url);
-            const name = url.split("/").pop()?.split("?")[0] || url;
-            setRefs((prev)=>[
-                    {
-                        id: `url_${Date.now()}`,
-                        title: name,
-                        confidentiality: "internal",
-                        is_pinned: uploadPriority === "main",
-                        category: uploadCategory,
-                        note: uploadNote,
-                        thumbnail_url: "",
-                        localPreview: isImageUrl ? url : undefined,
-                        priority: uploadPriority
-                    },
-                    ...prev
-                ]);
-            setUrlInput("");
+            if (isImageUrl) {
+                setRefs((prev)=>[
+                        {
+                            id: `url_${Date.now()}`,
+                            title: url.split("/").pop()?.split("?")[0]?.slice(0, 60) || "URL Import",
+                            confidentiality: "internal",
+                            is_pinned: uploadPriority === "main",
+                            category: uploadCategory,
+                            note: uploadNote,
+                            thumbnail_url: "",
+                            file_url: url,
+                            priority: uploadPriority,
+                            localPreview: url
+                        },
+                        ...prev
+                    ]);
+                setUrlInput("");
+            }
         }
         setUploading(false);
     };
@@ -1390,7 +1479,43 @@ function ReferenceHubContent() {
             });
         } catch  {}
     };
-    // ── Submit all + trigger agent analysis ───────────────────
+    // ── Analyze refs (agent only, no save) ────────────────────
+    const handleAnalyzeRefs = async ()=>{
+        if (refs.length === 0 || chatLoading) return;
+        setChatLoading(true);
+        try {
+            const res = await apiFetch("/suggestion/chat/reference", {
+                method: "POST",
+                body: JSON.stringify({
+                    message: "請仔細分析這個 reference set：\n1) 每張 ref 的 note 夠不夠具體？打光師/合成師看到後能直接執行嗎？\n2) category 設定合理嗎？\n3) Main Ref 的選擇有沒有問題？\n4) 整個 set 有沒有明顯的缺口？\n\n針對有問題的 ref 直接點名追問。",
+                    project_id: PROJECT_ID,
+                    clicked_ref_id: null,
+                    all_refs_context: refs.map((r)=>({
+                            id: r.id,
+                            title: r.title,
+                            category: r.category,
+                            note: r.note,
+                            is_pinned: r.is_pinned,
+                            priority: r.priority || (r.is_pinned ? "main" : "secondary")
+                        })),
+                    history: chatMessages.slice(-4).map((m)=>({
+                            role: m.role === "ai" ? "assistant" : "user",
+                            content: m.content
+                        }))
+                })
+            });
+            setChatMessages((prev)=>[
+                    ...prev,
+                    {
+                        role: "ai",
+                        content: res.reply
+                    }
+                ]);
+        } catch  {} finally{
+            setChatLoading(false);
+        }
+    };
+    // ── Submit & Save (no agent call) ─────────────────────────
     const handleSubmit = async ()=>{
         setSubmitting(true);
         try {
@@ -1407,39 +1532,8 @@ function ReferenceHubContent() {
                 })
             });
             setSubmitted(true);
-            // After save, agent auto-analyzes and asks follow-up questions
-            setChatLoading(true);
-            try {
-                const res = await apiFetch("/suggestion/chat/reference", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        message: "我剛剛 Submit 了這些 references。請仔細分析每一張：\n1) 這張 ref 的 note 夠不夠具體？打光師/合成師看到後能直接執行嗎？\n2) category 設定合理嗎？\n3) Main Ref 的選擇有沒有問題？\n4) 整個 set 有沒有明顯的缺口？\n\n針對有問題的 ref 直接點名追問。",
-                        project_id: PROJECT_ID,
-                        clicked_ref_id: null,
-                        all_refs_context: refs.map((r)=>({
-                                id: r.id,
-                                title: r.title,
-                                category: r.category,
-                                note: r.note,
-                                is_pinned: r.is_pinned,
-                                priority: r.priority || (r.is_pinned ? "main" : "secondary")
-                            })),
-                        history: chatMessages.slice(-4).map((m)=>({
-                                role: m.role === "ai" ? "assistant" : "user",
-                                content: m.content
-                            }))
-                    })
-                });
-                setChatMessages((prev)=>[
-                        ...prev,
-                        {
-                            role: "ai",
-                            content: res.reply
-                        }
-                    ]);
-            } catch  {} finally{
-                setChatLoading(false);
-            }
+            if (submitTimer.current) clearTimeout(submitTimer.current);
+            submitTimer.current = setTimeout(()=>setSubmitted(false), 2000);
         } catch  {}
         setSubmitting(false);
     };
@@ -1517,14 +1611,14 @@ function ReferenceHubContent() {
                         children: m[2]
                     }, m.index, false, {
                         fileName: "[project]/app/reference-hub/page.tsx",
-                        lineNumber: 337,
+                        lineNumber: 374,
                         columnNumber: 32
                     }, this));
                     else if (m[3]) parts.push(/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("em", {
                         children: m[3]
                     }, m.index, false, {
                         fileName: "[project]/app/reference-hub/page.tsx",
-                        lineNumber: 338,
+                        lineNumber: 375,
                         columnNumber: 37
                     }, this));
                     else if (m[4]) parts.push(/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
@@ -1532,7 +1626,7 @@ function ReferenceHubContent() {
                         children: m[4]
                     }, m.index, false, {
                         fileName: "[project]/app/reference-hub/page.tsx",
-                        lineNumber: 339,
+                        lineNumber: 376,
                         columnNumber: 37
                     }, this));
                     last = m.index + m[0].length;
@@ -1545,7 +1639,7 @@ function ReferenceHubContent() {
                 children: parseInline(line.slice(4))
             }, i, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 346,
+                lineNumber: 383,
                 columnNumber: 43
             }, this);
             if (line.startsWith("## ")) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1553,7 +1647,7 @@ function ReferenceHubContent() {
                 children: parseInline(line.slice(3))
             }, i, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 347,
+                lineNumber: 384,
                 columnNumber: 43
             }, this);
             if (line.startsWith("# ")) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1561,7 +1655,7 @@ function ReferenceHubContent() {
                 children: parseInline(line.slice(2))
             }, i, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 348,
+                lineNumber: 385,
                 columnNumber: 43
             }, this);
             if (line.startsWith("- ")) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1569,21 +1663,21 @@ function ReferenceHubContent() {
                 children: parseInline(line.slice(2))
             }, i, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 349,
+                lineNumber: 386,
                 columnNumber: 43
             }, this);
             if (line.trim() === "---") return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
                 className: "border-border my-2"
             }, i, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 350,
+                lineNumber: 387,
                 columnNumber: 43
             }, this);
             if (line.trim() === "") return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "h-2"
             }, i, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 351,
+                lineNumber: 388,
                 columnNumber: 43
             }, this);
             return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1591,35 +1685,35 @@ function ReferenceHubContent() {
                 children: parseInline(line)
             }, i, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 352,
+                lineNumber: 389,
                 columnNumber: 14
             }, this);
         });
     };
     // ── Render ─────────────────────────────────────────────────
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "min-h-screen bg-background",
+        className: "h-screen flex flex-col bg-background overflow-hidden",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$top$2d$bar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TopBar"], {}, void 0, false, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 359,
+                lineNumber: 396,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "flex",
+                className: "flex flex-1 min-h-0",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$pipeline$2d$sidebar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PipelineSidebar"], {}, void 0, false, {
                         fileName: "[project]/app/reference-hub/page.tsx",
-                        lineNumber: 361,
+                        lineNumber: 398,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
-                        className: "flex-1 overflow-auto",
+                        className: "flex-1 min-h-0 flex flex-col overflow-hidden",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "container mx-auto px-6 py-8",
+                            className: "px-4 py-3 flex flex-col flex-1 min-h-0",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "mb-6",
+                                    className: "mb-3",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             className: "flex items-center gap-3 mb-2",
@@ -1630,21 +1724,21 @@ function ReferenceHubContent() {
                                                     children: "C02"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                    lineNumber: 368,
+                                                    lineNumber: 405,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                                    className: "text-3xl font-bold",
+                                                    className: "text-xl font-bold",
                                                     children: "Reference Hub"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                    lineNumber: 369,
+                                                    lineNumber: 406,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                            lineNumber: 367,
+                                            lineNumber: 404,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1652,20 +1746,20 @@ function ReferenceHubContent() {
                                             children: "上傳視覺參考、標注用途、儲存至專案"
                                         }, void 0, false, {
                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                            lineNumber: 371,
+                                            lineNumber: 408,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                    lineNumber: 366,
+                                    lineNumber: 403,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex gap-6 items-start",
+                                    className: "flex gap-4 flex-1 min-h-0",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "flex-1 min-w-0 space-y-6",
+                                            className: "flex-1 min-w-0 overflow-y-auto space-y-4 pr-1",
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
                                                     children: [
@@ -1676,20 +1770,20 @@ function ReferenceHubContent() {
                                                                     children: "上傳參考圖"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 381,
+                                                                    lineNumber: 418,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardDescription"], {
                                                                     children: "支援圖片檔案或貼上圖片 URL"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 382,
+                                                                    lineNumber: 419,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                            lineNumber: 380,
+                                                            lineNumber: 417,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -1706,7 +1800,7 @@ function ReferenceHubContent() {
                                                                                     children: "分類"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 388,
+                                                                                    lineNumber: 425,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Select"], {
@@ -1717,12 +1811,12 @@ function ReferenceHubContent() {
                                                                                             className: "h-8 w-36 text-xs",
                                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 390,
+                                                                                                lineNumber: 427,
                                                                                                 columnNumber: 71
                                                                                             }, this)
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 390,
+                                                                                            lineNumber: 427,
                                                                                             columnNumber: 27
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -1731,24 +1825,24 @@ function ReferenceHubContent() {
                                                                                                     children: c
                                                                                                 }, c, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 391,
+                                                                                                    lineNumber: 428,
                                                                                                     columnNumber: 67
                                                                                                 }, this))
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 391,
+                                                                                            lineNumber: 428,
                                                                                             columnNumber: 27
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 389,
+                                                                                    lineNumber: 426,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 387,
+                                                                            lineNumber: 424,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1759,7 +1853,7 @@ function ReferenceHubContent() {
                                                                                     children: "重要性"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 395,
+                                                                                    lineNumber: 432,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Select"], {
@@ -1770,12 +1864,12 @@ function ReferenceHubContent() {
                                                                                             className: "h-8 w-32 text-xs",
                                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 397,
+                                                                                                lineNumber: 434,
                                                                                                 columnNumber: 71
                                                                                             }, this)
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 397,
+                                                                                            lineNumber: 434,
                                                                                             columnNumber: 27
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -1785,7 +1879,7 @@ function ReferenceHubContent() {
                                                                                                     children: "⭐ Main Ref"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 399,
+                                                                                                    lineNumber: 436,
                                                                                                     columnNumber: 29
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -1793,25 +1887,25 @@ function ReferenceHubContent() {
                                                                                                     children: "Secondary"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 400,
+                                                                                                    lineNumber: 437,
                                                                                                     columnNumber: 29
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, void 0, true, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 398,
+                                                                                            lineNumber: 435,
                                                                                             columnNumber: 27
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 396,
+                                                                                    lineNumber: 433,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 394,
+                                                                            lineNumber: 431,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1822,7 +1916,7 @@ function ReferenceHubContent() {
                                                                                     children: "備注（上傳前填寫）"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 405,
+                                                                                    lineNumber: 442,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1832,19 +1926,19 @@ function ReferenceHubContent() {
                                                                                     onChange: (e)=>setUploadNote(e.target.value)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 406,
+                                                                                    lineNumber: 443,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 404,
+                                                                            lineNumber: 441,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 386,
+                                                                    lineNumber: 423,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1856,7 +1950,7 @@ function ReferenceHubContent() {
                                                                                 className: "w-8 h-8 text-teal-500 animate-spin"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 416,
+                                                                                lineNumber: 453,
                                                                                 columnNumber: 29
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1864,7 +1958,7 @@ function ReferenceHubContent() {
                                                                                 children: "上傳中..."
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 416,
+                                                                                lineNumber: 453,
                                                                                 columnNumber: 87
                                                                             }, this)
                                                                         ]
@@ -1874,7 +1968,7 @@ function ReferenceHubContent() {
                                                                                 className: "w-8 h-8 text-muted-foreground"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 417,
+                                                                                lineNumber: 454,
                                                                                 columnNumber: 29
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1882,7 +1976,7 @@ function ReferenceHubContent() {
                                                                                 children: "點擊或拖曳上傳圖片"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 417,
+                                                                                lineNumber: 454,
                                                                                 columnNumber: 84
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1890,14 +1984,14 @@ function ReferenceHubContent() {
                                                                                 children: "JPG, PNG, WEBP, GIF"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 417,
+                                                                                lineNumber: 454,
                                                                                 columnNumber: 142
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 411,
+                                                                    lineNumber: 448,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1908,7 +2002,7 @@ function ReferenceHubContent() {
                                                                     onChange: handleFileUpload
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 420,
+                                                                    lineNumber: 457,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1922,7 +2016,7 @@ function ReferenceHubContent() {
                                                                             className: "text-sm"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 424,
+                                                                            lineNumber: 461,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -1935,32 +2029,32 @@ function ReferenceHubContent() {
                                                                                     className: "w-4 h-4 mr-1"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 432,
+                                                                                    lineNumber: 469,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 "匯入"
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 431,
+                                                                            lineNumber: 468,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 423,
+                                                                    lineNumber: 460,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                            lineNumber: 384,
+                                                            lineNumber: 421,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                    lineNumber: 379,
+                                                    lineNumber: 416,
                                                     columnNumber: 17
                                                 }, this),
                                                 refs.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1971,17 +2065,17 @@ function ReferenceHubContent() {
                                                                 className: "font-semibold text-sm text-muted-foreground",
                                                                 children: [
                                                                     "已加入的參考圖 (",
-                                                                    refs.length,
+                                                                    refs.filter((ref)=>ref.localPreview || ref.file_url?.trim() || ref.thumbnail_url?.trim()).length,
                                                                     ")"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                lineNumber: 442,
+                                                                lineNumber: 479,
                                                                 columnNumber: 21
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                            lineNumber: 441,
+                                                            lineNumber: 478,
                                                             columnNumber: 19
                                                         }, this),
                                                         loading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1991,49 +2085,36 @@ function ReferenceHubContent() {
                                                                     className: "w-4 h-4 animate-spin"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 449,
+                                                                    lineNumber: 486,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 "載入中..."
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                            lineNumber: 448,
+                                                            lineNumber: 485,
                                                             columnNumber: 21
                                                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                             className: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4",
-                                                            children: refs.map((ref)=>{
+                                                            children: refs.filter((ref)=>ref.localPreview || ref.file_url?.trim() || ref.thumbnail_url?.trim()).map((ref)=>{
                                                                 const saveState = saveStates[ref.id] || "idle";
-                                                                const previewSrc = ref.localPreview || ref.thumbnail_url || ref.file_url || "";
                                                                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
                                                                     className: "overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all group",
                                                                     children: [
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                            className: "aspect-video bg-gradient-to-br from-teal-500/20 to-cyan-500/20 relative cursor-pointer",
+                                                                            className: "aspect-video bg-muted relative cursor-pointer",
                                                                             onClick: ()=>handleRefClick(ref),
                                                                             children: [
-                                                                                previewSrc ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                                    src: previewSrc,
+                                                                                ref.localPreview ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                                                                    src: ref.localPreview,
                                                                                     alt: ref.title,
-                                                                                    className: "w-full h-full object-cover"
+                                                                                    className: "w-full h-full object-cover",
+                                                                                    onError: ()=>removeRef(ref.id)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 464,
+                                                                                    lineNumber: 500,
                                                                                     columnNumber: 33
-                                                                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                    className: "absolute inset-0 flex items-center justify-center",
-                                                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$image$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ImageIcon$3e$__["ImageIcon"], {
-                                                                                        className: "w-10 h-10 text-muted-foreground/30"
-                                                                                    }, void 0, false, {
-                                                                                        fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 467,
-                                                                                        columnNumber: 35
-                                                                                    }, this)
-                                                                                }, void 0, false, {
-                                                                                    fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 466,
-                                                                                    columnNumber: 33
-                                                                                }, this),
+                                                                                }, this) : null,
                                                                                 ref.is_pinned && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                                     className: "absolute top-2 left-2",
                                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
@@ -2043,19 +2124,19 @@ function ReferenceHubContent() {
                                                                                                 className: "w-2.5 h-2.5"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 474,
+                                                                                                lineNumber: 511,
                                                                                                 columnNumber: 37
                                                                                             }, this),
                                                                                             "Main Ref"
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 473,
+                                                                                        lineNumber: 510,
                                                                                         columnNumber: 35
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 472,
+                                                                                    lineNumber: 509,
                                                                                     columnNumber: 33
                                                                                 }, this),
                                                                                 ref.confidentiality === "nda-strict" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2068,19 +2149,19 @@ function ReferenceHubContent() {
                                                                                                 className: "w-2.5 h-2.5"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 481,
+                                                                                                lineNumber: 518,
                                                                                                 columnNumber: 37
                                                                                             }, this),
                                                                                             "NDA"
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 480,
+                                                                                        lineNumber: 517,
                                                                                         columnNumber: 35
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 479,
+                                                                                    lineNumber: 516,
                                                                                     columnNumber: 33
                                                                                 }, this),
                                                                                 ref.category && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2090,12 +2171,12 @@ function ReferenceHubContent() {
                                                                                         children: ref.category
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 487,
+                                                                                        lineNumber: 524,
                                                                                         columnNumber: 35
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 486,
+                                                                                    lineNumber: 523,
                                                                                     columnNumber: 33
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2108,18 +2189,18 @@ function ReferenceHubContent() {
                                                                                         className: "w-3 h-3"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 497,
+                                                                                        lineNumber: 534,
                                                                                         columnNumber: 33
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 493,
+                                                                                    lineNumber: 530,
                                                                                     columnNumber: 31
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 459,
+                                                                            lineNumber: 495,
                                                                             columnNumber: 29
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2131,7 +2212,7 @@ function ReferenceHubContent() {
                                                                                     children: ref.title
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 503,
+                                                                                    lineNumber: 540,
                                                                                     columnNumber: 31
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2150,12 +2231,12 @@ function ReferenceHubContent() {
                                                                                                     className: "flex-1 h-7 text-xs",
                                                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 508,
+                                                                                                        lineNumber: 545,
                                                                                                         columnNumber: 81
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 508,
+                                                                                                    lineNumber: 545,
                                                                                                     columnNumber: 35
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -2164,18 +2245,18 @@ function ReferenceHubContent() {
                                                                                                             children: c
                                                                                                         }, c, false, {
                                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                            lineNumber: 509,
+                                                                                                            lineNumber: 546,
                                                                                                             columnNumber: 75
                                                                                                         }, this))
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 509,
+                                                                                                    lineNumber: 546,
                                                                                                     columnNumber: 35
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, void 0, true, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 507,
+                                                                                            lineNumber: 544,
                                                                                             columnNumber: 33
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Select"], {
@@ -2192,12 +2273,12 @@ function ReferenceHubContent() {
                                                                                                     className: "w-28 h-7 text-xs",
                                                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 514,
+                                                                                                        lineNumber: 551,
                                                                                                         columnNumber: 79
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 514,
+                                                                                                    lineNumber: 551,
                                                                                                     columnNumber: 35
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -2207,7 +2288,7 @@ function ReferenceHubContent() {
                                                                                                             children: "⭐ Main"
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                            lineNumber: 516,
+                                                                                                            lineNumber: 553,
                                                                                                             columnNumber: 37
                                                                                                         }, this),
                                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -2215,25 +2296,25 @@ function ReferenceHubContent() {
                                                                                                             children: "Secondary"
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                            lineNumber: 517,
+                                                                                                            lineNumber: 554,
                                                                                                             columnNumber: 37
                                                                                                         }, this)
                                                                                                     ]
                                                                                                 }, void 0, true, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 515,
+                                                                                                    lineNumber: 552,
                                                                                                     columnNumber: 35
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, void 0, true, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 513,
+                                                                                            lineNumber: 550,
                                                                                             columnNumber: 33
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 505,
+                                                                                    lineNumber: 542,
                                                                                     columnNumber: 31
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Select"], {
@@ -2249,12 +2330,12 @@ function ReferenceHubContent() {
                                                                                             className: "w-full h-7 text-xs",
                                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 524,
+                                                                                                lineNumber: 561,
                                                                                                 columnNumber: 79
                                                                                             }, this)
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 524,
+                                                                                            lineNumber: 561,
                                                                                             columnNumber: 33
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -2264,7 +2345,7 @@ function ReferenceHubContent() {
                                                                                                     children: "Public"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 526,
+                                                                                                    lineNumber: 563,
                                                                                                     columnNumber: 35
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -2272,7 +2353,7 @@ function ReferenceHubContent() {
                                                                                                     children: "Internal"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 527,
+                                                                                                    lineNumber: 564,
                                                                                                     columnNumber: 35
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -2280,7 +2361,7 @@ function ReferenceHubContent() {
                                                                                                     children: "Client-Sensitive"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 528,
+                                                                                                    lineNumber: 565,
                                                                                                     columnNumber: 35
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -2288,19 +2369,19 @@ function ReferenceHubContent() {
                                                                                                     children: "NDA-Strict"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 529,
+                                                                                                    lineNumber: 566,
                                                                                                     columnNumber: 35
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, void 0, true, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 525,
+                                                                                            lineNumber: 562,
                                                                                             columnNumber: 33
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 523,
+                                                                                    lineNumber: 560,
                                                                                     columnNumber: 31
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2314,7 +2395,7 @@ function ReferenceHubContent() {
                                                                                             rows: 2
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 535,
+                                                                                            lineNumber: 572,
                                                                                             columnNumber: 33
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2335,72 +2416,106 @@ function ReferenceHubContent() {
                                                                                                         className: "w-3 h-3 mr-1 animate-spin"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 550,
+                                                                                                        lineNumber: 587,
                                                                                                         columnNumber: 64
                                                                                                     }, this),
                                                                                                     saveState === "saved" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$check$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__CheckCircle2$3e$__["CheckCircle2"], {
                                                                                                         className: "w-3 h-3 mr-1 text-green-500"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 551,
+                                                                                                        lineNumber: 588,
                                                                                                         columnNumber: 63
                                                                                                     }, this),
                                                                                                     saveState === "idle" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$save$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Save$3e$__["Save"], {
                                                                                                         className: "w-3 h-3 mr-1"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 552,
+                                                                                                        lineNumber: 589,
                                                                                                         columnNumber: 62
                                                                                                     }, this),
                                                                                                     saveState === "saved" ? "已儲存" : "儲存"
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 543,
+                                                                                                lineNumber: 580,
                                                                                                 columnNumber: 35
                                                                                             }, this)
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 542,
+                                                                                            lineNumber: 579,
                                                                                             columnNumber: 33
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 534,
+                                                                                    lineNumber: 571,
                                                                                     columnNumber: 31
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 502,
+                                                                            lineNumber: 539,
                                                                             columnNumber: 29
                                                                         }, this)
                                                                     ]
                                                                 }, ref.id, true, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 457,
+                                                                    lineNumber: 493,
                                                                     columnNumber: 27
                                                                 }, this);
                                                             })
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                            lineNumber: 452,
+                                                            lineNumber: 489,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                    lineNumber: 440,
+                                                    lineNumber: 477,
                                                     columnNumber: 17
                                                 }, this),
                                                 " ",
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex items-center gap-3 pt-2",
+                                                    className: "flex items-center gap-3 pt-2 flex-wrap",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                                                             size: "lg",
-                                                            className: submitted ? "bg-green-600 hover:bg-green-700 text-white" : "",
+                                                            variant: "outline",
+                                                            onClick: handleAnalyzeRefs,
+                                                            disabled: chatLoading || refs.length === 0,
+                                                            className: "border-teal-500/50 text-teal-700 hover:bg-teal-500/10",
+                                                            children: chatLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+                                                                children: [
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+                                                                        className: "w-4 h-4 mr-2 animate-spin"
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/app/reference-hub/page.tsx",
+                                                                        lineNumber: 613,
+                                                                        columnNumber: 27
+                                                                    }, this),
+                                                                    "分析中..."
+                                                                ]
+                                                            }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+                                                                children: [
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$bot$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Bot$3e$__["Bot"], {
+                                                                        className: "w-4 h-4 mr-2"
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/app/reference-hub/page.tsx",
+                                                                        lineNumber: 614,
+                                                                        columnNumber: 27
+                                                                    }, this),
+                                                                    "開始分析 Ref"
+                                                                ]
+                                                            }, void 0, true)
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/reference-hub/page.tsx",
+                                                            lineNumber: 605,
+                                                            columnNumber: 19
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                            size: "lg",
+                                                            className: submitted ? "opacity-70" : "",
                                                             onClick: handleSubmit,
                                                             disabled: submitting || refs.length === 0,
                                                             children: submitting ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -2409,7 +2524,7 @@ function ReferenceHubContent() {
                                                                         className: "w-4 h-4 mr-2 animate-spin"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                        lineNumber: 575,
+                                                                        lineNumber: 624,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     "儲存中..."
@@ -2420,10 +2535,10 @@ function ReferenceHubContent() {
                                                                         className: "w-4 h-4 mr-2"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                        lineNumber: 577,
+                                                                        lineNumber: 626,
                                                                         columnNumber: 29
                                                                     }, this),
-                                                                    "Submitted"
+                                                                    "已儲存"
                                                                 ]
                                                             }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
                                                                 children: [
@@ -2431,15 +2546,15 @@ function ReferenceHubContent() {
                                                                         className: "w-4 h-4 mr-2"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                        lineNumber: 578,
+                                                                        lineNumber: 627,
                                                                         columnNumber: 29
                                                                     }, this),
-                                                                    "Submit & Save All"
+                                                                    "Submit & Save"
                                                                 ]
                                                             }, void 0, true)
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                            lineNumber: 568,
+                                                            lineNumber: 617,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2455,52 +2570,49 @@ function ReferenceHubContent() {
                                                                         className: "w-4 h-4 ml-2"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                        lineNumber: 582,
+                                                                        lineNumber: 631,
                                                                         columnNumber: 73
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                lineNumber: 582,
+                                                                lineNumber: 631,
                                                                 columnNumber: 21
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                            lineNumber: 581,
+                                                            lineNumber: 630,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                    lineNumber: 567,
+                                                    lineNumber: 604,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                            lineNumber: 376,
+                                            lineNumber: 413,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "relative shrink-0",
+                                            ref: panelRef,
+                                            className: "shrink-0 relative self-stretch",
                                             style: {
-                                                width: chatWidth
+                                                width: panelW
                                             },
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-teal-500/50 transition-colors z-10",
-                                                    onMouseDown: onResizeMouseDown,
-                                                    title: "拖曳調整寬度"
+                                                    className: "absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-teal-500/40 rounded transition-colors z-20",
+                                                    onMouseDown: startResize
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                    lineNumber: 590,
+                                                    lineNumber: 639,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
-                                                    className: "border-teal-500/30 flex flex-col sticky top-8",
-                                                    style: {
-                                                        height: "calc(100vh - 220px)"
-                                                    },
+                                                    className: "border-teal-500/30 flex flex-col w-full h-full overflow-hidden absolute inset-0",
                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Collapsible"], {
                                                         open: chatOpen,
                                                         onOpenChange: setChatOpen,
@@ -2520,7 +2632,7 @@ function ReferenceHubContent() {
                                                                                         className: "w-5 h-5 text-teal-600"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 601,
+                                                                                        lineNumber: 646,
                                                                                         columnNumber: 29
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2530,7 +2642,7 @@ function ReferenceHubContent() {
                                                                                                 children: "AI Reference 助手"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 603,
+                                                                                                lineNumber: 648,
                                                                                                 columnNumber: 31
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardDescription"], {
@@ -2538,19 +2650,19 @@ function ReferenceHubContent() {
                                                                                                 children: "點擊圖片可直接詢問"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 604,
+                                                                                                lineNumber: 649,
                                                                                                 columnNumber: 31
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 602,
+                                                                                        lineNumber: 647,
                                                                                         columnNumber: 29
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 600,
+                                                                                lineNumber: 645,
                                                                                 columnNumber: 27
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2560,42 +2672,42 @@ function ReferenceHubContent() {
                                                                                         className: "w-4 h-4 text-teal-500 animate-spin"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 608,
+                                                                                        lineNumber: 653,
                                                                                         columnNumber: 45
                                                                                     }, this),
                                                                                     chatOpen ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                                                                                         className: "w-4 h-4"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 609,
+                                                                                        lineNumber: 654,
                                                                                         columnNumber: 41
                                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
                                                                                         className: "w-4 h-4"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 609,
+                                                                                        lineNumber: 654,
                                                                                         columnNumber: 77
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 607,
+                                                                                lineNumber: 652,
                                                                                 columnNumber: 27
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                        lineNumber: 599,
+                                                                        lineNumber: 644,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 598,
+                                                                    lineNumber: 643,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                lineNumber: 597,
+                                                                lineNumber: 642,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleContent"], {
@@ -2606,7 +2718,6 @@ function ReferenceHubContent() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollArea"], {
                                                                             className: "flex-1 min-h-0 mb-3",
                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                ref: chatScrollRef,
                                                                                 className: "space-y-4 pr-2",
                                                                                 children: [
                                                                                     chatMessages.map((msg, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2620,17 +2731,17 @@ function ReferenceHubContent() {
                                                                                                             className: "w-4 h-4"
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                            lineNumber: 623,
+                                                                                                            lineNumber: 668,
                                                                                                             columnNumber: 58
                                                                                                         }, this) : "U"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 622,
+                                                                                                        lineNumber: 667,
                                                                                                         columnNumber: 35
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 621,
+                                                                                                    lineNumber: 666,
                                                                                                     columnNumber: 33
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2640,25 +2751,25 @@ function ReferenceHubContent() {
                                                                                                         children: renderMarkdown(msg.content)
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 628,
+                                                                                                        lineNumber: 673,
                                                                                                         columnNumber: 39
                                                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                                                                         className: "text-sm whitespace-pre-line",
                                                                                                         children: msg.content
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 629,
+                                                                                                        lineNumber: 674,
                                                                                                         columnNumber: 39
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 626,
+                                                                                                    lineNumber: 671,
                                                                                                     columnNumber: 33
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, idx, true, {
                                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                            lineNumber: 620,
+                                                                                            lineNumber: 665,
                                                                                             columnNumber: 31
                                                                                         }, this)),
                                                                                     chatLoading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2672,17 +2783,17 @@ function ReferenceHubContent() {
                                                                                                         className: "w-4 h-4"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 637,
+                                                                                                        lineNumber: 682,
                                                                                                         columnNumber: 92
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                    lineNumber: 637,
+                                                                                                    lineNumber: 682,
                                                                                                     columnNumber: 35
                                                                                                 }, this)
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 636,
+                                                                                                lineNumber: 681,
                                                                                                 columnNumber: 33
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2692,7 +2803,7 @@ function ReferenceHubContent() {
                                                                                                         className: "w-3 h-3 animate-spin text-teal-500"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 640,
+                                                                                                        lineNumber: 685,
                                                                                                         columnNumber: 35
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2700,30 +2811,37 @@ function ReferenceHubContent() {
                                                                                                         children: "AI 思考中..."
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                        lineNumber: 641,
+                                                                                                        lineNumber: 686,
                                                                                                         columnNumber: 35
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                                lineNumber: 639,
+                                                                                                lineNumber: 684,
                                                                                                 columnNumber: 33
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 635,
+                                                                                        lineNumber: 680,
                                                                                         columnNumber: 31
+                                                                                    }, this),
+                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                        ref: chatScrollBottom
+                                                                                    }, void 0, false, {
+                                                                                        fileName: "[project]/app/reference-hub/page.tsx",
+                                                                                        lineNumber: 690,
+                                                                                        columnNumber: 29
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                lineNumber: 618,
+                                                                                lineNumber: 663,
                                                                                 columnNumber: 27
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 617,
+                                                                            lineNumber: 662,
                                                                             columnNumber: 25
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2749,12 +2867,12 @@ function ReferenceHubContent() {
                                                                                     children: label
                                                                                 }, label, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 655,
+                                                                                    lineNumber: 701,
                                                                                     columnNumber: 29
                                                                                 }, this))
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 649,
+                                                                            lineNumber: 695,
                                                                             columnNumber: 25
                                                                         }, this),
                                                                         clickedRef && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2767,7 +2885,7 @@ function ReferenceHubContent() {
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 664,
+                                                                                    lineNumber: 710,
                                                                                     columnNumber: 29
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2780,18 +2898,18 @@ function ReferenceHubContent() {
                                                                                         className: "w-3 h-3"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 665,
+                                                                                        lineNumber: 711,
                                                                                         columnNumber: 115
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 665,
+                                                                                    lineNumber: 711,
                                                                                     columnNumber: 29
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 663,
+                                                                            lineNumber: 709,
                                                                             columnNumber: 27
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2801,11 +2919,11 @@ function ReferenceHubContent() {
                                                                                     placeholder: "輸入問題或點擊圖片...",
                                                                                     value: chatInput,
                                                                                     onChange: (e)=>setChatInput(e.target.value),
-                                                                                    onKeyDown: (e)=>e.key === "Enter" && !e.shiftKey && handleChatSend(),
+                                                                                    onKeyDown: (e)=>e.stopPropagation(),
                                                                                     disabled: chatLoading
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 670,
+                                                                                    lineNumber: 716,
                                                                                     columnNumber: 27
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2816,81 +2934,81 @@ function ReferenceHubContent() {
                                                                                         className: "w-4 h-4 animate-spin"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 678,
+                                                                                        lineNumber: 724,
                                                                                         columnNumber: 44
                                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__["Send"], {
                                                                                         className: "w-4 h-4"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                        lineNumber: 678,
+                                                                                        lineNumber: 724,
                                                                                         columnNumber: 91
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                                    lineNumber: 677,
+                                                                                    lineNumber: 723,
                                                                                     columnNumber: 27
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                                                            lineNumber: 669,
+                                                                            lineNumber: 715,
                                                                             columnNumber: 25
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                                    lineNumber: 616,
+                                                                    lineNumber: 661,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/reference-hub/page.tsx",
-                                                                lineNumber: 615,
+                                                                lineNumber: 660,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/reference-hub/page.tsx",
-                                                        lineNumber: 596,
+                                                        lineNumber: 641,
                                                         columnNumber: 19
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                                    lineNumber: 595,
+                                                    lineNumber: 640,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/reference-hub/page.tsx",
-                                            lineNumber: 588,
+                                            lineNumber: 637,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/reference-hub/page.tsx",
-                                    lineNumber: 374,
-                                    columnNumber: 13
+                                    lineNumber: 411,
+                                    columnNumber: 1
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/reference-hub/page.tsx",
-                            lineNumber: 363,
+                            lineNumber: 400,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/reference-hub/page.tsx",
-                        lineNumber: 362,
+                        lineNumber: 399,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/reference-hub/page.tsx",
-                lineNumber: 360,
+                lineNumber: 397,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/reference-hub/page.tsx",
-        lineNumber: 358,
+        lineNumber: 395,
         columnNumber: 5
     }, this);
 }
@@ -2899,12 +3017,12 @@ function ReferenceHubPage() {
         fallback: null,
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ReferenceHubContent, {}, void 0, false, {
             fileName: "[project]/app/reference-hub/page.tsx",
-            lineNumber: 697,
+            lineNumber: 743,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/reference-hub/page.tsx",
-        lineNumber: 696,
+        lineNumber: 742,
         columnNumber: 5
     }, this);
 }

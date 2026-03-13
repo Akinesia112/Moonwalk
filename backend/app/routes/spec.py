@@ -17,50 +17,7 @@ PROJECTS = {
     }
 }
 
-REFERENCES: dict = {
-    "ref_001": {
-        "id": "ref_001",
-        "project_id": "proj_001",
-        "title": "Cyberpunk Lighting Reference",
-        "category": "Lighting",
-        "confidentiality": "client-sensitive",
-        "file_url": "",
-        "thumbnail_url": "",
-        "note": "參考光影方向，主光從右側硬光",
-        "is_pinned": True,
-        "priority": "main",
-        "uploaded_by": "Director",
-        "created_at": "2024-01-20",
-    },
-    "ref_002": {
-        "id": "ref_002",
-        "project_id": "proj_001",
-        "title": "Character Mood Study",
-        "category": "Mood",
-        "confidentiality": "client-sensitive",
-        "file_url": "",
-        "thumbnail_url": "",
-        "note": "角色情緒氛圍，壓抑的張力感",
-        "is_pinned": True,
-        "priority": "main",
-        "uploaded_by": "Director",
-        "created_at": "2024-01-20",
-    },
-    "ref_003": {
-        "id": "ref_003",
-        "project_id": "proj_001",
-        "title": "Material Reference - Metal",
-        "category": "Texture",
-        "confidentiality": "internal",
-        "file_url": "",
-        "thumbnail_url": "",
-        "note": "",
-        "is_pinned": False,
-        "priority": "secondary",
-        "uploaded_by": "Artist",
-        "created_at": "2024-01-21",
-    },
-}
+REFERENCES: dict = {}
 
 ARTWORKS: dict = {
     "art_001": {
@@ -105,10 +62,36 @@ async def get_project(project_id: str):
 
 @router.get("/search/references")
 async def get_references(project_id: str, pinned_only: bool = False, artwork_id: Optional[str] = None):
+    import os, glob
+    upload_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
+
     refs = [r for r in REFERENCES.values() if r["project_id"] == project_id]
     if pinned_only:
         refs = [r for r in refs if r["is_pinned"]]
-    return refs
+
+    result = []
+    for r in refs:
+
+        # Auto-resolve thumbnail: if file_url is /uploads/ref_xxx (no ext), find the actual file
+        thumb = r.get("thumbnail_url", "")
+        file_url = r.get("file_url", "")
+
+        if not thumb and file_url.startswith("/uploads/"):
+            # Try to find the file with any extension
+            ref_id = r["id"]
+            matches = glob.glob(os.path.join(upload_dir, f"{ref_id}.*"))
+            if matches:
+                ext = os.path.splitext(matches[0])[1]
+                thumb = f"/uploads/{ref_id}{ext}"
+                file_url = thumb
+
+        ref_copy = dict(r)
+        ref_copy["thumbnail_url"] = thumb
+        ref_copy["file_url"] = file_url
+        result.append(ref_copy)
+
+    return result
+
 
 @router.get("/search/references/{ref_id}")
 async def get_reference(ref_id: str):
@@ -125,41 +108,78 @@ async def upload_image(
     category: str = Form("Lighting"),
     image: Optional[UploadFile] = File(None),
 ):
+    import os, shutil, base64
     new_id = f"ref_{uuid.uuid4().hex[:8]}"
+
+    # Save file to disk
+    upload_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    file_url = ""
+    thumbnail_url = ""
+    title = "Uploaded Image"
+
+    if image and image.filename:
+        title = image.filename
+        ext = os.path.splitext(image.filename)[1].lower() or ".jpg"
+        save_path = os.path.join(upload_dir, f"{new_id}{ext}")
+        content_bytes = await image.read()
+        with open(save_path, "wb") as f:
+            f.write(content_bytes)
+        file_url = f"/uploads/{new_id}{ext}"
+        thumbnail_url = file_url
+
     REFERENCES[new_id] = {
         "id": new_id,
         "project_id": project_id,
-        "title": image.filename if image else "Uploaded Image",
+        "title": title,
         "category": category,
         "confidentiality": "internal",
-        "file_url": f"/uploads/{new_id}",
-        "thumbnail_url": "",
+        "file_url": file_url,
+        "thumbnail_url": thumbnail_url,
         "note": instruction,
         "is_pinned": priority == "main",
         "priority": priority,
         "uploaded_by": "User",
         "created_at": datetime.now().isoformat(),
     }
-    return {"id": new_id, "file_url": f"/uploads/{new_id}", "thumbnail_url": ""}
+    return {"id": new_id, "file_url": file_url, "thumbnail_url": thumbnail_url}
 
 @router.post("/search/url")
 async def import_by_url(body: dict):
+    import re, urllib.parse
+    raw_url = body.get("url", "").strip()
+
+    # Only accept direct image URLs
+    is_image = bool(re.search(r'\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$', raw_url, re.IGNORECASE))
+    if not is_image:
+        raise HTTPException(status_code=400, detail="只支援直接圖片 URL（.jpg / .png / .webp 等）。請貼上圖片的直接網址，不是網頁連結。")
+
     new_id = f"ref_{uuid.uuid4().hex[:8]}"
+
+    try:
+        parsed = urllib.parse.urlparse(raw_url)
+        path_parts = [p for p in parsed.path.split("/") if p]
+        filename = path_parts[-1] if path_parts else parsed.netloc
+        clean_title = filename.split("?")[0][:60] or parsed.netloc
+    except Exception:
+        clean_title = raw_url[:60]
+
     REFERENCES[new_id] = {
         "id": new_id,
         "project_id": body.get("project_id", "proj_001"),
-        "title": body.get("url", "URL Import"),
+        "title": clean_title,
         "category": body.get("category", "Lighting"),
         "confidentiality": "internal",
-        "file_url": body.get("url", ""),
-        "thumbnail_url": body.get("url", ""),
+        "file_url": raw_url,
+        "thumbnail_url": raw_url,
         "note": body.get("instruction", ""),
-        "is_pinned": False,
-        "priority": "secondary",
+        "is_pinned": body.get("priority", "secondary") == "main",
+        "priority": body.get("priority", "secondary"),
         "uploaded_by": "User",
         "created_at": datetime.now().isoformat(),
     }
-    return {"id": new_id, "file_url": body.get("url", ""), "thumbnail_url": body.get("url", "")}
+    return {"id": new_id, "file_url": raw_url, "thumbnail_url": raw_url}
 
 @router.get("/search/artworks")
 async def get_artworks(project_id: str, status: Optional[str] = None):

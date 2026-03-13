@@ -1,0 +1,13 @@
+{
+  "akinesia112@gmail.com": {
+    "email": "akinesia112@gmail.com",
+    "username": "122222",
+    "password_hash": "91e42f7c63ac277a6f27f3e9174fbe119f7269a487b31750c322836d45fe21a1",
+    "verified": false,
+    "verify_token": "GkjqpIu2OOn9kEngs-qOjFmgEAji6G2AJbAtc87h39s",
+    "verify_expires": 1773484178.005805,
+    "created_at": 1773397778.0058072,
+    "reset_token": null,
+    "reset_expires": null
+  }
+}

@@ -6,6 +6,7 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from autogen_core import SingleThreadedAgentRuntime
 from .agents.registor_agent import register_evaluation_agents
@@ -66,6 +67,12 @@ def create_app(config_class=Config) -> FastAPI:
     app.include_router(spec_router)
     app.include_router(analysis_router)
     app.include_router(feedback_router)
+
+    # Serve uploaded files
+    from fastapi.staticfiles import StaticFiles
+    upload_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=upload_dir), name="uploads")
 
     return app
 

@@ -469,7 +469,17 @@ async def _agent_chat(prompt: str, topics: list, timeout: float = 45.0) -> str:
                 shared.response_queues[session_id].get(),
                 timeout=timeout,
             )
-            replies.append(f"**{response.agent_name}**:\n{response.content}")
+            # Strip any leading "AgentName:" or "**AgentName**:" the agent may have
+            # written itself, to avoid "**Director**:\nDirector:" duplication
+            import re as _re
+            content = response.content.strip()
+            content = _re.sub(
+                r'^(\*{0,2}' + _re.escape(response.agent_name) + r'\*{0,2})\s*:\s*',
+                '',
+                content,
+                flags=_re.IGNORECASE
+            )
+            replies.append(f"**{response.agent_name}**:\n{content}")
     except asyncio.TimeoutError:
         if not replies:
             replies.append("Agent response timed out.")

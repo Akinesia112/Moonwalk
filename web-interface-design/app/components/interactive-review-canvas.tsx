@@ -326,7 +326,7 @@ export function InteractiveReviewCanvas({
               style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}
             >
               <img 
-                src={workImage || "/placeholder.svg"} 
+                src={workImage} 
                 alt="Artist Work" 
                 className="max-w-none"
                 style={{ width: 800 }}
@@ -405,7 +405,7 @@ export function InteractiveReviewCanvas({
                     className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${activeRefIndex === idx ? "border-purple-500" : "border-transparent hover:border-muted-foreground/30"}`}
                     onClick={() => setActiveRefIndex(idx)}
                   >
-                    <img src={img || "/placeholder.svg"} alt={`Reference ${idx + 1}`} className="w-full aspect-video object-cover" />
+                    <img src={img} alt={`Reference ${idx + 1}`} className="w-full aspect-video object-cover" />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                       <span className="text-white text-xs font-medium">Reference #{idx + 1}</span>
                     </div>

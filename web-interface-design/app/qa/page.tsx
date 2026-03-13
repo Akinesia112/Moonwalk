@@ -476,7 +476,7 @@ export default function QAPage() {
                               onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork === idx ? null : idx) }}
                             >
                               <div className="w-10 h-7 rounded overflow-hidden bg-muted shrink-0">
-                                <img src={art.image || "/placeholder.svg"} alt={art.name} className="w-full h-full object-cover" />
+                                <img src={art.image} alt={art.name} className="w-full h-full object-cover" />
                               </div>
                               <span className="text-[10px] font-medium flex-1 truncate">{art.name}</span>
                               <ChevronDown className={`w-3 h-3 transition-transform shrink-0 ${expandedArtwork === idx ? 'rotate-180' : ''}`} />
@@ -490,7 +490,7 @@ export default function QAPage() {
                                     onClick={() => setSelectedRef(ref.id)}
                                   >
                                     <div className="w-7 h-5 rounded overflow-hidden bg-muted shrink-0">
-                                      <img src={ref.image || "/placeholder.svg"} alt={ref.name} className="w-full h-full object-cover" />
+                                      <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />
                                     </div>
                                     <span className="truncate">{ref.name}</span>
                                   </div>
@@ -575,7 +575,7 @@ export default function QAPage() {
                                 onClick={() => setSelectedRef(ref.id)}
                               >
                                 <div className="w-20 h-14 bg-muted overflow-hidden">
-                                  <img src={ref.image || "/placeholder.svg"} alt={ref.name} className="w-full h-full object-cover" />
+                                  <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="px-1.5 py-0.5 bg-card">
                                   <p className="text-[9px] font-medium truncate">{ref.name}</p>
@@ -636,12 +636,12 @@ export default function QAPage() {
                         {/* Side-by-side: artwork left, ref right */}
                         <div className="flex-1 flex min-h-0 relative">
                           <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-                            <img src={currentArt?.image || "/placeholder.svg"} alt="Artwork" className="max-w-full max-h-full object-contain" crossOrigin="anonymous" style={{ transform: `scale(${artworkZoom / 100})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
+                            <img src={currentArt?.image} alt="Artwork" className="max-w-full max-h-full object-contain" crossOrigin="anonymous" style={{ transform: `scale(${artworkZoom / 100})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
                             <Badge className="absolute top-2 left-2 bg-blue-500 text-[10px] h-5">Work</Badge>
                           </div>
                           <div className="w-px bg-white/30 shrink-0" />
                           <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-                            <img src={currentRef?.image || "/placeholder.svg"} alt="Reference" className="max-w-full max-h-full object-contain" crossOrigin="anonymous" style={{ transform: `scale(${refZoom / 100})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
+                            <img src={currentRef?.image} alt="Reference" className="max-w-full max-h-full object-contain" crossOrigin="anonymous" style={{ transform: `scale(${refZoom / 100})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
                             <Badge className="absolute top-2 right-2 bg-amber-500 text-[10px] h-5">Ref</Badge>
                           </div>
                         </div>

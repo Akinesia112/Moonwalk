@@ -82,6 +82,22 @@ async function apiSaveBrief(brief: BriefForm) {
 // ── Component ───────────────────────────────────────────────────
 export default function KickoffPage() {
   const [chatbotOpen, setChatbotOpen] = useState(true)
+  const [panelW, setPanelW] = useState(400)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const resizeDir = useRef<string>("")
+  const resizeStart = useRef({ x: 0, w: 400 })
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault()
+    resizeStart.current = { x: e.clientX, w: panelW }
+    const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - resizeStart.current.x
+      setPanelW(Math.max(280, Math.min(700, resizeStart.current.w - dx)))
+    }
+    const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp) }
+    window.addEventListener("mousemove", onMove)
+    window.addEventListener("mouseup", onUp)
+  }
   const [specAnalyzed, setSpecAnalyzed] = useState(false)
   const [analyzingSpec, setAnalyzingSpec] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -90,20 +106,43 @@ export default function KickoffPage() {
   const [saveError, setSaveError] = useState("")
 
   const [brief, setBrief] = useState<BriefForm>(INITIAL_BRIEF)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      role: "ai",
-      content: "您好！我是 AI 追問助手。\n\n請填寫左側表單（標示 * 為必填），填完後點「開始分析 Spec」，我會根據您填入的內容做摘要並追問不清楚的地方。\n\n也可以直接在這裡輸入問題。",
-    },
-  ])
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([{
+    role: "ai" as const,
+    content: "您好！我是 AI 追問助手。\n\n請填寫左側表單（標示 * 為必填），填完後點「開始分析 Spec」，我會根據您填入的內容做摘要並追問不清楚的地方。\n\n也可以直接在這裡輸入問題。",
+  }])
   const [inputMessage, setInputMessage] = useState("")
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const [quickReplies, setQuickReplies] = useState<string[]>([])
+  const [quickRepliesLoading, setQuickRepliesLoading] = useState(false)
+  const scrollRef    = useRef<HTMLDivElement>(null)
+  const scrollBottom = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll chat
+  // Restore from sessionStorage after mount (client-only, avoids SSR hydration mismatch)
+  const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
+    try {
+      const savedBrief = sessionStorage.getItem("kickoff_brief")
+      if (savedBrief) setBrief(JSON.parse(savedBrief))
+      const savedChat = sessionStorage.getItem("kickoff_chat")
+      if (savedChat) setChatMessages(JSON.parse(savedChat))
+    } catch {}
+    setHydrated(true)
+  }, [])
+
+  // Persist brief to sessionStorage (only after hydrated)
+  useEffect(() => {
+    if (!hydrated) return
+    try { sessionStorage.setItem("kickoff_brief", JSON.stringify(brief)) } catch {}
+  }, [brief, hydrated])
+
+  // Persist chat to sessionStorage (only after hydrated)
+  useEffect(() => {
+    if (!hydrated) return
+    try { sessionStorage.setItem("kickoff_chat", JSON.stringify(chatMessages)) } catch {}
+  }, [chatMessages, hydrated])
+
+  // Auto-scroll chat — use a sentinel div at the bottom
+  useEffect(() => {
+    scrollBottom.current?.scrollIntoView({ behavior: "smooth" })
   }, [chatMessages, aiThinking])
 
   const setField = (field: keyof BriefForm) => (
@@ -114,8 +153,8 @@ export default function KickoffPage() {
     setBrief(prev => ({ ...prev, [field]: value }))
 
   // ── Send chat message ────────────────────────────────────────
-  const handleSendMessage = async () => {
-    const msg = inputMessage.trim()
+  const handleSendMessage = async (overrideMsg?: string) => {
+    const msg = (overrideMsg ?? inputMessage).trim()
     if (!msg || aiThinking) return
 
     const newHistory: ChatMessage[] = [...chatMessages, { role: "user", content: msg }]
@@ -126,7 +165,9 @@ export default function KickoffPage() {
 
     try {
       const reply = await apiChatBrief(msg, brief, newHistory)
-      setChatMessages(prev => [...prev, { role: "ai", content: reply }])
+      const updatedHistory = [...newHistory, { role: "ai" as const, content: reply }]
+      setChatMessages(updatedHistory)
+      fetchQuickReplies(updatedHistory, brief)
     } catch (e) {
       setChatMessages(prev => [
         ...prev,
@@ -134,6 +175,40 @@ export default function KickoffPage() {
       ])
     } finally {
       setAiThinking(false)
+    }
+  }
+
+
+  // ── Fetch AutoGen quick reply suggestions ───────────────────
+  const fetchQuickReplies = async (history: ChatMessage[], currentBrief: BriefForm) => {
+    setQuickRepliesLoading(true)
+    try {
+      const res = await fetch(`${API}/suggestion/chat/brief`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: "根據目前的對話和 brief 內容，請推薦三個最相關的追問問題，只回傳 JSON 陣列格式如 [\"問題1\", \"問題2\", \"問題3\"]，不要其他文字。",
+          project_id: "proj_001",
+          brief_context: currentBrief,
+          history: history.map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
+          mode: "quick_replies",
+        }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      const text = (data.reply as string || "").trim()
+      // Try to parse JSON array from reply
+      const match = text.match(/\[.*\]/s)
+      if (match) {
+        const arr = JSON.parse(match[0])
+        if (Array.isArray(arr) && arr.length > 0) {
+          setQuickReplies(arr.slice(0, 3))
+        }
+      }
+    } catch {
+      // silently fail — keep previous quick replies
+    } finally {
+      setQuickRepliesLoading(false)
     }
   }
 
@@ -198,7 +273,9 @@ export default function KickoffPage() {
       const finalMsg = `Spec 分析完成！\n\n${overviewText}${summaryText}${ambiguousText}${missingText}${suggestionsText}${
         allDone ? "\n\n✅ 所有必填項目已填寫完成，可以 Submit 了。" : ""
       }`
-      setChatMessages(prev => [...prev, { role: "ai", content: finalMsg }])
+      const afterAnalyze = [...chatMessages, { role: "ai" as const, content: finalMsg }]
+      setChatMessages(afterAnalyze)
+      fetchQuickReplies(afterAnalyze, brief)
     } catch (e) {
       setSaveError(`分析失敗：${e}`)
     } finally {
@@ -254,23 +331,23 @@ export default function KickoffPage() {
 
   // ── Render ───────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <TopBar />
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         <PipelineSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="container mx-auto px-6 py-8">
+        <main className="flex-1 min-h-0 overflow-auto">
+          <div className="px-4 py-3 flex flex-col h-full">
 
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-3">
               <div className="flex items-center gap-3 mb-2">
                 <Badge variant="outline" className="bg-teal-500/10 text-teal-600 border-teal-500/30">C01</Badge>
-                <h1 className="text-3xl font-bold">專案啟動與 Brief 對焦</h1>
+                <h1 className="text-xl font-bold">專案啟動與 Brief 對焦</h1>
               </div>
               <p className="text-muted-foreground">Project Kickoff & Brief Alignment</p>
             </div>
 
-            <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+            <Alert className="mb-3 border-amber-500/50 bg-amber-500/10">
               <AlertCircle className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-700">
                 <strong>提醒：</strong>規格尺寸、交付日期、參考點為必填項目。確保一開始不要做錯。
@@ -278,15 +355,15 @@ export default function KickoffPage() {
             </Alert>
 
             {saveError && (
-              <Alert className="mb-4 border-red-500/50 bg-red-500/10">
+              <Alert className="mb-2 border-red-500/50 bg-red-500/10">
                 <AlertCircle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-700">{saveError}</AlertDescription>
               </Alert>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex gap-4 flex-1 min-h-0">
               {/* ── Main Form ── */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="flex-1 min-w-0 overflow-y-auto pr-1 space-y-4">
 
                 {/* Basic Info */}
                 <Card>
@@ -428,9 +505,11 @@ export default function KickoffPage() {
                 </Button>
               </div>
 
-              {/* ── AI Chatbot Sidebar ── */}
-              <div>
-                <Card className="border-teal-500/30 flex flex-col sticky top-8" style={{ height: "calc(100vh - 220px)" }}>
+              {/* ── AI Chatbot Sidebar (resizable) ── */}
+              <div ref={panelRef} className="shrink-0 relative self-stretch" style={{ width: panelW }}>
+                {/* Resize handle — left edge only */}
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-teal-500/40 rounded transition-colors z-20" onMouseDown={startResize} />
+                <Card className="border-teal-500/30 flex flex-col w-full h-full overflow-hidden absolute inset-0">
                   <Collapsible open={chatbotOpen} onOpenChange={setChatbotOpen} className="flex flex-col flex-1 min-h-0">
                     <CollapsibleTrigger asChild>
                       <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors shrink-0">
@@ -452,7 +531,7 @@ export default function KickoffPage() {
                     <CollapsibleContent className="flex-1 min-h-0 flex flex-col">
                       <CardContent className="pt-0 flex-1 min-h-0 flex flex-col">
                         <ScrollArea className="flex-1 min-h-0 mb-4">
-                          <div ref={scrollRef} className="space-y-4 pr-2">
+                          <div className="space-y-4 pr-2">
                             {chatMessages.map((msg, idx) => (
                               <div key={idx} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                                 <Avatar className="w-8 h-8 shrink-0">
@@ -481,14 +560,33 @@ export default function KickoffPage() {
                                 </div>
                               </div>
                             )}
+                            <div ref={scrollBottom} />
                           </div>
                         </ScrollArea>
+                        {/* Quick reply suggestions — dynamic from AutoGen */}
+                        {!aiThinking && chatMessages.length > 0 && quickReplies.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2 shrink-0">
+                            {quickRepliesLoading ? (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Loader2 className="w-3 h-3 animate-spin" />產生建議中...
+                              </span>
+                            ) : quickReplies.map(msg => (
+                              <button
+                                key={msg}
+                                onClick={() => handleSendMessage(msg)}
+                                className="text-xs px-2 py-1 rounded-full border border-teal-500/40 text-teal-700 hover:bg-teal-500/10 transition-colors text-left max-w-[220px] truncate"
+                              >
+                                {msg}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <div className="flex gap-2 shrink-0">
                           <Input
                             placeholder="輸入回覆..."
                             value={inputMessage}
                             onChange={e => setInputMessage(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+                            onKeyDown={e => e.stopPropagation()}
                             disabled={aiThinking}
                           />
                           <Button size="icon" onClick={handleSendMessage} disabled={aiThinking || !inputMessage.trim()}>

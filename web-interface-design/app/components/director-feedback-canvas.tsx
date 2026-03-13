@@ -402,7 +402,7 @@ export function SupervisorFeedbackCanvas({
           >
             <div className="relative inline-block">
               <img 
-                src={workImage || "/placeholder.svg"} 
+                src={workImage} 
                 alt="Artist Work" 
                 className="max-w-none rounded shadow-lg"
                 style={{ maxWidth: "800px" }}
@@ -453,7 +453,7 @@ export function SupervisorFeedbackCanvas({
                     }`}
                     onClick={() => setActiveRefIndex(idx)}
                   >
-                    <img src={img || "/placeholder.svg"} alt={`Reference ${idx + 1}`} className="w-full" />
+                    <img src={img} alt={`Reference ${idx + 1}`} className="w-full" />
                     <div className="p-1.5 text-xs text-center bg-muted">
                       Ref #{idx + 1}
                     </div>

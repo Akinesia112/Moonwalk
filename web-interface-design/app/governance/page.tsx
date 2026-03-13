@@ -87,7 +87,7 @@ export default function GovernancePage() {
                         {reviewedArtworks.map((artwork) => (
                           <div key={artwork.id} className="p-2.5 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer">
                             <div className="w-full aspect-video rounded overflow-hidden bg-neutral-900 mb-2">
-                              <img src={artwork.thumbnail || "/placeholder.svg"} alt={artwork.name} className="w-full h-full object-cover" />
+                              <img src={artwork.thumbnail} alt={artwork.name} className="w-full h-full object-cover" />
                             </div>
                             <div className="flex items-center justify-between">
                               <p className="font-medium text-xs truncate">{artwork.name}</p>

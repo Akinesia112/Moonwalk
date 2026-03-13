@@ -151,7 +151,7 @@ export default function ComparePage() {
                             onClick={() => { setSelectedArtwork(art.id); setSelectedRef(0) }}
                           >
                             <div className="aspect-video bg-muted overflow-hidden">
-                              <img src={art.image || "/placeholder.svg"} alt={art.name} className="w-full h-full object-cover" />
+                              <img src={art.image} alt={art.name} className="w-full h-full object-cover" />
                             </div>
                             <div className="p-1.5">
                               <p className="text-[10px] font-medium truncate">{art.name}</p>
@@ -181,7 +181,7 @@ export default function ComparePage() {
                             onClick={() => setSelectedRef(ref.id)}
                           >
                             <div className="aspect-video bg-muted overflow-hidden">
-                              <img src={ref.image || "/placeholder.svg"} alt={ref.name} className="w-full h-full object-cover" />
+                              <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />
                             </div>
                             <div className="p-1.5">
                               <p className="text-[10px] font-medium truncate">{ref.name}</p>
@@ -250,11 +250,11 @@ export default function ComparePage() {
                       <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                         <div className="grid grid-cols-2 h-full">
                           <div className="relative overflow-hidden border-r border-border">
-                            <img src={artworks[selectedArtwork]?.image || "/placeholder.svg"} alt="Work" className="w-full h-full object-cover" style={{ transform: `scale(${artworkZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
+                            <img src={artworks[selectedArtwork]?.image} alt="Work" className="w-full h-full object-cover" style={{ transform: `scale(${artworkZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
                             <Badge className="absolute top-3 left-3 bg-blue-500">Work</Badge>
                           </div>
                           <div className="relative overflow-hidden">
-                            <img src={currentRefs[selectedRef]?.image || "/placeholder.svg"} alt="Reference" className="w-full h-full object-cover" style={{ transform: `scale(${refZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
+                            <img src={currentRefs[selectedRef]?.image} alt="Reference" className="w-full h-full object-cover" style={{ transform: `scale(${refZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
                             <Badge className="absolute top-3 right-3 bg-purple-500">Ref</Badge>
                           </div>
                         </div>
@@ -264,11 +264,11 @@ export default function ComparePage() {
                       <div className="space-y-4">
                         <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                           <div className="absolute inset-0" style={{ transform: `scale(${refZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }}>
-                            <img src={currentRefs[selectedRef]?.image || "/placeholder.svg"} alt="Ref" className="w-full h-full object-cover" />
+                            <img src={currentRefs[selectedRef]?.image} alt="Ref" className="w-full h-full object-cover" />
                           </div>
                           <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 ${100 - sliderValue[0]}% 0 0)` }}>
                             <div className="w-full h-full" style={{ transform: `scale(${artworkZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }}>
-                              <img src={artworks[selectedArtwork]?.image || "/placeholder.svg"} alt="Work" className="w-full h-full object-cover" />
+                              <img src={artworks[selectedArtwork]?.image} alt="Work" className="w-full h-full object-cover" />
                             </div>
                           </div>
                           <div className="absolute top-0 bottom-0 w-1 bg-white shadow-lg z-10" style={{ left: `${sliderValue[0]}%` }}>
@@ -285,13 +285,13 @@ export default function ComparePage() {
                         <div className="space-y-2">
                           <Badge variant="outline">Work</Badge>
                           <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                            <img src={artworks[selectedArtwork]?.image || "/placeholder.svg"} alt="Work" className="w-full h-full object-cover" style={{ transform: `scale(${artworkZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
+                            <img src={artworks[selectedArtwork]?.image} alt="Work" className="w-full h-full object-cover" style={{ transform: `scale(${artworkZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
                           </div>
                         </div>
                         <div className="space-y-2">
                           <Badge variant="outline">Reference</Badge>
                           <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                            <img src={currentRefs[selectedRef]?.image || "/placeholder.svg"} alt="Ref" className="w-full h-full object-cover" style={{ transform: `scale(${refZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
+                            <img src={currentRefs[selectedRef]?.image} alt="Ref" className="w-full h-full object-cover" style={{ transform: `scale(${refZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }} />
                           </div>
                         </div>
                       </div>

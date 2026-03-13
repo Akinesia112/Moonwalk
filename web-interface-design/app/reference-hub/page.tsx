@@ -82,6 +82,7 @@ function ReferenceHubContent() {
   const [loading, setLoading]       = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted]   = useState(false)
+  const submitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [saveStates, setSaveStates] = useState<Record<string, "idle"|"saving"|"saved">>({})
 
   // Upload area state
@@ -92,48 +93,84 @@ function ReferenceHubContent() {
   const [uploading, setUploading]           = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [chatWidth, setChatWidth] = useState(380) // px, resizable
-  const resizing = useRef(false)
-  const resizeStartX = useRef(0)
-  const resizeStartW = useRef(0)
+  const [panelW, setPanelW] = useState(400)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const resizeDir = useRef<string>("")
+  const resizeStart = useRef({ x: 0, w: 400 })
 
-  const onResizeMouseDown = (e: React.MouseEvent) => {
-    resizing.current = true
-    resizeStartX.current = e.clientX
-    resizeStartW.current = chatWidth
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault()
+    resizeStart.current = { x: e.clientX, w: panelW }
     const onMove = (ev: MouseEvent) => {
-      if (!resizing.current) return
-      const delta = resizeStartX.current - ev.clientX
-      setChatWidth(Math.max(280, Math.min(700, resizeStartW.current + delta)))
+      const dx = ev.clientX - resizeStart.current.x
+      setPanelW(Math.max(280, Math.min(700, resizeStart.current.w - dx)))
     }
-    const onUp = () => {
-      resizing.current = false
-      window.removeEventListener("mousemove", onMove)
-      window.removeEventListener("mouseup", onUp)
-    }
+    const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp) }
     window.addEventListener("mousemove", onMove)
     window.addEventListener("mouseup", onUp)
   }
 
   // Chat
   const [chatOpen, setChatOpen]         = useState(true)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: "ai", content: "您好！我是 Reference 助手。\n\n上傳並 Submit 參考圖後，我會自動分析每張 ref 的用途、note 是否夠具體，並找出缺口。\n\n也可以點擊圖片直接問我這張要看什麼。" },
-  ])
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([{
+    role: "ai" as const,
+    content: "您好！我是 Reference 助手。\n\n上傳並 Submit 參考圖後，我會自動分析每張 ref 的用途、note 是否夠具體，並找出缺口。\n\n也可以點擊圖片直接問我這張要看什麼。",
+  }])
   const [chatInput, setChatInput]   = useState("")
   const [chatLoading, setChatLoading] = useState(false)
   const [clickedRef, setClickedRef] = useState<Reference | null>(null)
-  const chatScrollRef = useRef<HTMLDivElement>(null)
+  const chatScrollRef  = useRef<HTMLDivElement>(null)
+  const chatScrollBottom = useRef<HTMLDivElement>(null)
 
-  // ── Load refs (skip mock data, start fresh) ───────────────
+  // Restore sessionStorage + clear stale states on mount (client-only)
+  const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
-    // Don't pre-load mock refs — grid only shows what user uploads this session
-    setLoading(false)
+    try {
+      const savedChat = sessionStorage.getItem("refhub_chat")
+      if (savedChat) setChatMessages(JSON.parse(savedChat))
+    } catch {}
+    setSaveStates({})
+    setSubmitted(false)
+    setHydrated(true)
+    return () => {
+      if (submitTimer.current) clearTimeout(submitTimer.current)
+    }
   }, [])
+
+  // ── Load refs from API (persisted) ───────────────────────
+  useEffect(() => {
+    apiFetch(`/search/references?project_id=${PROJECT_ID}`)
+      .then(data => {
+        const MOCK_IDS = ["ref_001", "ref_002", "ref_003"]
+        const valid = data.filter((r: any) =>
+          !MOCK_IDS.includes(r.id) &&
+          (r.file_url?.trim() || r.thumbnail_url?.trim())  // must have non-empty image src
+        )
+        setRefs(valid.map((r: any) => {
+          // For relative /uploads paths add API base; for empty thumbnail use file_url
+          const rawThumb = r.thumbnail_url || r.file_url || ""
+          const thumb = rawThumb.startsWith("/") ? `${API}${rawThumb}` : rawThumb
+          // Only use as preview if it looks like an image (not a web page URL)
+          const isImg = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(rawThumb) || rawThumb.startsWith(API)
+          return {
+            ...r,
+            localPreview: isImg ? thumb : undefined,
+          }
+        }))
+      })
+      .catch(() => setRefs([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Persist chat to sessionStorage (only after hydrated)
+  useEffect(() => {
+    if (!hydrated) return
+    try { sessionStorage.setItem("refhub_chat", JSON.stringify(chatMessages)) } catch {}
+  }, [chatMessages, hydrated])
 
   // Auto-scroll chat
   useEffect(() => {
-    if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    chatScrollBottom.current?.scrollIntoView({ behavior: "smooth" })
   }, [chatMessages, chatLoading])
 
   // ── Upload file ────────────────────────────────────────────
@@ -154,7 +191,7 @@ function ReferenceHubContent() {
         thumbnail_url: result.thumbnail_url || "",
         file_url: result.file_url || "",
         priority: uploadPriority,
-        localPreview,
+        localPreview,  // blob URL for immediate display; persists until page reload
       }
       setRefs(prev => [newRef, ...prev])
       setUploadNote("")
@@ -183,24 +220,20 @@ function ReferenceHubContent() {
     if (!urlInput.trim()) return
     setUploading(true)
     const url = urlInput.trim()
+    const isImageUrl = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(url)
     try {
-      // Try to load image URL directly as thumbnail (works for direct image links)
-      const isImageUrl = /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url)
-      const thumbnailSrc = isImageUrl ? url : `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-
       const result = await apiFetch("/search/url", {
         method: "POST",
         body: JSON.stringify({ url, project_id: PROJECT_ID, category: uploadCategory, priority: uploadPriority, instruction: uploadNote }),
       })
-      const name = url.split("/").pop()?.split("?")[0] || url
       const newRef: Reference = {
         id: result.id || `url_${Date.now()}`,
-        title: name,
+        title: result.title || url.split("/").pop()?.split("?")[0]?.slice(0, 60) || "URL Import",
         confidentiality: "internal",
         is_pinned: uploadPriority === "main",
         category: uploadCategory,
         note: uploadNote,
-        thumbnail_url: isImageUrl ? url : "",
+        thumbnail_url: result.thumbnail_url || "",
         file_url: url,
         priority: uploadPriority,
         localPreview: isImageUrl ? url : undefined,
@@ -209,21 +242,21 @@ function ReferenceHubContent() {
       setUrlInput("")
       setUploadNote("")
     } catch {
-      // Fallback: still add with URL as preview if it looks like an image
-      const isImageUrl = /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url)
-      const name = url.split("/").pop()?.split("?")[0] || url
-      setRefs(prev => [{
-        id: `url_${Date.now()}`,
-        title: name,
-        confidentiality: "internal",
-        is_pinned: uploadPriority === "main",
-        category: uploadCategory,
-        note: uploadNote,
-        thumbnail_url: "",
-        localPreview: isImageUrl ? url : undefined,
-        priority: uploadPriority,
-      }, ...prev])
-      setUrlInput("")
+      if (isImageUrl) {
+        setRefs(prev => [{
+          id: `url_${Date.now()}`,
+          title: url.split("/").pop()?.split("?")[0]?.slice(0, 60) || "URL Import",
+          confidentiality: "internal",
+          is_pinned: uploadPriority === "main",
+          category: uploadCategory,
+          note: uploadNote,
+          thumbnail_url: "",
+          file_url: url,
+          priority: uploadPriority,
+          localPreview: url,
+        }, ...prev])
+        setUrlInput("")
+      }
     }
     setUploading(false)
   }
@@ -253,7 +286,30 @@ function ReferenceHubContent() {
     try { await apiFetch(`/Modification/reference/${id}`, { method: "DELETE" }) } catch {}
   }
 
-  // ── Submit all + trigger agent analysis ───────────────────
+  // ── Analyze refs (agent only, no save) ────────────────────
+  const handleAnalyzeRefs = async () => {
+    if (refs.length === 0 || chatLoading) return
+    setChatLoading(true)
+    try {
+      const res = await apiFetch("/suggestion/chat/reference", {
+        method: "POST",
+        body: JSON.stringify({
+          message: "請仔細分析這個 reference set：\n1) 每張 ref 的 note 夠不夠具體？打光師/合成師看到後能直接執行嗎？\n2) category 設定合理嗎？\n3) Main Ref 的選擇有沒有問題？\n4) 整個 set 有沒有明顯的缺口？\n\n針對有問題的 ref 直接點名追問。",
+          project_id: PROJECT_ID,
+          clicked_ref_id: null,
+          all_refs_context: refs.map(r => ({
+            id: r.id, title: r.title, category: r.category,
+            note: r.note, is_pinned: r.is_pinned, priority: r.priority || (r.is_pinned ? "main" : "secondary"),
+          })),
+          history: chatMessages.slice(-4).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
+        }),
+      })
+      setChatMessages(prev => [...prev, { role: "ai", content: res.reply }])
+    } catch {}
+    finally { setChatLoading(false) }
+  }
+
+  // ── Submit & Save (no agent call) ─────────────────────────
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
@@ -262,27 +318,8 @@ function ReferenceHubContent() {
         body: JSON.stringify({ references: refs.map(r => ({ id: r.id, priority: r.priority || (r.is_pinned ? "main" : "secondary"), category: r.category, note: r.note, confidentiality: r.confidentiality })) }),
       })
       setSubmitted(true)
-
-      // After save, agent auto-analyzes and asks follow-up questions
-      setChatLoading(true)
-      try {
-        const res = await apiFetch("/suggestion/chat/reference", {
-          method: "POST",
-          body: JSON.stringify({
-            message: "我剛剛 Submit 了這些 references。請仔細分析每一張：\n1) 這張 ref 的 note 夠不夠具體？打光師/合成師看到後能直接執行嗎？\n2) category 設定合理嗎？\n3) Main Ref 的選擇有沒有問題？\n4) 整個 set 有沒有明顯的缺口？\n\n針對有問題的 ref 直接點名追問。",
-            project_id: PROJECT_ID,
-            clicked_ref_id: null,
-            all_refs_context: refs.map(r => ({
-              id: r.id, title: r.title, category: r.category,
-              note: r.note, is_pinned: r.is_pinned, priority: r.priority || (r.is_pinned ? "main" : "secondary"),
-            })),
-            history: chatMessages.slice(-4).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
-          }),
-        })
-        setChatMessages(prev => [...prev, { role: "ai", content: res.reply }])
-      } catch {}
-      finally { setChatLoading(false) }
-
+      if (submitTimer.current) clearTimeout(submitTimer.current)
+      submitTimer.current = setTimeout(() => setSubmitted(false), 2000)
     } catch {}
     setSubmitting(false)
   }
@@ -355,25 +392,25 @@ function ReferenceHubContent() {
 
   // ── Render ─────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <TopBar />
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         <PipelineSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="container mx-auto px-6 py-8">
+        <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="px-4 py-3 flex flex-col flex-1 min-h-0">
 
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-3">
               <div className="flex items-center gap-3 mb-2">
                 <Badge variant="outline" className="bg-teal-500/10 text-teal-600 border-teal-500/30">C02</Badge>
-                <h1 className="text-3xl font-bold">Reference Hub</h1>
+                <h1 className="text-xl font-bold">Reference Hub</h1>
               </div>
               <p className="text-muted-foreground">上傳視覺參考、標注用途、儲存至專案</p>
             </div>
 
-            <div className="flex gap-6 items-start">
+<div className="flex gap-4 flex-1 min-h-0">
               {/* ── Left: Upload + Grid ── */}
-              <div className="flex-1 min-w-0 space-y-6">
+              <div className="flex-1 min-w-0 overflow-y-auto space-y-4 pr-1">
 
                 {/* Upload Card */}
                 <Card>
@@ -440,7 +477,7 @@ function ReferenceHubContent() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="font-semibold text-sm text-muted-foreground">
-                      已加入的參考圖 ({refs.length})
+                      已加入的參考圖 ({refs.filter(ref => ref.localPreview || ref.file_url?.trim() || ref.thumbnail_url?.trim()).length})
                     </h2>
                   </div>
 
@@ -450,23 +487,23 @@ function ReferenceHubContent() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {refs.map(ref => {
+                      {refs.filter(ref => ref.localPreview || ref.file_url?.trim() || ref.thumbnail_url?.trim()).map(ref => {
                         const saveState = saveStates[ref.id] || "idle"
-                        const previewSrc = ref.localPreview || ref.thumbnail_url || ref.file_url || ""
                         return (
                           <Card key={ref.id} className="overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all group">
                             {/* Thumbnail */}
                             <div
-                              className="aspect-video bg-gradient-to-br from-teal-500/20 to-cyan-500/20 relative cursor-pointer"
+                              className="aspect-video bg-muted relative cursor-pointer"
                               onClick={() => handleRefClick(ref)}
                             >
-                              {previewSrc ? (
-                                <img src={previewSrc} alt={ref.title} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <ImageIcon className="w-10 h-10 text-muted-foreground/30" />
-                                </div>
-                              )}
+                              {ref.localPreview ? (
+                                <img
+                                  src={ref.localPreview}
+                                  alt={ref.title}
+                                  className="w-full h-full object-cover"
+                                  onError={() => removeRef(ref.id)}
+                                />
+                              ) : null}
                               {/* Overlay badges */}
                               {ref.is_pinned && (
                                 <div className="absolute top-2 left-2">
@@ -564,18 +601,30 @@ function ReferenceHubContent() {
                 )} {/* end refs.length > 0 */}
 
                 {/* Actions */}
-                <div className="flex items-center gap-3 pt-2">
+                <div className="flex items-center gap-3 pt-2 flex-wrap">
                   <Button
                     size="lg"
-                    className={submitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                    variant="outline"
+                    onClick={handleAnalyzeRefs}
+                    disabled={chatLoading || refs.length === 0}
+                    className="border-teal-500/50 text-teal-700 hover:bg-teal-500/10"
+                  >
+                    {chatLoading
+                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />分析中...</>
+                      : <><Bot className="w-4 h-4 mr-2" />開始分析 Ref</>
+                    }
+                  </Button>
+                  <Button
+                    size="lg"
+                    className={submitted ? "opacity-70" : ""}
                     onClick={handleSubmit}
                     disabled={submitting || refs.length === 0}
                   >
                     {submitting
                       ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />儲存中...</>
                       : submitted
-                        ? <><CheckCircle2 className="w-4 h-4 mr-2" />Submitted</>
-                        : <><Upload className="w-4 h-4 mr-2" />Submit & Save All</>
+                        ? <><CheckCircle2 className="w-4 h-4 mr-2" />已儲存</>
+                        : <><Upload className="w-4 h-4 mr-2" />Submit & Save</>
                     }
                   </Button>
                   <Button size="lg" variant="outline" className="bg-transparent" asChild>
@@ -584,15 +633,11 @@ function ReferenceHubContent() {
                 </div>
               </div>
 
-              {/* ── Right: AI Chat (resizable) ── */}
-              <div className="relative shrink-0" style={{ width: chatWidth }}>
-                {/* Resize handle */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-teal-500/50 transition-colors z-10"
-                  onMouseDown={onResizeMouseDown}
-                  title="拖曳調整寬度"
-                />
-                <Card className="border-teal-500/30 flex flex-col sticky top-8" style={{ height: "calc(100vh - 220px)" }}>
+              {/* ── Right: AI Chat (resizable width) ── */}
+              <div ref={panelRef} className="shrink-0 relative self-stretch" style={{ width: panelW }}>
+                {/* Resize handle — left edge only */}
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-teal-500/40 rounded transition-colors z-20" onMouseDown={startResize} />
+                <Card className="border-teal-500/30 flex flex-col w-full h-full overflow-hidden absolute inset-0">
                   <Collapsible open={chatOpen} onOpenChange={setChatOpen} className="flex flex-col flex-1 min-h-0">
                     <CollapsibleTrigger asChild>
                       <CardHeader className="cursor-pointer hover:bg-muted/50 shrink-0">
@@ -615,7 +660,7 @@ function ReferenceHubContent() {
                     <CollapsibleContent className="flex-1 min-h-0 flex flex-col">
                       <CardContent className="pt-0 flex-1 min-h-0 flex flex-col">
                         <ScrollArea className="flex-1 min-h-0 mb-3">
-                          <div ref={chatScrollRef} className="space-y-4 pr-2">
+                          <div className="space-y-4 pr-2">
                             {chatMessages.map((msg, idx) => (
                               <div key={idx} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                                 <Avatar className="w-8 h-8 shrink-0">
@@ -642,6 +687,7 @@ function ReferenceHubContent() {
                                 </div>
                               </div>
                             )}
+                            <div ref={chatScrollBottom} />
                           </div>
                         </ScrollArea>
 
@@ -671,7 +717,7 @@ function ReferenceHubContent() {
                             placeholder="輸入問題或點擊圖片..."
                             value={chatInput}
                             onChange={e => setChatInput(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleChatSend()}
+                            onKeyDown={e => e.stopPropagation()}
                             disabled={chatLoading}
                           />
                           <Button size="icon" onClick={() => handleChatSend()} disabled={chatLoading || !chatInput.trim()}>
