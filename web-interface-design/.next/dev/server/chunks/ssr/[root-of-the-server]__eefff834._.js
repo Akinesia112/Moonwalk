@@ -1365,6 +1365,16 @@ function KickoffPage() {
         chatMessages,
         aiThinking
     ]);
+    // Restore quick replies on hydration if there's chat history
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (!hydrated) return;
+        if (chatMessages.length > 1 && quickReplies.length === 0) {
+            fetchQuickReplies(chatMessages, brief);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        hydrated
+    ]);
     const setField = (field)=>(e)=>setBrief((prev)=>({
                     ...prev,
                     [field]: e.target.value
@@ -1415,35 +1425,47 @@ function KickoffPage() {
     const fetchQuickReplies = async (history, currentBrief)=>{
         setQuickRepliesLoading(true);
         try {
+            const briefLines = Object.entries(currentBrief).filter(([, v])=>v?.trim()).map(([k, v])=>`${k}: ${v}`).join("\n");
             const res = await fetch(`${API}/suggestion/chat/brief`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    message: "根據目前的對話和 brief 內容，請推薦三個最相關的追問問題，只回傳 JSON 陣列格式如 [\"問題1\", \"問題2\", \"問題3\"]，不要其他文字。",
+                    message: `根據以下 brief 內容和對話，生成三個最相關的追問問題作為快捷按鈕。
+每個問題必須針對 brief 中的具體內容，直接可以點擊追問。
+只回傳三行文字，每行一個問題，不加編號、不加標點符號以外的格式。
+
+Brief 內容：
+${briefLines}`,
                     project_id: "proj_001",
-                    brief_context: currentBrief,
-                    history: history.map((m)=>({
+                    history: history.slice(-6).map((m)=>({
                             role: m.role === "ai" ? "assistant" : "user",
                             content: m.content
-                        })),
-                    mode: "quick_replies"
+                        }))
                 })
             });
             if (!res.ok) return;
             const data = await res.json();
-            const text = (data.reply || "").trim();
-            // Try to parse JSON array from reply
-            const match = text.match(/\[.*\]/s);
-            if (match) {
-                const arr = JSON.parse(match[0]);
-                if (Array.isArray(arr) && arr.length > 0) {
-                    setQuickReplies(arr.slice(0, 3));
-                }
+            const raw = (data.response || data.reply || data.message || "").trim();
+            let suggestions = [];
+            // Try JSON array first
+            const jsonMatch = raw.match(/\[[\s\S]*?\]/);
+            if (jsonMatch) {
+                try {
+                    const arr = JSON.parse(jsonMatch[0]);
+                    if (Array.isArray(arr)) suggestions = arr.map(String).filter((s)=>s.trim().length > 5);
+                } catch  {}
+            }
+            // Fallback: split by newlines, strip numbering / bullets
+            if (suggestions.length === 0) {
+                suggestions = raw.split("\n").map((l)=>l.replace(/^[\d\-\*\.\、\s]+/, "").trim()).filter((l)=>l.length > 5);
+            }
+            if (suggestions.length > 0) {
+                setQuickReplies(suggestions.slice(0, 3));
             }
         } catch  {
-        // silently fail — keep previous quick replies
+        // silently fail
         } finally{
             setQuickRepliesLoading(false);
         }
@@ -1559,14 +1581,14 @@ function KickoffPage() {
                         children: m[2]
                     }, m.index, false, {
                         fileName: "[project]/app/kickoff/page.tsx",
-                        lineNumber: 314,
+                        lineNumber: 346,
                         columnNumber: 32
                     }, this));
                     else if (m[3]) parts.push(/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("em", {
                         children: m[3]
                     }, m.index, false, {
                         fileName: "[project]/app/kickoff/page.tsx",
-                        lineNumber: 315,
+                        lineNumber: 347,
                         columnNumber: 37
                     }, this));
                     else if (m[4]) parts.push(/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
@@ -1574,7 +1596,7 @@ function KickoffPage() {
                         children: m[4]
                     }, m.index, false, {
                         fileName: "[project]/app/kickoff/page.tsx",
-                        lineNumber: 316,
+                        lineNumber: 348,
                         columnNumber: 37
                     }, this));
                     last = m.index + m[0].length;
@@ -1587,7 +1609,7 @@ function KickoffPage() {
                 children: parseInline(line.replace(/^#+\s/, ""))
             }, i, false, {
                 fileName: "[project]/app/kickoff/page.tsx",
-                lineNumber: 323,
+                lineNumber: 355,
                 columnNumber: 16
             }, this);
             if (line.startsWith("- ")) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1595,21 +1617,21 @@ function KickoffPage() {
                 children: parseInline(line.slice(2))
             }, i, false, {
                 fileName: "[project]/app/kickoff/page.tsx",
-                lineNumber: 325,
+                lineNumber: 357,
                 columnNumber: 16
             }, this);
             if (line.trim() === "---") return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
                 className: "border-border my-2"
             }, i, false, {
                 fileName: "[project]/app/kickoff/page.tsx",
-                lineNumber: 326,
+                lineNumber: 358,
                 columnNumber: 41
             }, this);
             if (line.trim() === "") return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "h-2"
             }, i, false, {
                 fileName: "[project]/app/kickoff/page.tsx",
-                lineNumber: 327,
+                lineNumber: 359,
                 columnNumber: 40
             }, this);
             return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1617,7 +1639,7 @@ function KickoffPage() {
                 children: parseInline(line)
             }, i, false, {
                 fileName: "[project]/app/kickoff/page.tsx",
-                lineNumber: 328,
+                lineNumber: 360,
                 columnNumber: 14
             }, this);
         });
@@ -1628,7 +1650,7 @@ function KickoffPage() {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$top$2d$bar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TopBar"], {}, void 0, false, {
                 fileName: "[project]/app/kickoff/page.tsx",
-                lineNumber: 335,
+                lineNumber: 367,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1636,7 +1658,7 @@ function KickoffPage() {
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$pipeline$2d$sidebar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PipelineSidebar"], {}, void 0, false, {
                         fileName: "[project]/app/kickoff/page.tsx",
-                        lineNumber: 337,
+                        lineNumber: 369,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
@@ -1656,7 +1678,7 @@ function KickoffPage() {
                                                     children: "C01"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 344,
+                                                    lineNumber: 376,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -1664,13 +1686,13 @@ function KickoffPage() {
                                                     children: "專案啟動與 Brief 對焦"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 345,
+                                                    lineNumber: 377,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 343,
+                                            lineNumber: 375,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1678,13 +1700,13 @@ function KickoffPage() {
                                             children: "Project Kickoff & Brief Alignment"
                                         }, void 0, false, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 347,
+                                            lineNumber: 379,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/kickoff/page.tsx",
-                                    lineNumber: 342,
+                                    lineNumber: 374,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$alert$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Alert"], {
@@ -1694,7 +1716,7 @@ function KickoffPage() {
                                             className: "h-4 w-4 text-amber-600"
                                         }, void 0, false, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 351,
+                                            lineNumber: 383,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$alert$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDescription"], {
@@ -1704,20 +1726,20 @@ function KickoffPage() {
                                                     children: "提醒："
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 353,
+                                                    lineNumber: 385,
                                                     columnNumber: 17
                                                 }, this),
                                                 "規格尺寸、交付日期、參考點為必填項目。確保一開始不要做錯。"
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 352,
+                                            lineNumber: 384,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/kickoff/page.tsx",
-                                    lineNumber: 350,
+                                    lineNumber: 382,
                                     columnNumber: 13
                                 }, this),
                                 saveError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$alert$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Alert"], {
@@ -1727,7 +1749,7 @@ function KickoffPage() {
                                             className: "h-4 w-4 text-red-600"
                                         }, void 0, false, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 359,
+                                            lineNumber: 391,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$alert$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDescription"], {
@@ -1735,13 +1757,13 @@ function KickoffPage() {
                                             children: saveError
                                         }, void 0, false, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 360,
+                                            lineNumber: 392,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/kickoff/page.tsx",
-                                    lineNumber: 358,
+                                    lineNumber: 390,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1758,20 +1780,20 @@ function KickoffPage() {
                                                                     children: "基本資訊 Basic Information"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 371,
+                                                                    lineNumber: 403,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardDescription"], {
                                                                     children: "專案基礎設定與客戶資訊"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 372,
+                                                                    lineNumber: 404,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                            lineNumber: 370,
+                                                            lineNumber: 402,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -1792,13 +1814,13 @@ function KickoffPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 377,
+                                                                                            lineNumber: 409,
                                                                                             columnNumber: 60
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 377,
+                                                                                    lineNumber: 409,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1808,13 +1830,13 @@ function KickoffPage() {
                                                                                     onChange: setField("project_name")
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 378,
+                                                                                    lineNumber: 410,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 376,
+                                                                            lineNumber: 408,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1829,13 +1851,13 @@ function KickoffPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 381,
+                                                                                            lineNumber: 413,
                                                                                             columnNumber: 52
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 381,
+                                                                                    lineNumber: 413,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1845,19 +1867,19 @@ function KickoffPage() {
                                                                                     onChange: setField("client")
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 382,
+                                                                                    lineNumber: 414,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 380,
+                                                                            lineNumber: 412,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 375,
+                                                                    lineNumber: 407,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1875,13 +1897,13 @@ function KickoffPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 387,
+                                                                                            lineNumber: 419,
                                                                                             columnNumber: 59
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 387,
+                                                                                    lineNumber: 419,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1891,13 +1913,13 @@ function KickoffPage() {
                                                                                     onChange: setField("director")
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 388,
+                                                                                    lineNumber: 420,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 386,
+                                                                            lineNumber: 418,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1912,13 +1934,13 @@ function KickoffPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 391,
+                                                                                            lineNumber: 423,
                                                                                             columnNumber: 64
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 391,
+                                                                                    lineNumber: 423,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1928,19 +1950,19 @@ function KickoffPage() {
                                                                                     onChange: setField("supervisor")
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 392,
+                                                                                    lineNumber: 424,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 390,
+                                                                            lineNumber: 422,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 385,
+                                                                    lineNumber: 417,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1955,13 +1977,13 @@ function KickoffPage() {
                                                                                     children: "*"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 396,
+                                                                                    lineNumber: 428,
                                                                                     columnNumber: 75
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 396,
+                                                                            lineNumber: 428,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Select"], {
@@ -1972,12 +1994,12 @@ function KickoffPage() {
                                                                                     id: "confidentiality",
                                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 398,
+                                                                                        lineNumber: 430,
                                                                                         columnNumber: 61
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 398,
+                                                                                    lineNumber: 430,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -1987,7 +2009,7 @@ function KickoffPage() {
                                                                                             children: "Public Ref"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 400,
+                                                                                            lineNumber: 432,
                                                                                             columnNumber: 27
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -1995,7 +2017,7 @@ function KickoffPage() {
                                                                                             children: "Internal"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 401,
+                                                                                            lineNumber: 433,
                                                                                             columnNumber: 27
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -2003,7 +2025,7 @@ function KickoffPage() {
                                                                                             children: "Client-Sensitive"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 402,
+                                                                                            lineNumber: 434,
                                                                                             columnNumber: 27
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -2011,37 +2033,37 @@ function KickoffPage() {
                                                                                             children: "NDA-Strict"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 403,
+                                                                                            lineNumber: 435,
                                                                                             columnNumber: 27
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 399,
+                                                                                    lineNumber: 431,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 397,
+                                                                            lineNumber: 429,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 395,
+                                                                    lineNumber: 427,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                            lineNumber: 374,
+                                                            lineNumber: 406,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 369,
+                                                    lineNumber: 401,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
@@ -2057,27 +2079,27 @@ function KickoffPage() {
                                                                             children: "D"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 414,
+                                                                            lineNumber: 446,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         "客戶目標、視覺方向與 Supervisor Spec"
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 413,
+                                                                    lineNumber: 445,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardDescription"], {
                                                                     children: "客戶賣點、情緒關鍵詞、視覺風格、導演額外補充"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 417,
+                                                                    lineNumber: 449,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                            lineNumber: 412,
+                                                            lineNumber: 444,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -2095,13 +2117,13 @@ function KickoffPage() {
                                                                                     children: "*"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 421,
+                                                                                    lineNumber: 453,
                                                                                     columnNumber: 65
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 421,
+                                                                            lineNumber: 453,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$textarea$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Textarea"], {
@@ -2112,13 +2134,13 @@ function KickoffPage() {
                                                                             onChange: setField("selling_points")
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 422,
+                                                                            lineNumber: 454,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 420,
+                                                                    lineNumber: 452,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2133,13 +2155,13 @@ function KickoffPage() {
                                                                                     children: "*"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 425,
+                                                                                    lineNumber: 457,
                                                                                     columnNumber: 55
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 425,
+                                                                            lineNumber: 457,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -2149,13 +2171,13 @@ function KickoffPage() {
                                                                             onChange: setField("keywords")
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 426,
+                                                                            lineNumber: 458,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 424,
+                                                                    lineNumber: 456,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2166,7 +2188,7 @@ function KickoffPage() {
                                                                             children: "禁忌事項"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 429,
+                                                                            lineNumber: 461,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$textarea$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Textarea"], {
@@ -2177,13 +2199,13 @@ function KickoffPage() {
                                                                             onChange: setField("restrictions")
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 430,
+                                                                            lineNumber: 462,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 428,
+                                                                    lineNumber: 460,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2201,13 +2223,13 @@ function KickoffPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 434,
+                                                                                            lineNumber: 466,
                                                                                             columnNumber: 54
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 434,
+                                                                                    lineNumber: 466,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -2217,13 +2239,13 @@ function KickoffPage() {
                                                                                     onChange: setField("style")
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 435,
+                                                                                    lineNumber: 467,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 433,
+                                                                            lineNumber: 465,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2238,13 +2260,13 @@ function KickoffPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 438,
+                                                                                            lineNumber: 470,
                                                                                             columnNumber: 53
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 438,
+                                                                                    lineNumber: 470,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -2254,19 +2276,19 @@ function KickoffPage() {
                                                                                     onChange: setField("mood")
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 439,
+                                                                                    lineNumber: 471,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 437,
+                                                                            lineNumber: 469,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 432,
+                                                                    lineNumber: 464,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2277,7 +2299,7 @@ function KickoffPage() {
                                                                             children: "世界觀/概念"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 443,
+                                                                            lineNumber: 475,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$textarea$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Textarea"], {
@@ -2288,13 +2310,13 @@ function KickoffPage() {
                                                                             onChange: setField("worldview")
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 444,
+                                                                            lineNumber: 476,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 442,
+                                                                    lineNumber: 474,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2305,7 +2327,7 @@ function KickoffPage() {
                                                                             children: "Supervisor Spec 額外補充說明"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 448,
+                                                                            lineNumber: 480,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$textarea$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Textarea"], {
@@ -2316,7 +2338,7 @@ function KickoffPage() {
                                                                             onChange: setField("supervisor_spec")
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 449,
+                                                                            lineNumber: 481,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2326,38 +2348,38 @@ function KickoffPage() {
                                                                                     className: "w-3 h-3"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 457,
+                                                                                    lineNumber: 489,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                                     children: "AI 會根據此欄位追問更具體的定義與參考"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 458,
+                                                                                    lineNumber: 490,
                                                                                     columnNumber: 25
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 456,
+                                                                            lineNumber: 488,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 447,
+                                                                    lineNumber: 479,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                            lineNumber: 419,
+                                                            lineNumber: 451,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 411,
+                                                    lineNumber: 443,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2375,7 +2397,7 @@ function KickoffPage() {
                                                                         className: "w-4 h-4 mr-2 animate-spin"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                        lineNumber: 474,
+                                                                        lineNumber: 506,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     "分析中..."
@@ -2386,7 +2408,7 @@ function KickoffPage() {
                                                                         className: "w-4 h-4 mr-2"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                        lineNumber: 476,
+                                                                        lineNumber: 508,
                                                                         columnNumber: 29
                                                                     }, this),
                                                                     "Spec 分析完成"
@@ -2397,7 +2419,7 @@ function KickoffPage() {
                                                                         className: "w-4 h-4 mr-2"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                        lineNumber: 477,
+                                                                        lineNumber: 509,
                                                                         columnNumber: 29
                                                                     }, this),
                                                                     "開始分析 Spec"
@@ -2405,7 +2427,7 @@ function KickoffPage() {
                                                             }, void 0, true)
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                            lineNumber: 466,
+                                                            lineNumber: 498,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2419,7 +2441,7 @@ function KickoffPage() {
                                                                         className: "w-4 h-4 mr-2 animate-spin"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                        lineNumber: 493,
+                                                                        lineNumber: 525,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     "儲存中..."
@@ -2430,7 +2452,7 @@ function KickoffPage() {
                                                                         className: "w-4 h-4 mr-2"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                        lineNumber: 495,
+                                                                        lineNumber: 527,
                                                                         columnNumber: 29
                                                                     }, this),
                                                                     "Submitted"
@@ -2441,7 +2463,7 @@ function KickoffPage() {
                                                                         className: "w-4 h-4 mr-2"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                        lineNumber: 496,
+                                                                        lineNumber: 528,
                                                                         columnNumber: 29
                                                                     }, this),
                                                                     "Submit & Save to DB"
@@ -2449,13 +2471,13 @@ function KickoffPage() {
                                                             }, void 0, true)
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                            lineNumber: 480,
+                                                            lineNumber: 512,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 465,
+                                                    lineNumber: 497,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2470,25 +2492,25 @@ function KickoffPage() {
                                                                 className: "w-4 h-4 mr-2"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                lineNumber: 502,
+                                                                lineNumber: 534,
                                                                 columnNumber: 21
                                                             }, this),
                                                             "Jump to Reference Hub"
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                        lineNumber: 501,
+                                                        lineNumber: 533,
                                                         columnNumber: 19
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 500,
+                                                    lineNumber: 532,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 366,
+                                            lineNumber: 398,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2503,7 +2525,7 @@ function KickoffPage() {
                                                     onMouseDown: startResize
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 511,
+                                                    lineNumber: 543,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
@@ -2527,7 +2549,7 @@ function KickoffPage() {
                                                                                         className: "w-5 h-5 text-teal-600"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 518,
+                                                                                        lineNumber: 550,
                                                                                         columnNumber: 29
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2537,7 +2559,7 @@ function KickoffPage() {
                                                                                                 children: "AI 追問助手"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                lineNumber: 520,
+                                                                                                lineNumber: 552,
                                                                                                 columnNumber: 31
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardDescription"], {
@@ -2545,19 +2567,19 @@ function KickoffPage() {
                                                                                                 children: "AI Clarification Chatbot"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                lineNumber: 521,
+                                                                                                lineNumber: 553,
                                                                                                 columnNumber: 31
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 519,
+                                                                                        lineNumber: 551,
                                                                                         columnNumber: 29
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                lineNumber: 517,
+                                                                                lineNumber: 549,
                                                                                 columnNumber: 27
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2567,42 +2589,42 @@ function KickoffPage() {
                                                                                         className: "w-4 h-4 text-teal-500 animate-spin"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 525,
+                                                                                        lineNumber: 557,
                                                                                         columnNumber: 44
                                                                                     }, this),
                                                                                     chatbotOpen ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                                                                                         className: "w-4 h-4"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 526,
+                                                                                        lineNumber: 558,
                                                                                         columnNumber: 44
                                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
                                                                                         className: "w-4 h-4"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 526,
+                                                                                        lineNumber: 558,
                                                                                         columnNumber: 80
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                lineNumber: 524,
+                                                                                lineNumber: 556,
                                                                                 columnNumber: 27
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                        lineNumber: 516,
+                                                                        lineNumber: 548,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 515,
+                                                                    lineNumber: 547,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                lineNumber: 514,
+                                                                lineNumber: 546,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleContent"], {
@@ -2626,17 +2648,17 @@ function KickoffPage() {
                                                                                                             className: "w-4 h-4"
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                            lineNumber: 539,
+                                                                                                            lineNumber: 571,
                                                                                                             columnNumber: 58
                                                                                                         }, this) : "U"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                        lineNumber: 538,
+                                                                                                        lineNumber: 570,
                                                                                                         columnNumber: 35
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                    lineNumber: 537,
+                                                                                                    lineNumber: 569,
                                                                                                     columnNumber: 33
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2646,25 +2668,25 @@ function KickoffPage() {
                                                                                                         children: renderMarkdown(msg.content)
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                        lineNumber: 544,
+                                                                                                        lineNumber: 576,
                                                                                                         columnNumber: 39
                                                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                                                                         className: "text-sm whitespace-pre-line",
                                                                                                         children: msg.content
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                        lineNumber: 545,
+                                                                                                        lineNumber: 577,
                                                                                                         columnNumber: 39
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                    lineNumber: 542,
+                                                                                                    lineNumber: 574,
                                                                                                     columnNumber: 33
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, idx, true, {
                                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                                            lineNumber: 536,
+                                                                                            lineNumber: 568,
                                                                                             columnNumber: 31
                                                                                         }, this)),
                                                                                     aiThinking && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2678,17 +2700,17 @@ function KickoffPage() {
                                                                                                         className: "w-4 h-4"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                        lineNumber: 554,
+                                                                                                        lineNumber: 586,
                                                                                                         columnNumber: 37
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                    lineNumber: 553,
+                                                                                                    lineNumber: 585,
                                                                                                     columnNumber: 35
                                                                                                 }, this)
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                lineNumber: 552,
+                                                                                                lineNumber: 584,
                                                                                                 columnNumber: 33
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2698,7 +2720,7 @@ function KickoffPage() {
                                                                                                         className: "w-3 h-3 animate-spin text-teal-500"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                        lineNumber: 558,
+                                                                                                        lineNumber: 590,
                                                                                                         columnNumber: 35
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2706,40 +2728,40 @@ function KickoffPage() {
                                                                                                         children: "AI 思考中..."
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                        lineNumber: 559,
+                                                                                                        lineNumber: 591,
                                                                                                         columnNumber: 35
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                                lineNumber: 557,
+                                                                                                lineNumber: 589,
                                                                                                 columnNumber: 33
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 551,
+                                                                                        lineNumber: 583,
                                                                                         columnNumber: 31
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                                         ref: scrollBottom
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 563,
+                                                                                        lineNumber: 595,
                                                                                         columnNumber: 29
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                lineNumber: 534,
+                                                                                lineNumber: 566,
                                                                                 columnNumber: 27
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 533,
+                                                                            lineNumber: 565,
                                                                             columnNumber: 25
                                                                         }, this),
-                                                                        !aiThinking && chatMessages.length > 0 && quickReplies.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        !aiThinking && chatMessages.length > 0 && (quickReplies.length > 0 || quickRepliesLoading) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             className: "flex flex-wrap gap-1.5 mb-2 shrink-0",
                                                                             children: quickRepliesLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                                 className: "text-xs text-muted-foreground flex items-center gap-1",
@@ -2748,14 +2770,14 @@ function KickoffPage() {
                                                                                         className: "w-3 h-3 animate-spin"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 571,
+                                                                                        lineNumber: 603,
                                                                                         columnNumber: 33
                                                                                     }, this),
                                                                                     "產生建議中..."
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                                lineNumber: 570,
+                                                                                lineNumber: 602,
                                                                                 columnNumber: 31
                                                                             }, this) : quickReplies.map((msg)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                                                     onClick: ()=>handleSendMessage(msg),
@@ -2763,12 +2785,12 @@ function KickoffPage() {
                                                                                     children: msg
                                                                                 }, msg, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 574,
+                                                                                    lineNumber: 606,
                                                                                     columnNumber: 31
                                                                                 }, this))
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 568,
+                                                                            lineNumber: 600,
                                                                             columnNumber: 27
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2782,7 +2804,7 @@ function KickoffPage() {
                                                                                     disabled: aiThinking
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 585,
+                                                                                    lineNumber: 617,
                                                                                     columnNumber: 27
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2793,81 +2815,81 @@ function KickoffPage() {
                                                                                         className: "w-4 h-4 animate-spin"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 593,
+                                                                                        lineNumber: 625,
                                                                                         columnNumber: 43
                                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__["Send"], {
                                                                                         className: "w-4 h-4"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                                                        lineNumber: 593,
+                                                                                        lineNumber: 625,
                                                                                         columnNumber: 90
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                                    lineNumber: 592,
+                                                                                    lineNumber: 624,
                                                                                     columnNumber: 27
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/kickoff/page.tsx",
-                                                                            lineNumber: 584,
+                                                                            lineNumber: 616,
                                                                             columnNumber: 25
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                                    lineNumber: 532,
+                                                                    lineNumber: 564,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/kickoff/page.tsx",
-                                                                lineNumber: 531,
+                                                                lineNumber: 563,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/kickoff/page.tsx",
-                                                        lineNumber: 513,
+                                                        lineNumber: 545,
                                                         columnNumber: 19
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/kickoff/page.tsx",
-                                                    lineNumber: 512,
+                                                    lineNumber: 544,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/kickoff/page.tsx",
-                                            lineNumber: 509,
+                                            lineNumber: 541,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/kickoff/page.tsx",
-                                    lineNumber: 364,
+                                    lineNumber: 396,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/kickoff/page.tsx",
-                            lineNumber: 339,
+                            lineNumber: 371,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/kickoff/page.tsx",
-                        lineNumber: 338,
+                        lineNumber: 370,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/kickoff/page.tsx",
-                lineNumber: 336,
+                lineNumber: 368,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/kickoff/page.tsx",
-        lineNumber: 334,
+        lineNumber: 366,
         columnNumber: 5
     }, this);
 }

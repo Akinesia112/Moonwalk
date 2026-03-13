@@ -17,6 +17,7 @@ from .routes.analysis import router as analysis_router
 from .routes.feedback import router as feedback_router
 from .routes.spec import router as spec_router
 from .routes.auth import router as auth_router
+from .routes.suggestion import router as suggestion_router
 
 
 @asynccontextmanager
@@ -67,6 +68,7 @@ def create_app(config_class=Config) -> FastAPI:
     app.include_router(spec_router)
     app.include_router(analysis_router)
     app.include_router(feedback_router)
+    app.include_router(suggestion_router)
 
     # Serve uploaded files
     from fastapi.staticfiles import StaticFiles

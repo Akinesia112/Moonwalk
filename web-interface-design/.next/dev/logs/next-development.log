@@ -1452,3 +1452,18 @@ https://react.dev/link/hydration-mismatch
 [01:32:18.965] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
 [01:44:31.963] Server  LOG      ✓ Compiled in 8.1s
 [01:45:16.067] Server  LOG      ✓ Compiled in 1085ms
+[02:06:56.423] Server  LOG      ✓ Compiled in 8.4s
+[02:07:36.007] Server  LOG      ✓ Compiled in 2.5s
+[02:17:02.442] Server  LOG      ✓ Compiled in 3.8s
+[02:18:40.997] Server  LOG      ✓ Compiled in 1438ms
+[02:26:08.028] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[02:26:40.156] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[02:26:55.246] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[02:32:23.167] Server  LOG      ✓ Compiled in 1848ms
+[02:45:10.598] Server  LOG      ✓ Compiled in 4.2s
+[02:49:59.227] Server  LOG      ✓ Compiled in 1958ms
+[02:52:35.180] Server  LOG      ✓ Compiled in 4.1s
+[02:52:57.651] Browser ERROR   Fetch request failed: {}
+[02:53:10.801] Browser ERROR   Fetch request failed: {}
+[03:04:46.445] Server  LOG      ✓ Compiled in 2.1s
+[03:45:26.393] Server  LOG      ✓ Compiled in 4.7s

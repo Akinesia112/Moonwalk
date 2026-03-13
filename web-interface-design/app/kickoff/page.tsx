@@ -145,6 +145,15 @@ export default function KickoffPage() {
     scrollBottom.current?.scrollIntoView({ behavior: "smooth" })
   }, [chatMessages, aiThinking])
 
+  // Restore quick replies on hydration if there's chat history
+  useEffect(() => {
+    if (!hydrated) return
+    if (chatMessages.length > 1 && quickReplies.length === 0) {
+      fetchQuickReplies(chatMessages, brief)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated])
+
   const setField = (field: keyof BriefForm) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => setBrief(prev => ({ ...prev, [field]: e.target.value }))
@@ -183,30 +192,53 @@ export default function KickoffPage() {
   const fetchQuickReplies = async (history: ChatMessage[], currentBrief: BriefForm) => {
     setQuickRepliesLoading(true)
     try {
+      const briefLines = Object.entries(currentBrief)
+        .filter(([, v]) => v?.trim())
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n")
+
       const res = await fetch(`${API}/suggestion/chat/brief`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: "根據目前的對話和 brief 內容，請推薦三個最相關的追問問題，只回傳 JSON 陣列格式如 [\"問題1\", \"問題2\", \"問題3\"]，不要其他文字。",
+          message: `根據以下 brief 內容和對話，生成三個最相關的追問問題作為快捷按鈕。
+每個問題必須針對 brief 中的具體內容，直接可以點擊追問。
+只回傳三行文字，每行一個問題，不加編號、不加標點符號以外的格式。
+
+Brief 內容：
+${briefLines}`,
           project_id: "proj_001",
-          brief_context: currentBrief,
-          history: history.map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
-          mode: "quick_replies",
+          history: history.slice(-6).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         }),
       })
       if (!res.ok) return
       const data = await res.json()
-      const text = (data.reply as string || "").trim()
-      // Try to parse JSON array from reply
-      const match = text.match(/\[.*\]/s)
-      if (match) {
-        const arr = JSON.parse(match[0])
-        if (Array.isArray(arr) && arr.length > 0) {
-          setQuickReplies(arr.slice(0, 3))
-        }
+      const raw = (data.response || data.reply || data.message || "").trim()
+
+      let suggestions: string[] = []
+
+      // Try JSON array first
+      const jsonMatch = raw.match(/\[[\s\S]*?\]/)
+      if (jsonMatch) {
+        try {
+          const arr = JSON.parse(jsonMatch[0])
+          if (Array.isArray(arr)) suggestions = arr.map(String).filter(s => s.trim().length > 5)
+        } catch {}
+      }
+
+      // Fallback: split by newlines, strip numbering / bullets
+      if (suggestions.length === 0) {
+        suggestions = raw
+          .split("\n")
+          .map(l => l.replace(/^[\d\-\*\.\、\s]+/, "").trim())
+          .filter(l => l.length > 5)
+      }
+
+      if (suggestions.length > 0) {
+        setQuickReplies(suggestions.slice(0, 3))
       }
     } catch {
-      // silently fail — keep previous quick replies
+      // silently fail
     } finally {
       setQuickRepliesLoading(false)
     }
@@ -564,7 +596,7 @@ export default function KickoffPage() {
                           </div>
                         </ScrollArea>
                         {/* Quick reply suggestions — dynamic from AutoGen */}
-                        {!aiThinking && chatMessages.length > 0 && quickReplies.length > 0 && (
+                        {!aiThinking && chatMessages.length > 0 && (quickReplies.length > 0 || quickRepliesLoading) && (
                           <div className="flex flex-wrap gap-1.5 mb-2 shrink-0">
                             {quickRepliesLoading ? (
                               <span className="text-xs text-muted-foreground flex items-center gap-1">

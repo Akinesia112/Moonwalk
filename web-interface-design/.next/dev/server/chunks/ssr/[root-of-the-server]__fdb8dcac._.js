@@ -1038,7 +1038,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$s
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/components/ui/avatar.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/components/ui/collapsible.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$checkbox$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/components/ui/checkbox.tsx [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lightbulb$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lightbulb$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/lightbulb.js [app-ssr] (ecmascript) <export default as Lightbulb>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript) <export default as Loader2>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/file-text.js [app-ssr] (ecmascript) <export default as FileText>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$image$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ImageIcon$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/image.js [app-ssr] (ecmascript) <export default as ImageIcon>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/send.js [app-ssr] (ecmascript) <export default as Send>");
@@ -1054,8 +1054,8 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-up.js [app-ssr] (ecmascript) <export default as ArrowUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$refresh$2d$cw$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__RefreshCw$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/refresh-cw.js [app-ssr] (ecmascript) <export default as RefreshCw>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$beaker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Beaker$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/beaker.js [app-ssr] (ecmascript) <export default as Beaker>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lightbulb$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lightbulb$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/lightbulb.js [app-ssr] (ecmascript) <export default as Lightbulb>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-ssr] (ecmascript) <export default as Trash2>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript) <export default as Loader2>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$top$2d$bar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/components/top-bar.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$pipeline$2d$sidebar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/components/pipeline-sidebar.tsx [app-ssr] (ecmascript)");
 "use client";
@@ -1074,54 +1074,99 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$pipelin
 ;
 ;
 const API = ("TURBOPACK compile-time value", "http://127.0.0.1:5000") || "http://127.0.0.1:5000";
-const EMPTY_BRIEF = {
-    project_name: "",
-    client: "",
-    director: "",
-    supervisor: "",
-    confidentiality: "internal",
-    selling_points: "",
-    keywords: "",
-    restrictions: "",
-    style: "",
-    mood: "",
-    worldview: "",
-    supervisor_spec: ""
-};
-// ── AutoGen API ──────────────────────────────────────────────────
-async function apiCreativeAgent(message, brief, refs, history) {
-    const refContext = refs.map((r)=>`[${r.title}] category:${r.category || ""} note:${r.note || "（無說明）"} pinned:${r.is_pinned}`).join("\n");
-    const res = await fetch(`${API}/suggestion/chat/brief`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            message,
-            project_id: "proj_001",
-            brief_context: {
-                ...brief,
-                references_context: refContext
-            },
-            history: history.map((m)=>({
-                    role: m.role === "ai" ? "assistant" : "user",
-                    content: m.content
-                })),
-            mode: "creative_exploration",
-            system_hint: "你是 Creative Exploration Agent。根據 Supervisor Spec 和 Reference 分析，引導 Artist 深入思考創意決策。提出具體的追問和觀點，幫助 Artist 釐清執行方向。回應使用繁體中文。"
-        })
+const PROJECT_ID = "proj_001";
+// ── renderMarkdown (strip ** and --- to readable text) ──────────
+function renderMarkdown(text) {
+    return text.split("\n").map((line, i)=>{
+        const parseInline = (s)=>{
+            const parts = [];
+            const re = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
+            let last = 0, m;
+            while((m = re.exec(s)) !== null){
+                if (m.index > last) parts.push(s.slice(last, m.index));
+                if (m[2]) parts.push(/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
+                    children: m[2]
+                }, m.index, false, {
+                    fileName: "[project]/app/artist-reflection/page.tsx",
+                    lineNumber: 35,
+                    columnNumber: 30
+                }, this));
+                else if (m[3]) parts.push(/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("em", {
+                    children: m[3]
+                }, m.index, false, {
+                    fileName: "[project]/app/artist-reflection/page.tsx",
+                    lineNumber: 36,
+                    columnNumber: 35
+                }, this));
+                else if (m[4]) parts.push(/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
+                    className: "bg-muted px-1 rounded text-xs",
+                    children: m[4]
+                }, m.index, false, {
+                    fileName: "[project]/app/artist-reflection/page.tsx",
+                    lineNumber: 37,
+                    columnNumber: 35
+                }, this));
+                last = m.index + m[0].length;
+            }
+            if (last < s.length) parts.push(s.slice(last));
+            return parts;
+        };
+        if (line.startsWith("### ") || line.startsWith("## ") || line.startsWith("# ")) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+            className: "font-semibold text-sm mt-2",
+            children: parseInline(line.replace(/^#+\s/, ""))
+        }, i, false, {
+            fileName: "[project]/app/artist-reflection/page.tsx",
+            lineNumber: 44,
+            columnNumber: 14
+        }, this);
+        if (line.startsWith("- ")) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+            className: "text-sm pl-3 before:content-['•'] before:mr-2 before:text-indigo-500",
+            children: parseInline(line.slice(2))
+        }, i, false, {
+            fileName: "[project]/app/artist-reflection/page.tsx",
+            lineNumber: 46,
+            columnNumber: 14
+        }, this);
+        if (line.trim() === "---") return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "border-t border-border my-2"
+        }, i, false, {
+            fileName: "[project]/app/artist-reflection/page.tsx",
+            lineNumber: 47,
+            columnNumber: 39
+        }, this);
+        if (line.trim() === "") return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "h-1.5"
+        }, i, false, {
+            fileName: "[project]/app/artist-reflection/page.tsx",
+            lineNumber: 48,
+            columnNumber: 38
+        }, this);
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+            className: "text-sm",
+            children: parseInline(line)
+        }, i, false, {
+            fileName: "[project]/app/artist-reflection/page.tsx",
+            lineNumber: 49,
+            columnNumber: 12
+        }, this);
     });
-    if (!res.ok) throw new Error(`${res.status}`);
-    const data = await res.json();
-    return data.reply;
 }
-function ArtistReflectionPage() {
+// ── Brief fields readable label map ────────────────────────────
+const BRIEF_LABELS = {
+    project_name: "專案名稱",
+    client: "客戶",
+    deliverable_type: "交付物類型",
+    selling_point: "賣點",
+    keywords: "關鍵詞",
+    style_direction: "風格",
+    mood_atmosphere: "氛圍",
+    world_view: "世界觀",
+    taboos: "禁忌",
+    director_notes: "Supervisor 額外說明"
+};
+function ArtistReflectionContent() {
+    // ── State ────────────────────────────────────────────────────
     const [hydrated, setHydrated] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
-    // ── Data from previous pages ──────────────────────────────────
-    const [brief, setBrief] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(EMPTY_BRIEF);
-    const [refs, setRefs] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
-    const [refsLoading, setRefsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
-    // ── UI state ──────────────────────────────────────────────────
     const [specsOpen, setSpecsOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [refsOpen, setRefsOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [reflectionNotes, setReflectionNotes] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
@@ -1130,12 +1175,16 @@ function ArtistReflectionPage() {
     const [pageSubmitted, setPageSubmitted] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [editingNodeId, setEditingNodeId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [agentLoading, setAgentLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [agentError, setAgentError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
-    const scrollBottom = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
-    // ── Project questions (generated after brief+refs loaded) ─────
+    // Brief from kickoff sessionStorage
+    const [brief, setBrief] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({});
+    // Refs from backend
+    const [refs, setRefs] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [refsLoading, setRefsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    // Project questions from AutoGen
     const [projectQuestions, setProjectQuestions] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [questionsLoading, setQuestionsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [checkedQuestions, setCheckedQuestions] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
-    // ── Mind map nodes ────────────────────────────────────────────
+    // Mind map nodes
     const [mindMapNodes, setMindMapNodes] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([
         {
             id: "n1",
@@ -1162,52 +1211,36 @@ function ArtistReflectionPage() {
             done: false
         }
     ]);
-    // ── Agent chat ────────────────────────────────────────────────
-    const [creativeAgentMessages, setCreativeAgentMessages] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([
+    const [agentMessages, setAgentMessages] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([
         {
             role: "ai",
-            content: "我是 Creative Exploration Agent。載入 Spec 與 Reference 後，我會根據其中觀察到的潛在張力和需要釐清的地方，為您準備 project-based 問題。\n\n請稍候..."
+            content: "我是 Creative Exploration Agent。讀取 Spec 與 Reference 後，我會為您準備 project-based 問題，找出潛在張力與需要澄清的地方。\n\n您也可以直接輸入想法，或點選左側 Spec / Ref 項目讓我追問。"
         }
     ]);
-    // ── Restore brief from sessionStorage + fetch refs from API ──
+    const scrollBottom = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
+    // ── Hydrate from sessionStorage on mount ─────────────────────
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        // Load brief from kickoff sessionStorage
+        // Load brief from kickoff
         try {
             const saved = sessionStorage.getItem("kickoff_brief");
             if (saved) setBrief(JSON.parse(saved));
         } catch  {}
-        // Load refs from API
-        fetch(`${API}/search/references?project_id=proj_001`).then((r)=>r.json()).then((data)=>{
-            const valid = data.filter((r)=>r.file_url?.trim() || r.thumbnail_url?.trim()).map((r)=>{
-                const rawThumb = r.thumbnail_url || r.file_url || "";
-                const thumb = rawThumb.startsWith("/") ? `${API}${rawThumb}` : rawThumb;
-                return {
-                    ...r,
-                    localPreview: thumb || undefined
-                };
-            });
-            setRefs(valid);
-        }).catch(()=>setRefs([])).finally(()=>setRefsLoading(false));
+        // Load chat
+        try {
+            const saved = sessionStorage.getItem("reflection_chat");
+            if (saved) setAgentMessages(JSON.parse(saved));
+        } catch  {}
         setHydrated(true);
     }, []);
-    // ── After brief+refs loaded, generate project questions via AutoGen ──
+    // Persist chat
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        if (!hydrated || refsLoading) return;
-        const briefEmpty = !brief.selling_points && !brief.keywords && !brief.style;
-        const refsEmpty = refs.length === 0;
-        if (briefEmpty && refsEmpty) {
-            setCreativeAgentMessages([
-                {
-                    role: "ai",
-                    content: "尚未在 Kickoff 填寫 Spec，也沒有上傳 Reference。\n\n請先完成 C01 Brief/Spec 與 C02 Ref Hub，再回到這裡進行反思探索。"
-                }
-            ]);
-            return;
-        }
-        generateProjectQuestions(brief, refs);
+        if (!hydrated) return;
+        try {
+            sessionStorage.setItem("reflection_chat", JSON.stringify(agentMessages));
+        } catch  {}
     }, [
-        hydrated,
-        refsLoading
+        agentMessages,
+        hydrated
     ]);
     // Auto-scroll
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
@@ -1215,202 +1248,342 @@ function ArtistReflectionPage() {
             behavior: "smooth"
         });
     }, [
-        creativeAgentMessages,
+        agentMessages,
         agentLoading
     ]);
-    // ── Generate project-based questions from AutoGen ─────────────
-    const generateProjectQuestions = async (b, r)=>{
-        setAgentLoading(true);
-        try {
-            const reply = await apiCreativeAgent(`根據以下 Supervisor Spec 和 References，生成 5-8 個最關鍵的 project-based 問題，這些問題應該揭示 Spec 與 Ref 之間潛在的張力、模糊地帶或需要 Artist 釐清的創意決策。
-只回傳 JSON 格式：{"questions": ["問題1", "問題2", ...], "intro": "簡短介紹"}`, b, r, []);
-            // Parse JSON from reply
-            const match = reply.match(/\{[\s\S]*\}/);
-            if (match) {
-                const parsed = JSON.parse(match[0]);
-                const qs = (parsed.questions || []).slice(0, 8).map((q, i)=>({
-                        id: `pq${i + 1}`,
-                        text: q
-                    }));
-                setProjectQuestions(qs);
-                const intro = parsed.intro || "根據 Spec + Reference 的分析，我為您準備了以下 project-based 問題。";
-                setCreativeAgentMessages([
-                    {
-                        role: "ai",
-                        content: `${intro}\n\n這些問題基於您的 Spec 和 Reference 中觀察到的潛在張力與需要釐清的地方。\n\n請勾選感興趣的問題開始探索，或直接輸入您的想法。`
-                    }
-                ]);
-            }
-        } catch  {
-            setCreativeAgentMessages([
+    // ── Load refs from backend ────────────────────────────────────
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        setRefsLoading(true);
+        fetch(`${API}/search/references?project_id=${PROJECT_ID}`).then((r)=>r.json()).then((data)=>{
+            setRefs(data.filter((r)=>r.file_url?.trim() || r.thumbnail_url?.trim()).map((r)=>{
+                const raw = r.thumbnail_url || r.file_url || "";
+                const thumb = raw.startsWith("/") ? `${API}${raw}` : raw;
+                return {
+                    ...r,
+                    localPreview: thumb || undefined
+                };
+            }));
+        }).catch(()=>{}).finally(()=>setRefsLoading(false));
+    }, []);
+    // ── Load project questions from AutoGen once brief+refs ready ─
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (!hydrated) return;
+        const hasBrief = Object.values(brief).some((v)=>v?.trim());
+        if (!hasBrief) return;
+        setQuestionsLoading(true);
+        const briefSummary = Object.entries(brief).filter(([, v])=>v?.trim()).map(([k, v])=>`${BRIEF_LABELS[k] || k}: ${v}`).join("\n");
+        const refsSummary = refs.map((r)=>`- ${r.title}${r.note ? `（備註：${r.note}）` : ""}`).join("\n");
+        fetch(`${API}/suggestion/chat/brief`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                project_id: PROJECT_ID,
+                message: `請根據以下 Spec 與 References，生成 5 到 8 個 project-based 問題，幫助 Artist 深入思考並找出 Spec 與 Ref 之間的張力。每個問題一行，不要加編號或標記。\n\nSpec:\n${briefSummary}\n\nReferences:\n${refsSummary || "（尚未上傳）"}`,
+                history: []
+            })
+        }).then((r)=>r.json()).then((data)=>{
+            const text = data.response || data.reply || data.message || "";
+            const lines = text.split("\n").map((l)=>l.trim()).filter((l)=>l.length > 10);
+            setProjectQuestions(lines.map((t, i)=>({
+                    id: `pq${i}`,
+                    text: t
+                })));
+        }).catch(()=>{}).finally(()=>setQuestionsLoading(false));
+    }, [
+        hydrated,
+        brief,
+        refs
+    ]);
+    // ── Mode-specific system prompts ────────────────────────────
+    // ── Call AutoGen (normal chat) ────────────────────────────────
+    const callAgent = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(async (userMsg)=>{
+        setAgentMessages((prev)=>[
+                ...prev,
                 {
-                    role: "ai",
-                    content: "我是 Creative Exploration Agent。根據您的 Spec 與 Reference，我會引導您深入思考創意決策。\n\n請直接輸入問題開始探索。"
+                    role: "user",
+                    content: userMsg
                 }
             ]);
-        } finally{
-            setAgentLoading(false);
-        }
-    };
-    // ── Send message to AutoGen ───────────────────────────────────
-    const handleAgentSend = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(async (overrideMsg)=>{
-        const raw = overrideMsg ?? agentInput;
-        if (!raw.trim() || agentLoading) return;
-        const modePrefix = responseMode && !overrideMsg ? `[${responseMode}] ` : "";
-        const msg = modePrefix + raw.trim();
-        const newHistory = [
-            ...creativeAgentMessages,
-            {
-                role: "user",
-                content: msg
-            }
-        ];
-        setCreativeAgentMessages(newHistory);
-        if (!overrideMsg) setAgentInput("");
-        setResponseMode(null);
         setAgentLoading(true);
-        setAgentError("");
+        const briefSummary = Object.entries(brief).filter(([, v])=>v?.trim()).map(([k, v])=>`${BRIEF_LABELS[k] || k}: ${v}`).join("\n");
+        const refsSummary = refs.map((r)=>`- ${r.title}${r.note ? `（${r.note}）` : ""}`).join("\n");
+        const specAndRefs = `Spec:\n${briefSummary || "（未填）"}\n\nReferences:\n${refsSummary || "（無）"}`;
+        const systemCtx = `你是 Creative Exploration Agent，協助 VFX Artist 深化創意思考。
+當前專案資料：
+${specAndRefs}
+規則：用繁體中文回應。絕對禁止使用 ** 加粗或 --- 分隔線等 markdown 符號，直接輸出純文字。`;
         try {
-            const reply = await apiCreativeAgent(msg, brief, refs, newHistory);
-            setCreativeAgentMessages((prev)=>[
+            const history = agentMessages.slice(-10).map((m)=>({
+                    role: m.role === "ai" ? "assistant" : "user",
+                    content: m.content
+                }));
+            const res = await fetch(`${API}/suggestion/chat/brief`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    project_id: PROJECT_ID,
+                    message: `${systemCtx}\n\n用戶說：${userMsg}`,
+                    history
+                })
+            });
+            const data = await res.json();
+            const reply = data.response || data.reply || data.message || "抱歉，我現在無法回應，請稍後再試。";
+            setAgentMessages((prev)=>[
                     ...prev,
                     {
                         role: "ai",
                         content: reply
                     }
                 ]);
-        } catch (e) {
-            setAgentError(`連線失敗：${e}`);
-            setCreativeAgentMessages((prev)=>[
+        } catch  {
+            setAgentMessages((prev)=>[
                     ...prev,
                     {
                         role: "ai",
-                        content: `⚠️ 連線錯誤，請確認 backend 運作中。(${e})`
+                        content: "連線失敗，請確認後端服務是否正常運行。"
                     }
                 ]);
         } finally{
             setAgentLoading(false);
         }
     }, [
-        agentInput,
-        agentLoading,
-        responseMode,
-        creativeAgentMessages,
+        brief,
+        refs,
+        agentMessages
+    ]);
+    // ── Mode button: calls /suggestion/chat/mode on backend ────────
+    const callAgentWithMode = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(async (targetContent, mode)=>{
+        const modeLabel = mode === "rephrase" ? "換句話說" : mode === "logic" ? "講邏輯" : "Evidence Binding";
+        setAgentMessages((prev)=>[
+                ...prev,
+                {
+                    role: "user",
+                    content: `[${modeLabel}]`
+                }
+            ]);
+        setAgentLoading(true);
+        const briefSummary = Object.entries(brief).filter(([, v])=>v?.trim()).map(([k, v])=>`${BRIEF_LABELS[k] || k}: ${v}`).join("\n");
+        const refsSummary = refs.map((r)=>`- ${r.title}${r.note ? `（${r.note}）` : ""}`).join("\n");
+        const specAndRefs = `Spec:\n${briefSummary || "（未填）"}\n\nReferences:\n${refsSummary || "（無）"}`;
+        try {
+            const res = await fetch(`${API}/suggestion/chat/mode`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    mode,
+                    content: targetContent,
+                    spec_and_refs: specAndRefs
+                })
+            });
+            const data = await res.json();
+            const reply = data.response || data.reply || data.message || "抱歉，無法處理。";
+            setAgentMessages((prev)=>[
+                    ...prev,
+                    {
+                        role: "ai",
+                        content: reply
+                    }
+                ]);
+        } catch  {
+            setAgentMessages((prev)=>[
+                    ...prev,
+                    {
+                        role: "ai",
+                        content: "連線失敗，請確認後端服務是否正常運行。"
+                    }
+                ]);
+        } finally{
+            setAgentLoading(false);
+        }
+    }, [
         brief,
         refs
     ]);
-    // ── Check question → inject to chat ──────────────────────────
-    const handleQuestionCheck = (questionId, checked)=>{
-        if (checked) {
-            setCheckedQuestions((prev)=>[
-                    ...prev,
-                    questionId
-                ]);
-            const q = projectQuestions.find((p)=>p.id === questionId);
-            if (q) handleAgentSend(`[選擇問題] ${q.text}`);
+    const handleAgentSend = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
+        const msg = agentInput.trim();
+        if (!msg || agentLoading) return;
+        const mode = responseMode ?? undefined;
+        setAgentInput("");
+        setResponseMode(null);
+        if (mode) {
+            callAgentWithMode(msg, mode);
         } else {
-            setCheckedQuestions((prev)=>prev.filter((id)=>id !== questionId));
+            callAgent(msg);
         }
-    };
-    // ── Inject spec/ref item to chat ─────────────────────────────
-    const injectToChat = (text)=>handleAgentSend(text);
-    // ── Agent分析排序 ─────────────────────────────────────────────
-    const handleAnalyzeOrder = ()=>{
-        const orderText = mindMapNodes.map((n, i)=>`${i + 1}. ${n.text}`).join("\n");
-        handleAgentSend(`請分析並評估目前的工作流排序是否合理，並給出具體調整建議：\n${orderText}`);
-    };
-    // ── 我的理解筆記 Submit to Agent ─────────────────────────────
-    const handleSubmitNotes = ()=>{
-        if (!reflectionNotes.trim()) return;
-        handleAgentSend(`[我的理解筆記]\n${reflectionNotes}`);
-    };
-    // ── Mind map helpers ──────────────────────────────────────────
-    const moveNode = (idx, direction)=>{
-        if (direction === "up" && idx > 0) {
-            setMindMapNodes((prev)=>{
-                const arr = [
-                    ...prev
-                ];
-                [arr[idx], arr[idx - 1]] = [
-                    arr[idx - 1],
-                    arr[idx]
-                ];
-                return arr.map((n, i)=>({
-                        ...n,
-                        priority: i + 1
-                    }));
-            });
+    }, [
+        agentInput,
+        responseMode,
+        agentLoading,
+        callAgent,
+        callAgentWithMode
+    ]);
+    // ── Mode buttons: immediately transform last AI reply ─────────
+    const handleModeButton = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((mode)=>{
+        if (responseMode === mode) {
+            setResponseMode(null);
+            return;
         }
-        if (direction === "down" && idx < mindMapNodes.length - 1) {
-            setMindMapNodes((prev)=>{
-                const arr = [
-                    ...prev
-                ];
-                [arr[idx], arr[idx + 1]] = [
-                    arr[idx + 1],
-                    arr[idx]
-                ];
-                return arr.map((n, i)=>({
-                        ...n,
-                        priority: i + 1
-                    }));
-            });
+        if (agentInput.trim()) {
+            setResponseMode(mode);
+            return;
         }
+        // No input — transform last AI message immediately
+        const lastAI = [
+            ...agentMessages
+        ].reverse().find((m)=>m.role === "ai");
+        if (!lastAI) {
+            setResponseMode(mode);
+            return;
+        }
+        callAgentWithMode(lastAI.content, mode);
+    }, [
+        responseMode,
+        agentInput,
+        agentMessages,
+        callAgentWithMode
+    ]);
+    const injectToChat = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((text)=>{
+        callAgent(text);
+    }, [
+        callAgent
+    ]);
+    const handleQuestionCheck = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((qId, checked)=>{
+        setCheckedQuestions((prev)=>checked ? [
+                ...prev,
+                qId
+            ] : prev.filter((id)=>id !== qId));
+        if (checked) {
+            const q = projectQuestions.find((p)=>p.id === qId);
+            if (q) callAgent(`[選擇問題] ${q.text}`);
+        }
+    }, [
+        projectQuestions,
+        callAgent
+    ]);
+    const moveNode = (idx, dir)=>{
+        setMindMapNodes((prev)=>{
+            const arr = [
+                ...prev
+            ];
+            const swap = dir === "up" ? idx - 1 : idx + 1;
+            if (swap < 0 || swap >= arr.length) return prev;
+            [arr[idx], arr[swap]] = [
+                arr[swap],
+                arr[idx]
+            ];
+            return arr.map((n, i)=>({
+                    ...n,
+                    priority: i + 1
+                }));
+        });
     };
-    // ── Spec field display ────────────────────────────────────────
-    const specFields = [
+    // ALL brief fields — keys must match kickoff BriefForm exactly
+    const ALL_SPEC_FIELDS = [
         {
-            label: "賣點",
-            value: brief.selling_points
+            label: "專案名稱",
+            key: "project_name"
         },
         {
-            label: "關鍵詞",
-            value: brief.keywords
+            label: "客戶",
+            key: "client"
         },
         {
-            label: "風格",
-            value: brief.style
+            label: "導演/創意總監",
+            key: "director"
         },
         {
-            label: "氛圍",
-            value: brief.mood
+            label: "Supervisor",
+            key: "supervisor"
+        },
+        {
+            label: "密等",
+            key: "confidentiality"
+        },
+        {
+            label: "產品賣點",
+            key: "selling_points"
+        },
+        {
+            label: "情緒關鍵詞",
+            key: "keywords"
+        },
+        {
+            label: "禁忌事項",
+            key: "restrictions"
+        },
+        {
+            label: "風格關鍵字",
+            key: "style"
+        },
+        {
+            label: "色調/氛圍",
+            key: "mood"
         },
         {
             label: "世界觀",
-            value: brief.worldview
-        },
-        {
-            label: "禁忌",
-            value: brief.restrictions
+            key: "worldview"
         }
-    ].filter((f)=>f.value?.trim());
-    // ── Render ────────────────────────────────────────────────────
+    ];
+    const specFields = ALL_SPEC_FIELDS.filter((f)=>brief[f.key]?.trim());
+    // ── Panel resize state ──────────────────────────────────────
+    const [col1Width, setCol1Width] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(256) // px, default w-64
+    ;
+    const [col3Width, setCol3Width] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(320) // px, default w-80
+    ;
+    const dragging = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const startDrag = (col)=>(e)=>{
+            dragging.current = {
+                col,
+                startX: e.clientX,
+                startW: col === 1 ? col1Width : col3Width
+            };
+            const onMove = (ev)=>{
+                if (!dragging.current) return;
+                const delta = ev.clientX - dragging.current.startX;
+                const newW = Math.max(180, Math.min(700, dragging.current.startW + (dragging.current.col === 1 ? delta : -delta)));
+                dragging.current.col === 1 ? setCol1Width(newW) : setCol3Width(newW);
+            };
+            const onUp = ()=>{
+                dragging.current = null;
+                window.removeEventListener("mousemove", onMove);
+                window.removeEventListener("mouseup", onUp);
+            };
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onUp);
+        };
+    // ── Render ───────────────────────────────────────────────────
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "min-h-screen bg-background",
+        className: "h-screen flex flex-col bg-background overflow-hidden",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$top$2d$bar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TopBar"], {}, void 0, false, {
                 fileName: "[project]/app/artist-reflection/page.tsx",
-                lineNumber: 266,
+                lineNumber: 333,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "flex",
+                className: "flex flex-1 min-h-0",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$pipeline$2d$sidebar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PipelineSidebar"], {}, void 0, false, {
                         fileName: "[project]/app/artist-reflection/page.tsx",
-                        lineNumber: 268,
+                        lineNumber: 335,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
-                        className: "flex-1 overflow-auto",
+                        className: "flex-1 min-h-0 overflow-hidden",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "container mx-auto px-6 py-8",
+                            className: "px-4 py-3 h-full flex flex-col",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "mb-6",
+                                    className: "mb-3 shrink-0",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "flex items-center gap-3 mb-2",
+                                            className: "flex items-center gap-3 mb-1",
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
                                                     variant: "outline",
@@ -1418,203 +1591,199 @@ function ArtistReflectionPage() {
                                                     children: "C03"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                    lineNumber: 274,
+                                                    lineNumber: 342,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                                    className: "text-3xl font-bold",
+                                                    className: "text-xl font-bold",
                                                     children: "Artist Spec + Ref Reflection"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                    lineNumber: 275,
+                                                    lineNumber: 343,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                            lineNumber: 273,
+                                            lineNumber: 341,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                            className: "text-muted-foreground",
-                                            children: "使用者主導路徑 - 促進批判思考，不被系統帶著走"
+                                            className: "text-xs text-muted-foreground",
+                                            children: "使用者主導路徑 — 促進批判思考，不被系統帶著走"
                                         }, void 0, false, {
                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                            lineNumber: 277,
+                                            lineNumber: 345,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                    lineNumber: 272,
+                                    lineNumber: 340,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "grid grid-cols-1 lg:grid-cols-12 gap-6",
+                                    className: "flex gap-4 flex-1 min-h-0",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "lg:col-span-3 space-y-4",
+                                            className: "shrink-0 flex flex-col gap-3 min-h-0 overflow-y-auto",
+                                            style: {
+                                                width: col1Width
+                                            },
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
-                                                    className: "border-indigo-500/30",
+                                                    className: "border-indigo-500/30 shrink-0",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardHeader"], {
-                                                            className: "pb-3",
+                                                            className: "pb-2 pt-3 px-3",
                                                             children: [
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardTitle"], {
-                                                                    className: "flex items-center gap-2 text-sm",
+                                                                    className: "flex items-center gap-2 text-xs",
                                                                     children: [
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$grip$2d$vertical$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__GripVertical$3e$__["GripVertical"], {
-                                                                            className: "w-4 h-4 text-indigo-600"
+                                                                            className: "w-3.5 h-3.5 text-indigo-600"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 286,
+                                                                            lineNumber: 358,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         "Feedback 心智圖 / 工作流"
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 285,
+                                                                    lineNumber: 357,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardDescription"], {
-                                                                    className: "text-xs",
-                                                                    children: "拖曳排序工作優先順序，自動歸納"
+                                                                    className: "text-[10px]",
+                                                                    children: "排序工作優先順序"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 289,
+                                                                    lineNumber: 361,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                            lineNumber: 284,
+                                                            lineNumber: 356,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
+                                                            className: "px-3 pb-3 space-y-1.5",
                                                             children: [
-                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                    className: "space-y-2",
-                                                                    children: mindMapNodes.map((node, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                            className: "flex items-center gap-2 p-2.5 rounded-lg border transition-colors bg-card border-border hover:border-indigo-500/50",
-                                                                            children: [
-                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                    className: "flex flex-col gap-0.5",
-                                                                                    children: [
-                                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
-                                                                                            variant: "ghost",
-                                                                                            size: "sm",
-                                                                                            className: "h-5 w-5 p-0",
-                                                                                            onClick: ()=>moveNode(idx, "up"),
-                                                                                            disabled: idx === 0,
-                                                                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowUp$3e$__["ArrowUp"], {
-                                                                                                className: "w-3 h-3"
-                                                                                            }, void 0, false, {
-                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 297,
-                                                                                                columnNumber: 31
-                                                                                            }, this)
+                                                                mindMapNodes.map((node, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        className: "flex items-center gap-1.5 p-2 rounded-lg border bg-card hover:border-indigo-500/50 transition-colors",
+                                                                        children: [
+                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                className: "flex flex-col gap-0.5",
+                                                                                children: [
+                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                                                        variant: "ghost",
+                                                                                        size: "sm",
+                                                                                        className: "h-4 w-4 p-0",
+                                                                                        onClick: ()=>moveNode(idx, "up"),
+                                                                                        disabled: idx === 0,
+                                                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowUp$3e$__["ArrowUp"], {
+                                                                                            className: "w-2.5 h-2.5"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 296,
-                                                                                            columnNumber: 29
-                                                                                        }, this),
-                                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
-                                                                                            variant: "ghost",
-                                                                                            size: "sm",
-                                                                                            className: "h-5 w-5 p-0",
-                                                                                            onClick: ()=>moveNode(idx, "down"),
-                                                                                            disabled: idx === mindMapNodes.length - 1,
-                                                                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowDown$3e$__["ArrowDown"], {
-                                                                                                className: "w-3 h-3"
-                                                                                            }, void 0, false, {
-                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 300,
-                                                                                                columnNumber: 31
-                                                                                            }, this)
-                                                                                        }, void 0, false, {
-                                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 299,
-                                                                                            columnNumber: 29
+                                                                                            lineNumber: 367,
+                                                                                            columnNumber: 142
                                                                                         }, this)
-                                                                                    ]
-                                                                                }, void 0, true, {
-                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 295,
-                                                                                    columnNumber: 27
-                                                                                }, this),
-                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
-                                                                                    variant: "outline",
-                                                                                    className: "text-[10px] h-5 shrink-0 w-6 justify-center",
-                                                                                    children: node.priority
-                                                                                }, void 0, false, {
-                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 303,
-                                                                                    columnNumber: 27
-                                                                                }, this),
-                                                                                editingNodeId === node.id ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
-                                                                                    autoFocus: true,
-                                                                                    value: node.text,
-                                                                                    onChange: (e)=>setMindMapNodes((prev)=>prev.map((n)=>n.id === node.id ? {
-                                                                                                    ...n,
-                                                                                                    text: e.target.value
-                                                                                                } : n)),
-                                                                                    onBlur: ()=>setEditingNodeId(null),
-                                                                                    onKeyDown: (e)=>{
-                                                                                        if (e.key === "Enter") setEditingNodeId(null);
-                                                                                    },
-                                                                                    className: "text-xs h-6 flex-1"
-                                                                                }, void 0, false, {
-                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 305,
-                                                                                    columnNumber: 29
-                                                                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                                    className: "text-xs flex-1 cursor-text hover:text-indigo-600 transition-colors",
-                                                                                    onClick: ()=>setEditingNodeId(node.id),
-                                                                                    children: node.text
-                                                                                }, void 0, false, {
-                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 314,
-                                                                                    columnNumber: 29
-                                                                                }, this),
-                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
-                                                                                    variant: "ghost",
-                                                                                    size: "sm",
-                                                                                    className: "h-6 w-6 p-0 shrink-0 text-muted-foreground hover:text-red-500",
-                                                                                    onClick: ()=>setMindMapNodes((prev)=>prev.filter((n)=>n.id !== node.id).map((n, i)=>({
-                                                                                                    ...n,
-                                                                                                    priority: i + 1
-                                                                                                }))),
-                                                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__["Trash2"], {
-                                                                                        className: "w-3 h-3"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 318,
-                                                                                        columnNumber: 29
+                                                                                        lineNumber: 367,
+                                                                                        columnNumber: 27
+                                                                                    }, this),
+                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                                                        variant: "ghost",
+                                                                                        size: "sm",
+                                                                                        className: "h-4 w-4 p-0",
+                                                                                        onClick: ()=>moveNode(idx, "down"),
+                                                                                        disabled: idx === mindMapNodes.length - 1,
+                                                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowDown$3e$__["ArrowDown"], {
+                                                                                            className: "w-2.5 h-2.5"
+                                                                                        }, void 0, false, {
+                                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                            lineNumber: 368,
+                                                                                            columnNumber: 166
+                                                                                        }, this)
+                                                                                    }, void 0, false, {
+                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                        lineNumber: 368,
+                                                                                        columnNumber: 27
                                                                                     }, this)
+                                                                                ]
+                                                                            }, void 0, true, {
+                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                lineNumber: 366,
+                                                                                columnNumber: 25
+                                                                            }, this),
+                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
+                                                                                variant: "outline",
+                                                                                className: "text-[9px] h-4 w-5 justify-center shrink-0",
+                                                                                children: node.priority
+                                                                            }, void 0, false, {
+                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                lineNumber: 370,
+                                                                                columnNumber: 25
+                                                                            }, this),
+                                                                            editingNodeId === node.id ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
+                                                                                autoFocus: true,
+                                                                                value: node.text,
+                                                                                onChange: (e)=>setMindMapNodes((prev)=>prev.map((n)=>n.id === node.id ? {
+                                                                                                ...n,
+                                                                                                text: e.target.value
+                                                                                            } : n)),
+                                                                                onBlur: ()=>setEditingNodeId(null),
+                                                                                onKeyDown: (e)=>{
+                                                                                    if (e.key === "Enter") setEditingNodeId(null);
+                                                                                },
+                                                                                className: "text-[11px] h-5 flex-1"
+                                                                            }, void 0, false, {
+                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                lineNumber: 372,
+                                                                                columnNumber: 27
+                                                                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                                className: "text-[11px] flex-1 cursor-text hover:text-indigo-600 transition-colors",
+                                                                                onClick: ()=>setEditingNodeId(node.id),
+                                                                                children: node.text
+                                                                            }, void 0, false, {
+                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                lineNumber: 378,
+                                                                                columnNumber: 27
+                                                                            }, this),
+                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                                                variant: "ghost",
+                                                                                size: "sm",
+                                                                                className: "h-5 w-5 p-0 shrink-0 text-muted-foreground hover:text-red-500",
+                                                                                onClick: ()=>setMindMapNodes((prev)=>prev.filter((n)=>n.id !== node.id).map((n, i)=>({
+                                                                                                ...n,
+                                                                                                priority: i + 1
+                                                                                            }))),
+                                                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__["Trash2"], {
+                                                                                    className: "w-2.5 h-2.5"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 316,
+                                                                                    lineNumber: 382,
                                                                                     columnNumber: 27
                                                                                 }, this)
-                                                                            ]
-                                                                        }, node.id, true, {
-                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 294,
-                                                                            columnNumber: 25
-                                                                        }, this))
-                                                                }, void 0, false, {
-                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 292,
-                                                                    columnNumber: 21
-                                                                }, this),
+                                                                            }, void 0, false, {
+                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                lineNumber: 380,
+                                                                                columnNumber: 25
+                                                                            }, this)
+                                                                        ]
+                                                                    }, node.id, true, {
+                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                        lineNumber: 365,
+                                                                        columnNumber: 23
+                                                                    }, this)),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                                                                     variant: "outline",
                                                                     size: "sm",
-                                                                    className: "w-full mt-3 text-xs bg-transparent",
-                                                                    onClick: ()=>{
-                                                                        setMindMapNodes((prev)=>[
+                                                                    className: "w-full text-[11px] bg-transparent h-7",
+                                                                    onClick: ()=>setMindMapNodes((prev)=>[
                                                                                 ...prev,
                                                                                 {
                                                                                     id: `n${Date.now()}`,
@@ -1622,156 +1791,163 @@ function ArtistReflectionPage() {
                                                                                     priority: prev.length + 1,
                                                                                     done: false
                                                                                 }
-                                                                            ]);
-                                                                    },
+                                                                            ]),
                                                                     children: "+ 新增工作項"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 323,
+                                                                    lineNumber: 386,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                                                                     variant: "ghost",
                                                                     size: "sm",
-                                                                    className: "w-full mt-1 text-xs",
-                                                                    onClick: handleAnalyzeOrder,
+                                                                    className: "w-full text-[11px] h-7",
+                                                                    disabled: agentLoading,
+                                                                    onClick: ()=>injectToChat(`請分析目前工作流排序是否合理：\n${mindMapNodes.map((n, i)=>`${i + 1}. ${n.text}`).join("\n")}\n\n請針對每項給出具體建議。`),
                                                                     children: [
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$message$2d$square$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__MessageSquare$3e$__["MessageSquare"], {
                                                                             className: "w-3 h-3 mr-1"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 327,
+                                                                            lineNumber: 391,
                                                                             columnNumber: 23
                                                                         }, this),
-                                                                        "Agent分析排序"
+                                                                        "Agent 分析排序"
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 326,
+                                                                    lineNumber: 389,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                            lineNumber: 291,
+                                                            lineNumber: 363,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                    lineNumber: 283,
+                                                    lineNumber: 355,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
-                                                    className: "border-indigo-500/30",
+                                                    className: "border-indigo-500/30 flex-1 flex flex-col min-h-0",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardHeader"], {
-                                                            className: "pb-3",
+                                                            className: "pb-2 pt-3 px-3 shrink-0",
                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardTitle"], {
-                                                                className: "flex items-center gap-2 text-sm",
+                                                                className: "flex items-center gap-2 text-xs",
                                                                 children: [
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$book$2d$open$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__BookOpen$3e$__["BookOpen"], {
-                                                                        className: "w-4 h-4 text-indigo-600"
+                                                                        className: "w-3.5 h-3.5 text-indigo-600"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 336,
+                                                                        lineNumber: 400,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     "我的理解筆記"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 335,
+                                                                lineNumber: 399,
                                                                 columnNumber: 21
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                            lineNumber: 334,
+                                                            lineNumber: 398,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
-                                                            className: "space-y-3",
+                                                            className: "px-3 pb-3 flex flex-col gap-2 flex-1 min-h-0",
                                                             children: [
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$textarea$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Textarea"], {
                                                                     value: reflectionNotes,
                                                                     onChange: (e)=>setReflectionNotes(e.target.value),
                                                                     placeholder: "寫下理解...\n- 我覺得導演想要的是...\n- 「被背叛後的憤怒」我打算用...來表現",
-                                                                    rows: 8,
-                                                                    className: "text-xs"
+                                                                    className: "text-xs flex-1 resize-none min-h-[120px]"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 341,
+                                                                    lineNumber: 405,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                    className: "flex items-center gap-2",
+                                                                    className: "flex gap-1.5 shrink-0",
                                                                     children: [
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                                                                             variant: "outline",
                                                                             size: "sm",
-                                                                            className: "flex-1 text-xs gap-1 bg-transparent",
+                                                                            className: "flex-1 text-[11px] gap-1 bg-transparent h-7",
                                                                             disabled: !reflectionNotes.trim(),
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$book$2d$open$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__BookOpen$3e$__["BookOpen"], {
                                                                                     className: "w-3 h-3"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 350,
+                                                                                    lineNumber: 410,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 "Save"
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 349,
+                                                                            lineNumber: 409,
                                                                             columnNumber: 23
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                                                                             size: "sm",
-                                                                            className: "flex-1 text-xs gap-1",
+                                                                            className: "flex-1 text-[11px] gap-1 h-7",
                                                                             disabled: !reflectionNotes.trim() || agentLoading,
-                                                                            onClick: handleSubmitNotes,
+                                                                            onClick: ()=>reflectionNotes.trim() && injectToChat(`[我的理解筆記]\n${reflectionNotes}\n\n請針對我的理解進行分析，找出邏輯一致性問題或需要補充的地方。`),
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__["Send"], {
                                                                                     className: "w-3 h-3"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 353,
+                                                                                    lineNumber: 414,
                                                                                     columnNumber: 25
                                                                                 }, this),
                                                                                 "Submit to Agent"
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 352,
+                                                                            lineNumber: 412,
                                                                             columnNumber: 23
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 348,
+                                                                    lineNumber: 408,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                            lineNumber: 340,
+                                                            lineNumber: 404,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                    lineNumber: 333,
+                                                    lineNumber: 397,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                            lineNumber: 282,
+                                            lineNumber: 352,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "lg:col-span-5 space-y-4",
+                                            className: "w-1 shrink-0 cursor-col-resize hover:bg-indigo-400/50 rounded transition-colors self-stretch",
+                                            onMouseDown: startDrag(1)
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                            lineNumber: 422,
+                                            columnNumber: 15
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "flex-1 min-w-0 flex flex-col gap-3 min-h-0",
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Collapsible"], {
                                                     open: specsOpen,
@@ -1782,7 +1958,7 @@ function ArtistReflectionPage() {
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleTrigger"], {
                                                                 asChild: true,
                                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardHeader"], {
-                                                                    className: "cursor-pointer hover:bg-muted/30 transition-colors pb-3",
+                                                                    className: "cursor-pointer hover:bg-muted/30 transition-colors py-2.5 px-4",
                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                         className: "flex items-center justify-between",
                                                                         children: [
@@ -1790,172 +1966,166 @@ function ArtistReflectionPage() {
                                                                                 className: "flex items-center gap-2",
                                                                                 children: [
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__["FileText"], {
-                                                                                        className: "w-5 h-5 text-teal-600"
+                                                                                        className: "w-4 h-4 text-teal-600"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 369,
+                                                                                        lineNumber: 434,
                                                                                         columnNumber: 29
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardTitle"], {
-                                                                                        className: "text-base",
+                                                                                        className: "text-sm",
                                                                                         children: "Supervisor Spec & Intention"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 370,
+                                                                                        lineNumber: 435,
                                                                                         columnNumber: 29
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 368,
+                                                                                lineNumber: 433,
                                                                                 columnNumber: 27
                                                                             }, this),
                                                                             specsOpen ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
-                                                                                className: "w-4 h-4"
+                                                                                className: "w-3.5 h-3.5"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 372,
+                                                                                lineNumber: 437,
                                                                                 columnNumber: 40
                                                                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
-                                                                                className: "w-4 h-4"
+                                                                                className: "w-3.5 h-3.5"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 372,
-                                                                                columnNumber: 76
+                                                                                lineNumber: 437,
+                                                                                columnNumber: 80
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 367,
+                                                                        lineNumber: 432,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 366,
+                                                                    lineNumber: 431,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 365,
+                                                                lineNumber: 430,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleContent"], {
                                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
-                                                                    className: "space-y-3 pt-0",
-                                                                    children: !hydrated || !brief.selling_points && !brief.keywords ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                        className: "text-xs text-muted-foreground italic py-2",
-                                                                        children: "尚未填寫 Kickoff Spec。請先完成 C01 Brief/Spec。"
-                                                                    }, void 0, false, {
-                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 379,
-                                                                        columnNumber: 27
-                                                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                                                                        children: [
-                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                className: "text-xs text-muted-foreground italic",
-                                                                                children: "點擊任何項目可自動加入 Agent 對話追問"
-                                                                            }, void 0, false, {
-                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 384,
-                                                                                columnNumber: 29
-                                                                            }, this),
-                                                                            specFields.map((item, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                    className: "p-2.5 bg-background rounded-lg border cursor-pointer hover:ring-2 hover:ring-teal-500/50 transition-all",
-                                                                                    onClick: ()=>injectToChat(`關於 Spec「${item.label}: ${item.value}」，請幫我深入分析這對執行方向的影響`),
+                                                                    className: "pt-0 pb-3 px-4 space-y-2",
+                                                                    children: [
+                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                            className: "text-[10px] text-muted-foreground italic",
+                                                                            children: "點擊任何項目可自動加入 Agent 對話追問"
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                            lineNumber: 443,
+                                                                            columnNumber: 25
+                                                                        }, this),
+                                                                        specFields.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                            className: "text-xs text-muted-foreground py-2",
+                                                                            children: "尚未填寫 Kickoff Brief，請先完成 C01。"
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                            lineNumber: 445,
+                                                                            columnNumber: 27
+                                                                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                            className: "grid grid-cols-2 gap-2",
+                                                                            children: specFields.map((item, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                    className: "p-2 bg-background rounded-lg border cursor-pointer hover:ring-2 hover:ring-teal-500/50 transition-all",
+                                                                                    onClick: ()=>injectToChat(`關於 Spec「${item.label}: ${brief[item.key]}」，請追問我對這個項目的理解與執行計劃。`),
                                                                                     children: [
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                                             className: "text-[10px] text-muted-foreground uppercase",
                                                                                             children: item.label
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 389,
+                                                                                            lineNumber: 451,
                                                                                             columnNumber: 33
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                            className: "text-sm mt-0.5",
-                                                                                            children: item.value
+                                                                                            className: "text-xs mt-0.5",
+                                                                                            children: brief[item.key]
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 390,
+                                                                                            lineNumber: 452,
                                                                                             columnNumber: 33
                                                                                         }, this)
                                                                                     ]
                                                                                 }, idx, true, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 386,
+                                                                                    lineNumber: 449,
                                                                                     columnNumber: 31
-                                                                                }, this)),
-                                                                            brief.supervisor_spec?.trim() && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                className: "p-3 bg-teal-500/10 rounded-lg border border-teal-500/30 cursor-pointer hover:ring-2 hover:ring-teal-500/50 transition-all",
-                                                                                onClick: ()=>injectToChat(`關於 Supervisor 額外說明：「${brief.supervisor_spec}」，我想了解更多`),
-                                                                                children: [
-                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                                        className: "text-[10px] font-semibold text-teal-700",
-                                                                                        children: "SUPERVISOR 額外說明"
-                                                                                    }, void 0, false, {
-                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 397,
-                                                                                        columnNumber: 33
-                                                                                    }, this),
-                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                        className: "text-sm whitespace-pre-line mt-1",
-                                                                                        children: brief.supervisor_spec
-                                                                                    }, void 0, false, {
-                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 398,
-                                                                                        columnNumber: 33
-                                                                                    }, this)
-                                                                                ]
-                                                                            }, void 0, true, {
-                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 394,
-                                                                                columnNumber: 31
-                                                                            }, this),
-                                                                            brief.project_name && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                className: "text-[10px] text-muted-foreground pt-1",
-                                                                                children: [
-                                                                                    "專案：",
-                                                                                    brief.project_name,
-                                                                                    brief.client ? ` · ${brief.client}` : "",
-                                                                                    brief.director ? ` · 導演：${brief.director}` : ""
-                                                                                ]
-                                                                            }, void 0, true, {
-                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 402,
-                                                                                columnNumber: 31
-                                                                            }, this)
-                                                                        ]
-                                                                    }, void 0, true)
-                                                                }, void 0, false, {
+                                                                                }, this))
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                            lineNumber: 447,
+                                                                            columnNumber: 27
+                                                                        }, this),
+                                                                        brief["supervisor_spec"]?.trim() && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                            className: "p-2.5 bg-teal-500/10 rounded-lg border border-teal-500/30 cursor-pointer hover:ring-2 hover:ring-teal-500/50 transition-all",
+                                                                            onClick: ()=>injectToChat(`關於 Supervisor Spec：「${brief["supervisor_spec"]}」，請追問我如何具體執行。`),
+                                                                            children: [
+                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                                    className: "text-[10px] font-semibold text-teal-700",
+                                                                                    children: "SUPERVISOR 額外說明"
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                    lineNumber: 460,
+                                                                                    columnNumber: 29
+                                                                                }, this),
+                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                                    className: "text-xs whitespace-pre-line mt-1",
+                                                                                    children: brief["supervisor_spec"]
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                    lineNumber: 461,
+                                                                                    columnNumber: 29
+                                                                                }, this)
+                                                                            ]
+                                                                        }, void 0, true, {
+                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                            lineNumber: 458,
+                                                                            columnNumber: 27
+                                                                        }, this)
+                                                                    ]
+                                                                }, void 0, true, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 377,
+                                                                    lineNumber: 442,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 376,
+                                                                lineNumber: 441,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                        lineNumber: 364,
+                                                        lineNumber: 429,
                                                         columnNumber: 19
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                    lineNumber: 363,
+                                                    lineNumber: 428,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Collapsible"], {
                                                     open: refsOpen,
                                                     onOpenChange: setRefsOpen,
+                                                    className: "flex-1 min-h-0 flex flex-col",
                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
+                                                        className: "flex-1 flex flex-col min-h-0",
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleTrigger"], {
                                                                 asChild: true,
                                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardHeader"], {
-                                                                    className: "cursor-pointer hover:bg-muted/30 transition-colors pb-3",
+                                                                    className: "cursor-pointer hover:bg-muted/30 transition-colors py-2.5 px-4",
                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                         className: "flex items-center justify-between",
                                                                         children: [
@@ -1963,110 +2133,112 @@ function ArtistReflectionPage() {
                                                                                 className: "flex items-center gap-2",
                                                                                 children: [
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$image$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ImageIcon$3e$__["ImageIcon"], {
-                                                                                        className: "w-5 h-5 text-indigo-600"
+                                                                                        className: "w-4 h-4 text-indigo-600"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 421,
+                                                                                        lineNumber: 476,
                                                                                         columnNumber: 29
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardTitle"], {
-                                                                                        className: "text-base",
+                                                                                        className: "text-sm",
                                                                                         children: "References"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 422,
+                                                                                        lineNumber: 477,
                                                                                         columnNumber: 29
                                                                                     }, this),
-                                                                                    !refsLoading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
+                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
                                                                                         variant: "secondary",
-                                                                                        className: "text-xs",
+                                                                                        className: "text-[10px] h-4",
                                                                                         children: refs.length
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 423,
-                                                                                        columnNumber: 46
+                                                                                        lineNumber: 478,
+                                                                                        columnNumber: 29
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 420,
+                                                                                lineNumber: 475,
                                                                                 columnNumber: 27
                                                                             }, this),
                                                                             refsOpen ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
-                                                                                className: "w-4 h-4"
+                                                                                className: "w-3.5 h-3.5"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 425,
+                                                                                lineNumber: 480,
                                                                                 columnNumber: 39
                                                                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
-                                                                                className: "w-4 h-4"
+                                                                                className: "w-3.5 h-3.5"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 425,
-                                                                                columnNumber: 75
+                                                                                lineNumber: 480,
+                                                                                columnNumber: 79
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 419,
+                                                                        lineNumber: 474,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 418,
+                                                                    lineNumber: 473,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 417,
+                                                                lineNumber: 472,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleContent"], {
+                                                                className: "flex-1 min-h-0",
                                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
-                                                                    className: "space-y-3 pt-0",
+                                                                    className: "pt-0 pb-3 px-4 h-full flex flex-col",
                                                                     children: refsLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                        className: "flex items-center gap-2 py-4 text-muted-foreground text-sm",
+                                                                        className: "flex items-center gap-2 py-4 text-muted-foreground text-xs",
                                                                         children: [
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
-                                                                                className: "w-4 h-4 animate-spin"
+                                                                                className: "w-3.5 h-3.5 animate-spin"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 433,
+                                                                                lineNumber: 488,
                                                                                 columnNumber: 29
                                                                             }, this),
-                                                                            "載入 References..."
+                                                                            "載入中..."
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 432,
+                                                                        lineNumber: 487,
                                                                         columnNumber: 27
                                                                     }, this) : refs.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                        className: "text-xs text-muted-foreground italic py-2",
-                                                                        children: "尚未上傳 Reference。請先完成 C02 Ref Hub。"
+                                                                        className: "text-xs text-muted-foreground py-2",
+                                                                        children: "尚未上傳任何 Reference，請先完成 C02。"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 436,
+                                                                        lineNumber: 491,
                                                                         columnNumber: 27
                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
                                                                         children: [
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                className: "text-xs text-muted-foreground italic",
-                                                                                children: "點擊 Ref 可自動加入 Agent 對話追問"
+                                                                                className: "text-[10px] text-muted-foreground italic mb-2",
+                                                                                children: "點擊 Reference 可自動加入 Agent 追問"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 441,
+                                                                                lineNumber: 494,
                                                                                 columnNumber: 29
                                                                             }, this),
-                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                className: "grid grid-cols-2 gap-2",
-                                                                                children: refs.map((ref)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                        className: "rounded-lg border overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-500/50 transition-all group",
-                                                                                        onClick: ()=>injectToChat(`關於 Reference「${ref.title}」${ref.note ? `（說明：${ref.note}）` : ""}，請分析這張 ref 的核心特質，以及與 Spec 的關係`),
-                                                                                        children: [
-                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                                className: "aspect-video bg-muted relative",
-                                                                                                children: [
-                                                                                                    ref.localPreview ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollArea"], {
+                                                                                className: "flex-1 min-h-0",
+                                                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                    className: "grid grid-cols-2 md:grid-cols-3 gap-2 pr-1",
+                                                                                    children: refs.map((ref)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
+                                                                                            className: "overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-500/50 transition-all",
+                                                                                            onClick: ()=>injectToChat(`[點擊 Reference] ${ref.title}${ref.note ? `\n備註：${ref.note}` : ""}\n\n請問我這張圖的核心特質、與 Spec 的關聯，以及我打算從中借鑑哪些元素。`),
+                                                                                            children: [
+                                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                                    className: "aspect-video bg-muted overflow-hidden",
+                                                                                                    children: ref.localPreview && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
                                                                                                         src: ref.localPreview,
                                                                                                         alt: ref.title,
                                                                                                         className: "w-full h-full object-cover",
@@ -2075,169 +2247,220 @@ function ArtistReflectionPage() {
                                                                                                         }
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                        lineNumber: 449,
-                                                                                                        columnNumber: 39
-                                                                                                    }, this) : null,
-                                                                                                    ref.is_pinned && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
-                                                                                                        className: "absolute top-1 left-1 text-[9px] bg-amber-500 text-white",
-                                                                                                        children: "Main Ref"
-                                                                                                    }, void 0, false, {
-                                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                        lineNumber: 454,
+                                                                                                        lineNumber: 502,
                                                                                                         columnNumber: 39
                                                                                                     }, this)
-                                                                                                ]
-                                                                                            }, void 0, true, {
-                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 447,
-                                                                                                columnNumber: 35
-                                                                                            }, this),
-                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                                className: "p-2",
-                                                                                                children: [
-                                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                                        className: "text-xs font-medium truncate group-hover:text-indigo-600",
-                                                                                                        children: ref.title
-                                                                                                    }, void 0, false, {
-                                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                        lineNumber: 458,
-                                                                                                        columnNumber: 37
-                                                                                                    }, this),
-                                                                                                    ref.note && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                                        className: "text-[10px] text-muted-foreground truncate mt-0.5",
-                                                                                                        children: ref.note
-                                                                                                    }, void 0, false, {
-                                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                        lineNumber: 459,
-                                                                                                        columnNumber: 50
-                                                                                                    }, this),
-                                                                                                    ref.category && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
-                                                                                                        variant: "outline",
-                                                                                                        className: "text-[9px] mt-1",
-                                                                                                        children: ref.category
-                                                                                                    }, void 0, false, {
-                                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                        lineNumber: 460,
-                                                                                                        columnNumber: 54
-                                                                                                    }, this)
-                                                                                                ]
-                                                                                            }, void 0, true, {
-                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 457,
-                                                                                                columnNumber: 35
-                                                                                            }, this)
-                                                                                        ]
-                                                                                    }, ref.id, true, {
-                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 444,
-                                                                                        columnNumber: 33
-                                                                                    }, this))
+                                                                                                }, void 0, false, {
+                                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                    lineNumber: 500,
+                                                                                                    columnNumber: 35
+                                                                                                }, this),
+                                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                                    className: "p-1.5",
+                                                                                                    children: [
+                                                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                                            className: "flex items-center gap-1 mb-0.5",
+                                                                                                            children: [
+                                                                                                                ref.is_pinned && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
+                                                                                                                    className: "bg-amber-500 text-white text-[9px] h-3.5 px-1",
+                                                                                                                    children: "Main"
+                                                                                                                }, void 0, false, {
+                                                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                                    lineNumber: 508,
+                                                                                                                    columnNumber: 57
+                                                                                                                }, this),
+                                                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
+                                                                                                                    className: "font-medium text-[11px] truncate",
+                                                                                                                    children: ref.title
+                                                                                                                }, void 0, false, {
+                                                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                                    lineNumber: 509,
+                                                                                                                    columnNumber: 39
+                                                                                                                }, this)
+                                                                                                            ]
+                                                                                                        }, void 0, true, {
+                                                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                            lineNumber: 507,
+                                                                                                            columnNumber: 37
+                                                                                                        }, this),
+                                                                                                        ref.note && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                                                            className: "text-[10px] text-muted-foreground truncate",
+                                                                                                            children: ref.note
+                                                                                                        }, void 0, false, {
+                                                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                            lineNumber: 511,
+                                                                                                            columnNumber: 50
+                                                                                                        }, this)
+                                                                                                    ]
+                                                                                                }, void 0, true, {
+                                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                    lineNumber: 506,
+                                                                                                    columnNumber: 35
+                                                                                                }, this)
+                                                                                            ]
+                                                                                        }, ref.id, true, {
+                                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                            lineNumber: 498,
+                                                                                            columnNumber: 33
+                                                                                        }, this))
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                    lineNumber: 496,
+                                                                                    columnNumber: 29
+                                                                                }, this)
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 442,
+                                                                                lineNumber: 495,
                                                                                 columnNumber: 29
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 430,
+                                                                    lineNumber: 485,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 429,
+                                                                lineNumber: 484,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                        lineNumber: 416,
+                                                        lineNumber: 471,
                                                         columnNumber: 19
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                    lineNumber: 415,
+                                                    lineNumber: 470,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex justify-end pt-2",
-                                                    children: !pageSubmitted ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
-                                                        onClick: ()=>setPageSubmitted(true),
-                                                        disabled: checkedQuestions.length === 0 && !reflectionNotes.trim(),
-                                                        children: [
-                                                            "Ready - Submit & Continue",
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$right$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronRight$3e$__["ChevronRight"], {
-                                                                className: "w-4 h-4 ml-2"
+                                                    className: "flex gap-3 shrink-0 mt-auto pt-2",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                            size: "lg",
+                                                            variant: "outline",
+                                                            className: "flex-1 bg-transparent",
+                                                            asChild: true,
+                                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
+                                                                href: "/reference-hub",
+                                                                children: "← Back to Ref Hub"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 477,
+                                                                lineNumber: 527,
+                                                                columnNumber: 21
+                                                            }, this)
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                            lineNumber: 526,
+                                                            columnNumber: 19
+                                                        }, this),
+                                                        pageSubmitted ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                            size: "lg",
+                                                            className: "flex-1",
+                                                            asChild: true,
+                                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
+                                                                href: "/upload-analyze",
+                                                                children: [
+                                                                    "Submitted — Jump to C04 ",
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$right$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronRight$3e$__["ChevronRight"], {
+                                                                        className: "w-4 h-4 ml-1"
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                        lineNumber: 531,
+                                                                        columnNumber: 73
+                                                                    }, this)
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                lineNumber: 531,
                                                                 columnNumber: 23
                                                             }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                        lineNumber: 475,
-                                                        columnNumber: 21
-                                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
-                                                        className: "bg-green-500 text-white px-4 py-2",
-                                                        children: "✓ 已提交 - 繼續至 C04"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/app/artist-reflection/page.tsx",
-                                                        lineNumber: 480,
-                                                        columnNumber: 21
-                                                    }, this)
-                                                }, void 0, false, {
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                            lineNumber: 530,
+                                                            columnNumber: 21
+                                                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                            size: "lg",
+                                                            className: "flex-1",
+                                                            onClick: ()=>setPageSubmitted(true),
+                                                            children: [
+                                                                "Ready — Submit & Continue ",
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$right$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronRight$3e$__["ChevronRight"], {
+                                                                    className: "w-4 h-4 ml-1"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                    lineNumber: 535,
+                                                                    columnNumber: 49
+                                                                }, this)
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                            lineNumber: 534,
+                                                            columnNumber: 21
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                    lineNumber: 473,
+                                                    lineNumber: 525,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                            lineNumber: 361,
+                                            lineNumber: 425,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "lg:col-span-4",
+                                            className: "w-1 shrink-0 cursor-col-resize hover:bg-indigo-400/50 rounded transition-colors self-stretch",
+                                            onMouseDown: startDrag(3)
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                            lineNumber: 542,
+                                            columnNumber: 15
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "shrink-0 flex flex-col min-h-0",
+                                            style: {
+                                                width: col3Width
+                                            },
                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
-                                                className: "border-indigo-500/30 bg-indigo-500/5 flex flex-col sticky top-8",
-                                                style: {
-                                                    height: "calc(100vh - 200px)"
-                                                },
+                                                className: "border-indigo-500/30 bg-indigo-500/5 flex flex-col flex-1 min-h-0",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardHeader"], {
-                                                        className: "pb-2 shrink-0",
+                                                        className: "pb-2 pt-3 px-4 shrink-0",
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardTitle"], {
-                                                                className: "flex items-center gap-2",
+                                                                className: "flex items-center gap-2 text-sm",
                                                                 children: [
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"], {
-                                                                        className: "w-5 h-5 text-indigo-600"
+                                                                        className: "w-4 h-4 text-indigo-600"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 490,
+                                                                        lineNumber: 549,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     "Creative Exploration Agent"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 489,
+                                                                lineNumber: 548,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardDescription"], {
-                                                                className: "text-xs",
+                                                                className: "text-[11px]",
                                                                 children: "主動引導思考探索。勾選感興趣的問題深入對話。"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 493,
+                                                                lineNumber: 552,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                        lineNumber: 488,
+                                                        lineNumber: 547,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -2245,7 +2468,7 @@ function ArtistReflectionPage() {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Collapsible"], {
                                                                 defaultOpen: false,
-                                                                className: "border-b bg-indigo-500/5 shrink-0",
+                                                                className: "border-b shrink-0",
                                                                 children: [
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleTrigger"], {
                                                                         asChild: true,
@@ -2256,33 +2479,39 @@ function ArtistReflectionPage() {
                                                                                     className: "flex items-center gap-2",
                                                                                     children: [
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$help$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__HelpCircle$3e$__["HelpCircle"], {
-                                                                                            className: "w-4 h-4 text-amber-500"
+                                                                                            className: "w-3.5 h-3.5 text-amber-500"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 501,
+                                                                                            lineNumber: 561,
                                                                                             columnNumber: 29
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                                             className: "text-xs font-medium",
-                                                                                            children: "Project-Based 預設問題"
+                                                                                            children: "Project-Based 問題"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 502,
+                                                                                            lineNumber: 562,
                                                                                             columnNumber: 29
                                                                                         }, this),
-                                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
+                                                                                        questionsLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+                                                                                            className: "w-3 h-3 animate-spin text-muted-foreground"
+                                                                                        }, void 0, false, {
+                                                                                            fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                            lineNumber: 564,
+                                                                                            columnNumber: 33
+                                                                                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
                                                                                             variant: "secondary",
                                                                                             className: "text-[10px] h-4",
                                                                                             children: projectQuestions.length
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 503,
-                                                                                            columnNumber: 29
+                                                                                            lineNumber: 565,
+                                                                                            columnNumber: 33
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 500,
+                                                                                    lineNumber: 560,
                                                                                     columnNumber: 27
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
@@ -2294,51 +2523,64 @@ function ArtistReflectionPage() {
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 505,
+                                                                                    lineNumber: 568,
                                                                                     columnNumber: 27
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 499,
+                                                                            lineNumber: 559,
                                                                             columnNumber: 25
                                                                         }, this)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 498,
+                                                                        lineNumber: 558,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$collapsible$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CollapsibleContent"], {
                                                                         forceMount: true,
                                                                         className: "data-[state=closed]:hidden",
                                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                            className: "border-t",
-                                                                            style: {
-                                                                                height: "200px"
-                                                                            },
+                                                                            className: "h-48 border-t",
                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollArea"], {
                                                                                 className: "h-full",
                                                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                    className: "px-4 py-3 space-y-1.5 pr-6",
-                                                                                    children: projectQuestions.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                        className: "text-xs text-muted-foreground italic",
-                                                                                        children: "根據 Spec 與 Ref 生成中..."
+                                                                                    className: "px-3 py-2 space-y-1.5 pr-5",
+                                                                                    children: questionsLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                        className: "flex items-center gap-2 py-3 text-muted-foreground text-xs",
+                                                                                        children: [
+                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+                                                                                                className: "w-3.5 h-3.5 animate-spin"
+                                                                                            }, void 0, false, {
+                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                lineNumber: 577,
+                                                                                                columnNumber: 35
+                                                                                            }, this),
+                                                                                            "AutoGen 生成問題中..."
+                                                                                        ]
+                                                                                    }, void 0, true, {
+                                                                                        fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                        lineNumber: 576,
+                                                                                        columnNumber: 33
+                                                                                    }, this) : projectQuestions.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                                        className: "text-xs text-muted-foreground py-2",
+                                                                                        children: "需要先填寫 C01 Brief 才能生成問題。"
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 513,
+                                                                                        lineNumber: 580,
                                                                                         columnNumber: 33
                                                                                     }, this) : projectQuestions.map((q)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                            className: `flex items-start gap-2.5 p-2 rounded-lg border transition-colors cursor-pointer ${checkedQuestions.includes(q.id) ? "bg-indigo-500/10 border-indigo-500/30" : "bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10"}`,
+                                                                                            className: `flex items-start gap-2 p-1.5 rounded-lg border transition-colors cursor-pointer ${checkedQuestions.includes(q.id) ? "bg-indigo-500/10 border-indigo-500/30" : "bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10"}`,
                                                                                             onClick: ()=>handleQuestionCheck(q.id, !checkedQuestions.includes(q.id)),
                                                                                             children: [
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$checkbox$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Checkbox"], {
                                                                                                     checked: checkedQuestions.includes(q.id),
-                                                                                                    onCheckedChange: (checked)=>handleQuestionCheck(q.id, checked),
+                                                                                                    onCheckedChange: (c)=>handleQuestionCheck(q.id, c),
                                                                                                     className: "mt-0.5 shrink-0",
                                                                                                     onClick: (e)=>e.stopPropagation()
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                    lineNumber: 518,
+                                                                                                    lineNumber: 585,
                                                                                                     columnNumber: 35
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2346,347 +2588,365 @@ function ArtistReflectionPage() {
                                                                                                     children: q.text
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                    lineNumber: 524,
+                                                                                                    lineNumber: 588,
                                                                                                     columnNumber: 35
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, q.id, true, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 515,
+                                                                                            lineNumber: 582,
                                                                                             columnNumber: 33
                                                                                         }, this))
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 511,
+                                                                                    lineNumber: 574,
                                                                                     columnNumber: 29
                                                                                 }, this)
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 510,
+                                                                                lineNumber: 573,
                                                                                 columnNumber: 27
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 509,
+                                                                            lineNumber: 572,
                                                                             columnNumber: 25
                                                                         }, this)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 508,
+                                                                        lineNumber: 571,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 497,
+                                                                lineNumber: 557,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollArea"], {
-                                                                className: "flex-1 min-h-0 p-4",
+                                                                className: "flex-1 min-h-0 p-3",
                                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                    className: "space-y-4 pr-2",
+                                                                    className: "space-y-3 pr-1",
                                                                     children: [
-                                                                        creativeAgentMessages.map((msg, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                className: `flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`,
+                                                                        agentMessages.map((msg, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                className: `flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`,
                                                                                 children: [
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Avatar"], {
-                                                                                        className: "w-8 h-8 shrink-0",
+                                                                                        className: "w-7 h-7 shrink-0",
                                                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AvatarFallback"], {
                                                                                             className: msg.role === "ai" ? "bg-indigo-500/10 text-indigo-600" : "bg-primary/10",
                                                                                             children: msg.role === "ai" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"], {
-                                                                                                className: "w-4 h-4"
+                                                                                                className: "w-3.5 h-3.5"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 540,
+                                                                                                lineNumber: 604,
                                                                                                 columnNumber: 54
                                                                                             }, this) : "A"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 539,
+                                                                                            lineNumber: 603,
                                                                                             columnNumber: 31
                                                                                         }, this)
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 538,
+                                                                                        lineNumber: 602,
                                                                                         columnNumber: 29
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                        className: `rounded-lg p-3 max-w-[85%] ${msg.role === "ai" ? "bg-muted" : "bg-primary text-primary-foreground"}`,
+                                                                                        className: `rounded-lg p-2.5 min-w-0 max-w-[80%] break-words ${msg.role === "ai" ? "bg-muted" : "bg-primary text-primary-foreground"}`,
                                                                                         children: [
                                                                                             msg.image && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                                className: "mb-2 rounded overflow-hidden",
+                                                                                                className: "mb-1.5 rounded overflow-hidden",
                                                                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
                                                                                                     src: msg.image,
-                                                                                                    alt: "reference",
-                                                                                                    className: "w-full h-24 object-cover rounded"
+                                                                                                    alt: "ref",
+                                                                                                    className: "w-full h-20 object-cover rounded"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                    lineNumber: 546,
+                                                                                                    lineNumber: 610,
                                                                                                     columnNumber: 35
                                                                                                 }, this)
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 545,
+                                                                                                lineNumber: 609,
                                                                                                 columnNumber: 33
                                                                                             }, this),
-                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                                            msg.role === "ai" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                                className: "space-y-0.5",
+                                                                                                children: renderMarkdown(msg.content)
+                                                                                            }, void 0, false, {
+                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                                lineNumber: 614,
+                                                                                                columnNumber: 35
+                                                                                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                                                                 className: "text-sm whitespace-pre-line",
                                                                                                 children: msg.content
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 549,
-                                                                                                columnNumber: 31
+                                                                                                lineNumber: 615,
+                                                                                                columnNumber: 35
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 543,
+                                                                                        lineNumber: 607,
                                                                                         columnNumber: 29
                                                                                     }, this)
                                                                                 ]
                                                                             }, idx, true, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 537,
+                                                                                lineNumber: 601,
                                                                                 columnNumber: 27
                                                                             }, this)),
                                                                         agentLoading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                            className: "flex gap-3",
+                                                                            className: "flex gap-2",
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Avatar"], {
-                                                                                    className: "w-8 h-8 shrink-0",
+                                                                                    className: "w-7 h-7 shrink-0",
                                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AvatarFallback"], {
                                                                                         className: "bg-indigo-500/10 text-indigo-600",
                                                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"], {
-                                                                                            className: "w-4 h-4"
+                                                                                            className: "w-3.5 h-3.5"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 557,
-                                                                                            columnNumber: 33
+                                                                                            lineNumber: 623,
+                                                                                            columnNumber: 92
                                                                                         }, this)
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                        lineNumber: 556,
+                                                                                        lineNumber: 623,
                                                                                         columnNumber: 31
                                                                                     }, this)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 555,
+                                                                                    lineNumber: 622,
                                                                                     columnNumber: 29
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                                    className: "rounded-lg p-3 bg-muted flex items-center gap-2",
+                                                                                    className: "rounded-lg p-2.5 bg-muted flex items-center gap-2",
                                                                                     children: [
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
                                                                                             className: "w-3 h-3 animate-spin text-indigo-500"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 561,
+                                                                                            lineNumber: 626,
                                                                                             columnNumber: 31
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                                            className: "text-sm text-muted-foreground",
+                                                                                            className: "text-xs text-muted-foreground",
                                                                                             children: "AI 思考中..."
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                            lineNumber: 562,
+                                                                                            lineNumber: 627,
                                                                                             columnNumber: 31
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 560,
+                                                                                    lineNumber: 625,
                                                                                     columnNumber: 29
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 554,
+                                                                            lineNumber: 621,
                                                                             columnNumber: 27
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             ref: scrollBottom
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                            lineNumber: 566,
+                                                                            lineNumber: 631,
                                                                             columnNumber: 25
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                    lineNumber: 535,
+                                                                    lineNumber: 599,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 534,
+                                                                lineNumber: 598,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                className: "p-4 border-t space-y-3 shrink-0",
+                                                                className: "p-3 border-t space-y-2 shrink-0",
                                                                 children: [
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                        className: "flex gap-2 flex-wrap",
+                                                                        className: "flex gap-1.5 flex-wrap",
                                                                         children: [
-                                                                            "rephrase",
-                                                                            "logic",
-                                                                            "evidence"
-                                                                        ].map((mode)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
-                                                                                variant: responseMode === mode ? "default" : "outline",
+                                                                            {
+                                                                                id: "rephrase",
+                                                                                label: "換句話說",
+                                                                                icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$refresh$2d$cw$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__RefreshCw$3e$__["RefreshCw"], {
+                                                                                    className: "w-3 h-3"
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                    lineNumber: 640,
+                                                                                    columnNumber: 66
+                                                                                }, this)
+                                                                            },
+                                                                            {
+                                                                                id: "logic",
+                                                                                label: "講邏輯",
+                                                                                icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$beaker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Beaker$3e$__["Beaker"], {
+                                                                                    className: "w-3 h-3"
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                    lineNumber: 641,
+                                                                                    columnNumber: 67
+                                                                                }, this)
+                                                                            },
+                                                                            {
+                                                                                id: "evidence",
+                                                                                label: "Evidence Binding",
+                                                                                icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lightbulb$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lightbulb$3e$__["Lightbulb"], {
+                                                                                    className: "w-3 h-3"
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/app/artist-reflection/page.tsx",
+                                                                                    lineNumber: 642,
+                                                                                    columnNumber: 78
+                                                                                }, this)
+                                                                            }
+                                                                        ].map((btn)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                                                variant: responseMode === btn.id ? "default" : "outline",
                                                                                 size: "sm",
-                                                                                className: "text-xs gap-1 bg-transparent",
-                                                                                onClick: ()=>setResponseMode(responseMode === mode ? null : mode),
+                                                                                className: "text-[11px] gap-1 h-7 bg-transparent",
+                                                                                disabled: agentLoading,
+                                                                                onClick: ()=>handleModeButton(btn.id),
                                                                                 children: [
-                                                                                    mode === "rephrase" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                                                                                        children: [
-                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$refresh$2d$cw$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__RefreshCw$3e$__["RefreshCw"], {
-                                                                                                className: "w-3 h-3"
-                                                                                            }, void 0, false, {
-                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 578,
-                                                                                                columnNumber: 55
-                                                                                            }, this),
-                                                                                            "換句話說"
-                                                                                        ]
-                                                                                    }, void 0, true),
-                                                                                    mode === "logic" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                                                                                        children: [
-                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$beaker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Beaker$3e$__["Beaker"], {
-                                                                                                className: "w-3 h-3"
-                                                                                            }, void 0, false, {
-                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 579,
-                                                                                                columnNumber: 52
-                                                                                            }, this),
-                                                                                            "講邏輯"
-                                                                                        ]
-                                                                                    }, void 0, true),
-                                                                                    mode === "evidence" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                                                                                        children: [
-                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lightbulb$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lightbulb$3e$__["Lightbulb"], {
-                                                                                                className: "w-3 h-3"
-                                                                                            }, void 0, false, {
-                                                                                                fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                                lineNumber: 580,
-                                                                                                columnNumber: 55
-                                                                                            }, this),
-                                                                                            "Evidence Binding"
-                                                                                        ]
-                                                                                    }, void 0, true)
+                                                                                    btn.icon,
+                                                                                    btn.label
                                                                                 ]
-                                                                            }, mode, true, {
+                                                                            }, btn.id, true, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 574,
+                                                                                lineNumber: 644,
                                                                                 columnNumber: 27
                                                                             }, this))
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 572,
+                                                                        lineNumber: 638,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     responseMode && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                         className: "text-[10px] text-indigo-600 bg-indigo-500/10 rounded px-2 py-1",
                                                                         children: [
                                                                             "模式：",
-                                                                            responseMode === "rephrase" ? "換句話說" : responseMode === "logic" ? "講邏輯（物理現象/戲劇需求）" : "Evidence Binding（綁定畫面/Ref/Spec）"
+                                                                            responseMode === "rephrase" ? "換句話說" : responseMode === "logic" ? "講邏輯（物理現象/戲劇需求）" : "Evidence Binding（綁定畫面/Ref/Spec）",
+                                                                            " — ",
+                                                                            "輸入內容後送出，或直接點擊按鈕追問上一則回覆。"
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 585,
+                                                                        lineNumber: 654,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                        className: "flex gap-2",
+                                                                        className: "flex gap-1.5",
                                                                         children: [
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
                                                                                 placeholder: "分享您的想法...",
                                                                                 value: agentInput,
                                                                                 onChange: (e)=>setAgentInput(e.target.value),
-                                                                                onKeyDown: (e)=>e.stopPropagation(),
-                                                                                disabled: agentLoading
+                                                                                onKeyDown: (e)=>{
+                                                                                    e.stopPropagation();
+                                                                                    if (e.key === "Enter") handleAgentSend();
+                                                                                },
+                                                                                disabled: agentLoading,
+                                                                                className: "text-xs"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 590,
+                                                                                lineNumber: 660,
                                                                                 columnNumber: 25
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                                                                                 size: "icon",
-                                                                                onClick: ()=>handleAgentSend(),
+                                                                                className: "h-9 w-9 shrink-0",
+                                                                                onClick: handleAgentSend,
                                                                                 disabled: agentLoading || !agentInput.trim(),
                                                                                 children: agentLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
                                                                                     className: "w-4 h-4 animate-spin"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 598,
+                                                                                    lineNumber: 665,
                                                                                     columnNumber: 43
                                                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__["Send"], {
                                                                                     className: "w-4 h-4"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                    lineNumber: 598,
+                                                                                    lineNumber: 665,
                                                                                     columnNumber: 90
                                                                                 }, this)
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                                lineNumber: 597,
+                                                                                lineNumber: 664,
                                                                                 columnNumber: 25
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                        lineNumber: 589,
+                                                                        lineNumber: 659,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                                lineNumber: 571,
+                                                                lineNumber: 636,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/artist-reflection/page.tsx",
-                                                        lineNumber: 495,
+                                                        lineNumber: 554,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/artist-reflection/page.tsx",
-                                                lineNumber: 487,
+                                                lineNumber: 546,
                                                 columnNumber: 17
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/app/artist-reflection/page.tsx",
-                                            lineNumber: 486,
+                                            lineNumber: 545,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/artist-reflection/page.tsx",
-                                    lineNumber: 280,
+                                    lineNumber: 349,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/artist-reflection/page.tsx",
-                            lineNumber: 270,
+                            lineNumber: 337,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/artist-reflection/page.tsx",
-                        lineNumber: 269,
+                        lineNumber: 336,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/artist-reflection/page.tsx",
-                lineNumber: 267,
+                lineNumber: 334,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/artist-reflection/page.tsx",
-        lineNumber: 265,
+        lineNumber: 332,
         columnNumber: 5
+    }, this);
+}
+function ArtistReflectionPage() {
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ArtistReflectionContent, {}, void 0, false, {
+        fileName: "[project]/app/artist-reflection/page.tsx",
+        lineNumber: 682,
+        columnNumber: 10
     }, this);
 }
 }),
