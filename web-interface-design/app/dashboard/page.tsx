@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ListVideo, Clock, Settings, MessageSquare, Upload, GitCompare, PenTool, Sparkles,
   Bell, Eye, EyeOff, Mail, Loader2, CheckCircle2, AlertCircle, LogOut, User, KeyRound,
@@ -30,36 +29,471 @@ async function apiFetch(path: string, body: object) {
   return data
 }
 
+/* ─────────────────────────────────────────────────────────
+   Agent Chat Types
+───────────────────────────────────────────────────────── */
+interface Attachment {
+  id: string
+  name: string
+  type: "image" | "text" | "file"
+  preview?: string
+  size: string
+}
+
+interface Message {
+  id: string
+  role: "user" | "agent"
+  content: string
+  attachments?: Attachment[]
+  ts: Date
+}
+
+const QUICK_PROMPTS = [
+  { label: "分析作品", icon: "✦", prompt: "幫我分析這張作品的光影與構圖" },
+  { label: "差距對比", icon: "◈", prompt: "比對 Artwork 與 Reference 的差距" },
+  { label: "導演意見", icon: "◎", prompt: "整理需要上報給導演的修改重點" },
+  { label: "風格建議", icon: "⟡", prompt: "根據 Reference 給我風格調整建議" },
+]
+
+const HOURS = new Date().getHours()
+const GREETING =
+  HOURS < 5 ? "深夜了，還在工作" :
+  HOURS < 12 ? "早安，Moonwalk" :
+  HOURS < 18 ? "午後繼續" :
+  HOURS < 22 ? "晚上好" : "夜深了"
+
+/* ─────────────────────────────────────────────────────────
+   AgentChatPanel
+───────────────────────────────────────────────────────── */
+function AgentChatPanel() {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState("")
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [loading, setLoading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`
+    }
+  }, [input])
+
+  const processFiles = useCallback(async (files: FileList | File[]) => {
+    const arr = Array.from(files)
+    const processed: Attachment[] = []
+    for (const f of arr) {
+      const isImg = f.type.startsWith("image/")
+      let preview: string | undefined
+      if (isImg) {
+        preview = await new Promise<string>((res) => {
+          const r = new FileReader()
+          r.onload = () => res(r.result as string)
+          r.readAsDataURL(f)
+        })
+      }
+      processed.push({
+        id: crypto.randomUUID(),
+        name: f.name,
+        type: isImg ? "image" : f.type.startsWith("text/") ? "text" : "file",
+        preview,
+        size: f.size < 1024 * 1024
+          ? `${(f.size / 1024).toFixed(1)} KB`
+          : `${(f.size / 1024 / 1024).toFixed(1)} MB`,
+      })
+    }
+    setAttachments((p) => [...p, ...processed])
+  }, [])
+
+  const send = useCallback(async (text?: string) => {
+    const content = (text ?? input).trim()
+    if (!content && attachments.length === 0) return
+
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content,
+      attachments: [...attachments],
+      ts: new Date(),
+    }
+    setMessages((p) => [...p, userMsg])
+    setInput("")
+    setAttachments([])
+    setLoading(true)
+
+    try {
+      const msgHistory = [...messages, userMsg].map((m) => ({
+        role: m.role === "agent" ? "assistant" : "user",
+        content: m.content || "(附件)",
+      }))
+      const chatHistory = msgHistory.slice(0, -1)
+
+      // 帶上所有可能的欄位名，backend 取它認識的，422 時 catch 會顯示 detail
+      const res = await fetch(`${API}/suggestion/chat/compare`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_message:  content,
+          message:       content,
+          query:         content,
+          prompt:        content,
+          chat_history:  chatHistory,
+          history:       chatHistory,
+          messages:      chatHistory,
+          artwork_name:  "",
+          ref_name:      "",
+          ref_desc:      "",
+          spec:          "",
+          context:       "",
+        }),
+      })
+
+      const data = await res.json()
+      console.log("[AgentChat] status:", res.status, "body:", JSON.stringify(data))
+
+      if (!res.ok) {
+        const detail = Array.isArray(data.detail)
+          ? data.detail.map((d: any) => `${d.loc?.join(".")}: ${d.msg}`).join(" | ")
+          : JSON.stringify(data.detail ?? data)
+        throw new Error(`HTTP ${res.status} — ${detail}`)
+      }
+
+      const reply: string =
+        data.reply ??
+        data.message ??
+        data.response ??
+        data.answer ??
+        data.text ??
+        data.result ??
+        data.output ??
+        (typeof data.content === "string" ? data.content : undefined) ??
+        data.content?.[0]?.text ??
+        data.choices?.[0]?.message?.content ??
+        (typeof data === "string" ? data : undefined) ??
+        `[未知格式] keys: ${Object.keys(data).join(", ")}`
+
+      setMessages((p) => [...p, {
+        id: crypto.randomUUID(),
+        role: "agent",
+        content: reply,
+        ts: new Date(),
+      }])
+    } catch (e: any) {
+      setMessages((p) => [...p, {
+        id: crypto.randomUUID(),
+        role: "agent",
+        content: e?.message ?? "連線失敗",
+        ts: new Date(),
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }, [input, attachments, messages])
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      send()
+    }
+  }
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    if (e.dataTransfer.files.length) processFiles(e.dataTransfer.files)
+  }
+
+  const isEmpty = messages.length === 0
+
+  return (
+    <div className="flex flex-col" style={{ height: "100%", minHeight: 0 }}>
+
+      {/* Empty state */}
+      {isEmpty && (
+        <div className="flex flex-col items-center justify-center gap-6 pb-4 select-none" style={{ flex: 1, minHeight: 0 }}>
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <span style={{
+                color: "var(--color-teal-500)",
+                fontSize: "24px",
+                lineHeight: 1,
+                display: "inline-block",
+                animation: "mw-spin 12s linear infinite",
+              }}>✳</span>
+              <h2 style={{
+                fontSize: "22px",
+                fontWeight: 500,
+                letterSpacing: "-0.01em",
+                color: "hsl(var(--foreground))",
+                margin: 0,
+                fontFamily: "system-ui, sans-serif",
+              }}>
+                {GREETING}
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              告訴我你需要什麼，或上傳作品開始分析
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-2 max-w-md">
+            {QUICK_PROMPTS.map((q) => (
+              <button
+                key={q.label}
+                onClick={() => send(q.prompt)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm transition-colors hover:bg-accent"
+                style={{ fontFamily: "system-ui, sans-serif" }}
+              >
+                <span style={{ color: "var(--color-teal-500)", fontSize: "12px" }}>{q.icon}</span>
+                {q.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Message thread */}
+      {!isEmpty && (
+        <div className="overflow-y-auto px-4 py-4 flex flex-col gap-4" style={{ flex: 1, minHeight: 0 }}>
+          {messages.map((m) => (
+            <div key={m.id} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "12px",
+                background: m.role === "agent" ? "var(--color-teal-500)" : "hsl(var(--muted))",
+                color: m.role === "agent" ? "#fff" : "hsl(var(--muted-foreground))",
+              }}>
+                {m.role === "agent" ? "✳" : "U"}
+              </div>
+
+              <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: "6px" }}>
+                {m.attachments && m.attachments.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {m.attachments.map((a) => (
+                      <div key={a.id} className="border rounded-lg overflow-hidden bg-card">
+                        {a.type === "image" && a.preview
+                          ? <img src={a.preview} alt={a.name} style={{ width: 120, height: 80, objectFit: "cover", display: "block" }} />
+                          : (
+                            <div className="flex items-center gap-1.5 px-2.5 py-2 text-xs text-muted-foreground">
+                              <span>📄</span>
+                              <span className="max-w-[100px] truncate">{a.name}</span>
+                              <span className="opacity-60">{a.size}</span>
+                            </div>
+                          )
+                        }
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {m.content && (
+                  <div style={{
+                    padding: "10px 14px",
+                    borderRadius: m.role === "user" ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
+                    background: m.role === "user" ? "hsl(var(--primary))" : "hsl(var(--card))",
+                    border: m.role === "agent" ? "1px solid hsl(var(--border))" : "none",
+                    color: m.role === "user" ? "hsl(var(--primary-foreground))" : "hsl(var(--card-foreground))",
+                    fontSize: "14px",
+                    lineHeight: 1.6,
+                    fontFamily: "system-ui, sans-serif",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}>
+                    {m.content}
+                  </div>
+                )}
+
+                <span className="text-[11px] text-muted-foreground" style={{
+                  alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                }}>
+                  {m.ts.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            </div>
+          ))}
+
+          {loading && (
+            <div className="flex gap-3">
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%",
+                background: "var(--color-teal-500)", color: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "12px", flexShrink: 0,
+              }}>✳</div>
+              <div className="border rounded-[4px_16px_16px_16px] px-3.5 py-2.5 bg-card flex items-center gap-1.5">
+                {[0, 1, 2].map((i) => (
+                  <span key={i} style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: "var(--color-teal-500)", opacity: 0.4,
+                    animation: `mw-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    display: "inline-block",
+                  }} />
+                ))}
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+      )}
+
+      {/* Attachment previews */}
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-4 pt-2">
+          {attachments.map((a) => (
+            <div key={a.id} className="relative border rounded-lg overflow-hidden bg-card">
+              {a.type === "image" && a.preview
+                ? <img src={a.preview} alt={a.name} style={{ width: 64, height: 64, objectFit: "cover", display: "block" }} />
+                : (
+                  <div style={{ width: 64, height: 64 }} className="flex flex-col items-center justify-center text-xl gap-0.5">
+                    <span>📄</span>
+                    <span className="text-[9px] text-muted-foreground text-center px-1 break-all leading-tight">
+                      {a.name.length > 10 ? a.name.slice(0, 8) + "…" : a.name}
+                    </span>
+                  </div>
+                )
+              }
+              <button
+                onClick={() => setAttachments((p) => p.filter((x) => x.id !== a.id))}
+                className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white leading-none"
+                style={{ background: "rgba(0,0,0,0.55)", border: "none", cursor: "pointer" }}
+              >✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Input bar */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={onDrop}
+        style={{
+          margin: isEmpty ? "0 12px 12px" : "8px 12px 12px",
+          borderRadius: 12,
+          border: dragOver ? "2px solid var(--color-teal-500)" : "1px solid hsl(var(--border))",
+          background: dragOver ? "rgba(45,122,79,0.04)" : "hsl(var(--background))",
+          transition: "border-color 0.15s, background 0.15s",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          position: "relative",
+        }}
+      >
+        {dragOver && (
+          <div className="absolute inset-0 flex items-center justify-center text-sm pointer-events-none"
+            style={{ color: "var(--color-teal-500)", zIndex: 1 }}>
+            放開以上傳
+          </div>
+        )}
+
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={isEmpty ? "有什麼需要幫忙的？" : "繼續對話…（Enter 送出，Shift+Enter 換行）"}
+          rows={1}
+          style={{
+            width: "100%", border: "none", outline: "none", resize: "none",
+            background: "transparent", padding: "12px 14px 0",
+            fontSize: "14px", fontFamily: "system-ui, sans-serif",
+            color: "hsl(var(--foreground))", lineHeight: 1.6,
+            minHeight: 40, maxHeight: 200, overflowY: "auto",
+            boxSizing: "border-box",
+          }}
+        />
+
+        <div className="flex items-center justify-between px-3 pb-2.5 pt-2">
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileRef} type="file" multiple
+              accept="image/*,text/*,.pdf,.doc,.docx"
+              style={{ display: "none" }}
+              onChange={(e) => e.target.files && processFiles(e.target.files)}
+            />
+            <button
+              onClick={() => fileRef.current?.click()}
+              title="上傳檔案"
+              className="w-8 h-8 rounded-lg border flex items-center justify-center text-base text-muted-foreground hover:bg-accent transition-colors"
+              style={{ background: "transparent", cursor: "pointer" }}
+            >+</button>
+            <span className="text-[11px] text-muted-foreground opacity-70">
+              圖片 / 文件 / 拖曳上傳
+            </span>
+          </div>
+
+          <button
+            onClick={() => send()}
+            disabled={loading || (!input.trim() && attachments.length === 0)}
+            style={{
+              height: 30, padding: "0 14px", borderRadius: 999, border: "none",
+              background: (loading || (!input.trim() && attachments.length === 0))
+                ? "hsl(var(--muted))" : "var(--color-teal-500)",
+              color: (loading || (!input.trim() && attachments.length === 0))
+                ? "hsl(var(--muted-foreground))" : "#fff",
+              fontSize: "13px", fontFamily: "system-ui, sans-serif",
+              cursor: (loading || (!input.trim() && attachments.length === 0)) ? "not-allowed" : "pointer",
+              transition: "background 0.15s",
+              display: "flex", alignItems: "center", gap: 5,
+            }}
+          >
+            {loading ? "思考中…" : "送出"}
+            {!loading && <span style={{ fontSize: "11px", opacity: 0.8 }}>↵</span>}
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes mw-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes mw-bounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+          40% { transform: translateY(-6px); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────
+   Auth types
+───────────────────────────────────────────────────────── */
 type AuthView = "login" | "register" | "forgot" | "change-password"
 
+/* ─────────────────────────────────────────────────────────
+   Dashboard Page
+───────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const router = useRouter()
 
-  // ── Auth state ─────────────────────────────────────────────
+  // ── Auth state ──────────────────────────────────────────
   const [authToken,    setAuthToken]    = useState<string | null>(null)
   const [authUsername, setAuthUsername] = useState("")
   const [authEmail,    setAuthEmail]    = useState("")
   const [authOpen,     setAuthOpen]     = useState(false)
   const [authView,     setAuthView]     = useState<AuthView>("login")
 
-  // form fields
-  const [loginEmail,    setLoginEmail]    = useState("")
-  const [loginPw,       setLoginPw]       = useState("")
-  const [regName,       setRegName]       = useState("")
-  const [regEmail,      setRegEmail]      = useState("")
-  const [regPw,         setRegPw]         = useState("")
-  const [regPw2,        setRegPw2]        = useState("")
-  const [forgotEmail,   setForgotEmail]   = useState("")
-  const [oldPw,         setOldPw]         = useState("")
-  const [newPw,         setNewPw]         = useState("")
-  const [newPw2,        setNewPw2]        = useState("")
-  const [showPw,        setShowPw]        = useState(false)
+  const [loginEmail,  setLoginEmail]  = useState("")
+  const [loginPw,     setLoginPw]     = useState("")
+  const [regName,     setRegName]     = useState("")
+  const [regEmail,    setRegEmail]    = useState("")
+  const [regPw,       setRegPw]       = useState("")
+  const [regPw2,      setRegPw2]      = useState("")
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [oldPw,       setOldPw]       = useState("")
+  const [newPw,       setNewPw]       = useState("")
+  const [newPw2,      setNewPw2]      = useState("")
+  const [showPw,      setShowPw]      = useState(false)
 
   const [loading, setLoading] = useState(false)
-  const [err,     setErr]     = useState("")
-  const [ok,      setOk]      = useState("")
+  const [err, setErr] = useState("")
+  const [ok,  setOk]  = useState("")
 
-  // load from sessionStorage on mount
   useEffect(() => {
     const t = sessionStorage.getItem("auth_token")
     const u = sessionStorage.getItem("auth_username") || ""
@@ -68,10 +502,8 @@ export default function DashboardPage() {
   }, [])
 
   const clear = () => { setErr(""); setOk("") }
-
   const openAuth = (view: AuthView) => { clear(); setAuthView(view); setAuthOpen(true) }
 
-  // ── Login ──────────────────────────────────────────────────
   const handleLogin = async () => {
     clear()
     if (!loginEmail || !loginPw) { setErr("請填寫電子郵件與密碼"); return }
@@ -88,7 +520,6 @@ export default function DashboardPage() {
     finally { setLoading(false) }
   }
 
-  // ── Register ───────────────────────────────────────────────
   const handleRegister = async () => {
     clear()
     if (!regName || !regEmail || !regPw) { setErr("請填寫所有必填欄位"); return }
@@ -103,7 +534,6 @@ export default function DashboardPage() {
     finally { setLoading(false) }
   }
 
-  // ── Forgot password ────────────────────────────────────────
   const handleForgot = async () => {
     clear()
     if (!forgotEmail) { setErr("請輸入電子郵件"); return }
@@ -116,7 +546,6 @@ export default function DashboardPage() {
     finally { setLoading(false) }
   }
 
-  // ── Change password ────────────────────────────────────────
   const handleChangePw = async () => {
     clear()
     if (!oldPw || !newPw || !newPw2) { setErr("請填寫所有欄位"); return }
@@ -134,7 +563,6 @@ export default function DashboardPage() {
     finally { setLoading(false) }
   }
 
-  // ── Logout ─────────────────────────────────────────────────
   const handleLogout = async () => {
     if (authToken) {
       try {
@@ -147,15 +575,9 @@ export default function DashboardPage() {
     setAuthToken(null); setAuthUsername(""); setAuthEmail("")
   }
 
-  const activities = [
-    { user: "Sarah L.",  action: "uploaded a new version for", target: "Shot_005_v04",          time: "4 小時前", isSystem: false },
-    { user: "AI System", action: "completed analysis for",     target: "Asset_Dragon_Tex_v02",  time: "4 小時前", isSystem: true },
-    { user: "Mike T.",   action: "submitted feedback on",      target: "Sequence_A_Anim_v03",   time: "4 小時前", isSystem: false },
-  ]
-
   const initials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase()
 
-  // ── Auth modal content ────────────────────────────────────
+  // ── Auth Modal ──────────────────────────────────────────
   const AuthModal = () => (
     <Dialog open={authOpen} onOpenChange={v => { setAuthOpen(v); if (!v) clear() }}>
       <DialogContent className="sm:max-w-[440px]">
@@ -178,7 +600,6 @@ export default function DashboardPage() {
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          {/* Status alerts */}
           {err && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -192,7 +613,6 @@ export default function DashboardPage() {
             </Alert>
           )}
 
-          {/* ── Login ── */}
           {authView === "login" && (
             <>
               <div className="space-y-1.5">
@@ -228,7 +648,6 @@ export default function DashboardPage() {
             </>
           )}
 
-          {/* ── Register ── */}
           {authView === "register" && (
             <>
               <div className="space-y-1.5">
@@ -258,9 +677,7 @@ export default function DashboardPage() {
               <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={handleRegister} disabled={loading}>
                 {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />建立中...</> : "建立帳號"}
               </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                註冊後需驗證電子郵件才能登入
-              </p>
+              <p className="text-xs text-center text-muted-foreground">註冊後需驗證電子郵件才能登入</p>
               <p className="text-center text-sm text-muted-foreground">
                 已有帳號？{" "}
                 <button className="text-teal-600 hover:underline" onClick={() => { clear(); setAuthView("login") }}>登入</button>
@@ -268,7 +685,6 @@ export default function DashboardPage() {
             </>
           )}
 
-          {/* ── Forgot password ── */}
           {authView === "forgot" && (
             <>
               <div className="space-y-1.5">
@@ -290,7 +706,6 @@ export default function DashboardPage() {
             </>
           )}
 
-          {/* ── Change password ── */}
           {authView === "change-password" && (
             <>
               <div className="space-y-1.5">
@@ -321,7 +736,7 @@ export default function DashboardPage() {
     </Dialog>
   )
 
-  // ── Top bar user section ───────────────────────────────────
+  // ── Top bar user section ──────────────────────────────
   const UserSection = () => (
     <div className="flex items-center gap-2">
       {authToken ? (
@@ -409,10 +824,10 @@ export default function DashboardPage() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
-              { label: "Active Shots",         value: "142", sub: "Shots in Progress",   color: "text-teal-600",   icon: <ListVideo className="w-4 h-4 text-muted-foreground" />,   bar: true },
-              { label: "Pending Reviews",       value: "38",  sub: "Awaiting Feedback",   color: "text-amber-600",  icon: <Clock className="w-4 h-4 text-muted-foreground" /> },
-              { label: "AI Analysis Queue",     value: "15",  sub: "Assets Processing",   color: "text-cyan-600",   icon: <Settings className="w-4 h-4 text-muted-foreground animate-spin" style={{ animationDuration: "3s" }} /> },
-              { label: "Recent Feedback",       value: "24",  sub: "New Comments Today",  color: "text-purple-600", icon: <MessageSquare className="w-4 h-4 text-muted-foreground" /> },
+              { label: "Active Shots",     value: "142", sub: "Shots in Progress",  color: "text-teal-600",   icon: <ListVideo className="w-4 h-4 text-muted-foreground" />,   bar: true },
+              { label: "Pending Reviews",  value: "38",  sub: "Awaiting Feedback",  color: "text-amber-600",  icon: <Clock className="w-4 h-4 text-muted-foreground" /> },
+              { label: "AI Analysis Queue",value: "15",  sub: "Assets Processing",  color: "text-cyan-600",   icon: <Settings className="w-4 h-4 text-muted-foreground animate-spin" style={{ animationDuration: "3s" }} /> },
+              { label: "Recent Feedback",  value: "24",  sub: "New Comments Today", color: "text-purple-600", icon: <MessageSquare className="w-4 h-4 text-muted-foreground" /> },
             ].map((s, i) => (
               <Card key={i}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -429,34 +844,14 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Recent Activity */}
-            <Card className="lg:col-span-2">
-              <CardHeader><CardTitle>Recent Activity Timeline</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activities.map((a, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <Avatar className="w-8 h-8">
-                        {a.isSystem
-                          ? <AvatarFallback className="bg-teal-500/10 text-teal-600"><Sparkles className="w-4 h-4" /></AvatarFallback>
-                          : <AvatarFallback>{initials(a.user)}</AvatarFallback>
-                        }
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="font-medium">{a.user}</span>{" "}
-                          <span className="text-muted-foreground">{a.action}</span>{" "}
-                          <span className="font-medium">{a.target}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">{a.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+            {/* ── Agent Chat Panel (replaces Recent Activity Timeline) ── */}
+            <Card className="lg:col-span-2 overflow-hidden" style={{ minHeight: 520, display: "flex", flexDirection: "column" }}>
+              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                <AgentChatPanel />
+              </div>
             </Card>
 
-            {/* Quick Actions */}
+            {/* Quick Actions + Auth */}
             <div className="space-y-4">
               <Card>
                 <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
@@ -476,7 +871,6 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Auth card — shows different UI based on login state */}
               <Card className="border-teal-500/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
