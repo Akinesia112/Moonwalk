@@ -16,6 +16,16 @@ import { Loader2, FileText, ImageIcon, Bot, Send, ChevronRight, ChevronDown, Che
 import { TopBar } from "@/components/top-bar"
 import { PipelineSidebar } from "@/components/pipeline-sidebar"
 
+// Strip markdown from AI responses
+function stripBold(text: string): string {
+  return text
+    .replace(/[*][*](.+?)[*][*]/g, "$1")
+    .replace(/[*](.+?)[*]/g, "$1")
+    .replace(/^---+$/gm, "")
+    .replace(/^[#]{1,6} /gm, "")
+    .trim()
+}
+
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 const PROJECT_ID = "proj_001"
 
@@ -154,7 +164,7 @@ function ArtistReflectionContent() {
       .join("\n")
     const refsSummary = refs.map(r => `- ${r.title}${r.note ? `（備註：${r.note}）` : ""}`).join("\n")
 
-    fetch(`${API}/suggestion/chat/brief`, {
+    fetch(`${API}/suggestion/chat/reflection`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -165,7 +175,7 @@ function ArtistReflectionContent() {
     })
       .then(r => r.json())
       .then(data => {
-        const text: string = data.response || data.reply || data.message || ""
+        const text: string = stripBold(data.response || data.reply || data.message || "")
         const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 10)
         setProjectQuestions(lines.map((t, i) => ({ id: `pq${i}`, text: t })))
       })
@@ -196,7 +206,7 @@ ${specAndRefs}
         role: m.role === "ai" ? "assistant" : "user",
         content: m.content,
       }))
-      const res = await fetch(`${API}/suggestion/chat/brief`, {
+      const res = await fetch(`${API}/suggestion/chat/reflection`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -206,7 +216,7 @@ ${specAndRefs}
         }),
       })
       const data = await res.json()
-      const reply = data.response || data.reply || data.message || "抱歉，我現在無法回應，請稍後再試。"
+      const reply = stripBold(data.response || data.reply || data.message || "抱歉，我現在無法回應，請稍後再試。")
       setAgentMessages(prev => [...prev, { role: "ai", content: reply }])
     } catch {
       setAgentMessages(prev => [...prev, { role: "ai", content: "連線失敗，請確認後端服務是否正常運行。" }])
@@ -239,7 +249,7 @@ ${specAndRefs}
         }),
       })
       const data = await res.json()
-      const reply = data.response || data.reply || data.message || "抱歉，無法處理。"
+      const reply = stripBold(data.response || data.reply || data.message || "抱歉，無法處理。")
       setAgentMessages(prev => [...prev, { role: "ai", content: reply }])
     } catch {
       setAgentMessages(prev => [...prev, { role: "ai", content: "連線失敗，請確認後端服務是否正常運行。" }])
@@ -310,8 +320,8 @@ ${specAndRefs}
   const specFields = ALL_SPEC_FIELDS.filter(f => brief[f.key]?.trim())
 
   // ── Panel resize state ──────────────────────────────────────
-  const [col1Width, setCol1Width] = useState(256)   // px, default w-64
-  const [col3Width, setCol3Width] = useState(320)   // px, default w-80
+  const [col1Width, setCol1Width] = useState(700)   // px, default max
+  const [col3Width, setCol3Width] = useState(700)   // px, default max
   const dragging = useRef<{ col: 1 | 3; startX: number; startW: number } | null>(null)
 
   const startDrag = (col: 1 | 3) => (e: React.MouseEvent) => {
@@ -659,7 +669,7 @@ ${specAndRefs}
                       <div className="flex gap-1.5">
                         <Input placeholder="分享您的想法..."
                           value={agentInput} onChange={e => setAgentInput(e.target.value)}
-                          onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter") handleAgentSend() }}
+                          onKeyDown={e => { e.stopPropagation() }}
                           disabled={agentLoading} className="text-xs" />
                         <Button size="icon" className="h-9 w-9 shrink-0" onClick={handleAgentSend} disabled={agentLoading || !agentInput.trim()}>
                           {agentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

@@ -93,7 +93,7 @@ function ReferenceHubContent() {
   const [uploading, setUploading]           = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [panelW, setPanelW] = useState(400)
+  const [panelW, setPanelW] = useState(700)
   const panelRef = useRef<HTMLDivElement>(null)
   const resizeDir = useRef<string>("")
   const resizeStart = useRef({ x: 0, w: 400 })
@@ -146,17 +146,19 @@ function ReferenceHubContent() {
           !MOCK_IDS.includes(r.id) &&
           (r.file_url?.trim() || r.thumbnail_url?.trim())  // must have non-empty image src
         )
-        setRefs(valid.map((r: any) => {
-          // For relative /uploads paths add API base; for empty thumbnail use file_url
+        const loaded = valid.map((r: any) => {
           const rawThumb = r.thumbnail_url || r.file_url || ""
           const thumb = rawThumb.startsWith("/") ? `${API}${rawThumb}` : rawThumb
-          // Only use as preview if it looks like an image (not a web page URL)
           const isImg = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(rawThumb) || rawThumb.startsWith(API)
-          return {
-            ...r,
-            localPreview: isImg ? thumb : undefined,
-          }
-        }))
+          return { ...r, localPreview: isImg ? thumb : undefined }
+        })
+        // Persist ref metadata + categories for upload-analyze
+        try {
+          sessionStorage.setItem("refhub_refs", JSON.stringify(
+            loaded.map((r: any) => ({ id: r.id, title: r.title || r.id, category: r.category || "", note: r.note || "", is_pinned: !!r.is_pinned }))
+          ))
+        } catch {}
+        setRefs(loaded)
       })
       .catch(() => setRefs([]))
       .finally(() => setLoading(false))
@@ -174,43 +176,55 @@ function ReferenceHubContent() {
   }, [chatMessages, chatLoading])
 
   // ── Upload file ────────────────────────────────────────────
+  // Convert file to base64 for persistent preview
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise(resolve => {
+      const r = new FileReader()
+      r.onload = () => resolve(r.result as string)
+      r.onerror = () => resolve(URL.createObjectURL(file))
+      r.readAsDataURL(file)
+    })
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
     setUploading(true)
-    const localPreview = URL.createObjectURL(file)
-    try {
-      const result = await apiUploadFile(file, PROJECT_ID, uploadCategory, uploadPriority, uploadNote)
-      const newRef: Reference = {
-        id: result.id,
-        title: file.name.replace(/\.[^/.]+$/, ""),
-        confidentiality: "internal",
-        is_pinned: uploadPriority === "main",
-        category: uploadCategory,
-        note: uploadNote,
-        thumbnail_url: result.thumbnail_url || "",
-        file_url: result.file_url || "",
-        priority: uploadPriority,
-        localPreview,  // blob URL for immediate display; persists until page reload
+    for (const file of files) {
+      const localPreview = await fileToBase64(file)
+      try {
+        const result = await apiUploadFile(file, PROJECT_ID, uploadCategory, uploadPriority, uploadNote)
+        const newRef: Reference = {
+          id: result.id,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          confidentiality: "internal",
+          is_pinned: uploadPriority === "main",
+          category: uploadCategory,
+          note: uploadNote,
+          thumbnail_url: result.thumbnail_url || "",
+          file_url: result.file_url || "",
+          priority: uploadPriority,
+          localPreview,
+        }
+        setRefs(prev => [newRef, ...prev])
+        setUploadNote("")
+      } catch {
+        const fallbackRef: Reference = {
+          id: `local_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          confidentiality: "internal",
+          is_pinned: uploadPriority === "main",
+          category: uploadCategory,
+          note: uploadNote,
+          thumbnail_url: "",
+          localPreview,
+          priority: uploadPriority,
+        }
+        setRefs(prev => [fallbackRef, ...prev])
       }
-      setRefs(prev => [newRef, ...prev])
-      setUploadNote("")
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    } catch {
-      // Still show locally even if backend failed
-      const fallbackRef: Reference = {
-        id: `local_${Date.now()}`,
-        title: file.name.replace(/\.[^/.]+$/, ""),
-        confidentiality: "internal",
-        is_pinned: uploadPriority === "main",
-        category: uploadCategory,
-        note: uploadNote,
-        thumbnail_url: "",
-        localPreview,
-        priority: uploadPriority,
-      }
-      setRefs(prev => [fallbackRef, ...prev])
-    } finally {
+    }
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    // single-file path ends here — finally block below handles setUploading
+    if (files.length > 0) {
       setUploading(false)
     }
   }
@@ -448,13 +462,34 @@ function ReferenceHubContent() {
                     <div
                       className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors py-8 gap-2"
                       onClick={() => fileInputRef.current?.click()}
+                      onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add("border-primary", "bg-primary/5") }}
+                      onDragLeave={e => { e.currentTarget.classList.remove("border-primary", "bg-primary/5") }}
+                      onDrop={async e => {
+                        e.preventDefault()
+                        e.currentTarget.classList.remove("border-primary", "bg-primary/5")
+                        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"))
+                        if (files.length === 0) return
+                        setUploading(true)
+                        for (const file of files) {
+                          const localPreview = await (new Promise<string>(resolve => {
+                            const r = new FileReader(); r.onload = () => resolve(r.result as string); r.onerror = () => resolve(""); r.readAsDataURL(file)
+                          }))
+                          try {
+                            const result = await apiUploadFile(file, PROJECT_ID, uploadCategory, uploadPriority, uploadNote)
+                            setRefs(prev => [{ id: result.id, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: uploadPriority==="main", category: uploadCategory, note: uploadNote, thumbnail_url: result.thumbnail_url||"", file_url: result.file_url||"", priority: uploadPriority, localPreview }, ...prev])
+                          } catch {
+                            setRefs(prev => [{ id:`local_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: false, category: uploadCategory, note: uploadNote, thumbnail_url:"", localPreview, priority: uploadPriority }, ...prev])
+                          }
+                        }
+                        setUploading(false)
+                      }}
                     >
                       {uploading
                         ? <><Loader2 className="w-8 h-8 text-teal-500 animate-spin" /><p className="text-sm text-muted-foreground">上傳中...</p></>
                         : <><ImageIcon className="w-8 h-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">點擊或拖曳上傳圖片</p><p className="text-xs text-muted-foreground">JPG, PNG, WEBP, GIF</p></>
                       }
                     </div>
-                    <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                    <input ref={fileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
 
                     {/* URL import */}
                     <div className="flex gap-2">

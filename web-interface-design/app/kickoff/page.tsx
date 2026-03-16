@@ -82,7 +82,7 @@ async function apiSaveBrief(brief: BriefForm) {
 // ── Component ───────────────────────────────────────────────────
 export default function KickoffPage() {
   const [chatbotOpen, setChatbotOpen] = useState(true)
-  const [panelW, setPanelW] = useState(400)
+  const [panelW, setPanelW] = useState(700)
   const panelRef = useRef<HTMLDivElement>(null)
   const resizeDir = useRef<string>("")
   const resizeStart = useRef({ x: 0, w: 400 })
@@ -295,8 +295,20 @@ ${briefLines}`,
       const ambiguousText = result.ambiguous_items?.length
         ? `\n\n⚠️ **需要釐清（根據您填入的內容）：**\n${result.ambiguous_items.map((s: string) => `- ${s}`).join("\n")}`
         : ""
-      const missingText = result.missing_items?.length
-        ? `\n\n❌ **必填欄位尚未填寫：**\n${result.missing_items.map((s: string) => `- ${s}`).join("\n")}`
+      // Only show missing items for fields that are actually empty in the brief
+      const actuallyMissing = (result.missing_items || []).filter((item: string) => {
+        const labelToKey: Record<string, keyof typeof brief> = {
+          "產品賣點": "selling_points", "產品賣點/重點訊息": "selling_points",
+          "情緒關鍵詞": "keywords", "風格關鍵字": "style", "色調/氛圍": "mood",
+          "專案名稱": "project_name", "客戶": "client",
+          "導演/創意總監": "director", "Supervisor": "supervisor",
+        }
+        const key = Object.entries(labelToKey).find(([label]) => item.includes(label))?.[1]
+        if (!key) return true  // unknown field, keep it
+        return !brief[key]?.trim()  // only show if actually empty
+      })
+      const missingText = actuallyMissing.length
+        ? `\n\n❌ **必填欄位尚未填寫：**\n${actuallyMissing.map((s: string) => `- ${s}`).join("\n")}`
         : ""
       const suggestionsText = result.suggestions?.length
         ? `\n\n💡 **建議：**\n${result.suggestions.map((s: string) => `- ${s}`).join("\n")}`
@@ -498,34 +510,24 @@ ${briefLines}`,
                   <Button
                     size="lg"
                     variant="outline"
-                    className={`flex-1 ${specAnalyzed ? "border-green-500 text-green-600 bg-green-500/10" : "bg-transparent"}`}
+                    className="flex-1 bg-transparent"
                     onClick={handleAnalyzeSpec}
                     disabled={analyzingSpec}
                   >
                     {analyzingSpec
                       ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />分析中...</>
-                      : specAnalyzed
-                        ? <><CheckCircle2 className="w-4 h-4 mr-2" />Spec 分析完成</>
-                        : <><Sparkles className="w-4 h-4 mr-2" />開始分析 Spec</>
+                      : <><Sparkles className="w-4 h-4 mr-2" />開始分析 Spec</>
                     }
                   </Button>
                   <Button
                     size="lg"
-                    className={`flex-1 transition-colors ${
-                      !specAnalyzed
-                        ? "opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted"
-                        : kickoffSubmitted
-                          ? "bg-green-600 hover:bg-green-700 text-white"
-                          : ""
-                    }`}
+                    className={`flex-1 transition-colors ${!specAnalyzed ? "opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted" : ""}`}
                     disabled={!specAnalyzed || submitting}
                     onClick={handleSubmit}
                   >
                     {submitting
                       ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />儲存中...</>
-                      : kickoffSubmitted
-                        ? <><CheckCircle2 className="w-4 h-4 mr-2" />Submitted</>
-                        : <><Send className="w-4 h-4 mr-2" />Submit & Save to DB</>
+                      : <><Send className="w-4 h-4 mr-2" />Submit & Save to DB</>
                     }
                   </Button>
                 </div>
