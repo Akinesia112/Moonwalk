@@ -10,13 +10,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import {
-  SlidersHorizontal, AlertCircle, CheckCircle2, ArrowLeftRight,
+  SlidersHorizontal, AlertCircle, CheckCircle2, ArrowLeftRight, LayoutList, Maximize2,
   Flag, MessageSquare, Send, ChevronRight, ChevronDown, ChevronUp,
   Bot, ZoomIn, ZoomOut, RotateCcw, Sparkles, Loader2, Save, ImageIcon, Upload, X as XIcon,
 } from "lucide-react"
 import { TopBar } from "@/components/top-bar"
 import { PipelineSidebar } from "@/components/pipeline-sidebar"
-import { RefCard } from "@/components/ref-card"
+import { RefCard, CATEGORY_COLOR, IMPORTANCE_COLOR } from "@/components/ref-card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -61,6 +61,7 @@ export default function ComparePage() {
   const [expandedAnnotation, setExpandedAnnotation] = useState<string | null>(null)
   const [compareSubmitted, setCompareSubmitted] = useState(false)
   const [deltaAnalyzing, setDeltaAnalyzing] = useState(false)
+  const [leftPanelMode, setLeftPanelMode] = useState<"expand" | "browse">("expand")
 
   // Vertical resize center (viewer vs delta list)
   const [topH, setTopH] = useState(55)
@@ -488,9 +489,11 @@ export default function ComparePage() {
                           Artworks
                           <Badge variant="secondary" className="text-[10px] h-4">{artworkList.length}</Badge>
                         </CardTitle>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artUploadRef.current?.click()} title="上傳 Artwork">
-                          <Upload className="w-3 h-3" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button size="sm" variant={leftPanelMode==="expand"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("expand")} title="展開模式"><Maximize2 className="w-3 h-3" /></Button>
+                          <Button size="sm" variant={leftPanelMode==="browse"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("browse")} title="收納模式"><LayoutList className="w-3 h-3" /></Button>
+                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artUploadRef.current?.click()} title="上傳 Artwork"><Upload className="w-3 h-3" /></Button>
+                        </div>
                       </div>
                       <input ref={artUploadRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => {
                         Array.from(e.target.files || []).forEach(file => {
@@ -532,25 +535,36 @@ export default function ComparePage() {
                           )}
                           {artworkList.map((art, idx) => (
                             <div key={art.id} className="relative group">
-                              <div
-                                className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork === idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
-                                onClick={() => { setSelectedArtwork(idx); setSelectedRef(0) }}
-                                onDoubleClick={() => {
-                                  setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${art.name}` }])
-                                  callAgent(`請觀察 Artwork「${art.name}」，分析它與目前選取的 Reference 的差距，並給出 2-3 個具體改進建議。`)
-                                }}
-                                title="雙擊匯入對話框討論"
-                              >
-                                <div className="aspect-video bg-muted overflow-hidden relative group">
-                                  {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                    <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">雙擊討論</span>
+                              {leftPanelMode === "expand" ? (
+                                /* ── Expand mode: large thumbnail card ── */
+                                <div
+                                  className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork === idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
+                                  onClick={() => { setSelectedArtwork(idx); setSelectedRef(0) }}
+                                  onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察 Artwork「${art.name}」，分析它與目前選取的 Reference 的差距，並給出 2-3 個具體改進建議。`) }}
+                                  title="雙擊匯入對話框討論"
+                                >
+                                  <div className="aspect-video bg-muted overflow-hidden relative">
+                                    {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                      <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">雙擊討論</span>
+                                    </div>
                                   </div>
+                                  <div className="p-1.5"><p className="text-[10px] font-medium truncate">{art.name}</p></div>
                                 </div>
-                                <div className="p-1.5">
-                                  <p className="text-[10px] font-medium truncate">{art.name}</p>
+                              ) : (
+                                /* ── Browse mode: compact row ── */
+                                <div
+                                  className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedArtwork === idx ? "bg-primary/10 border border-primary/30" : "hover:bg-muted border border-transparent"}`}
+                                  onClick={() => { setSelectedArtwork(idx); setSelectedRef(0) }}
+                                  onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察 Artwork「${art.name}」，分析它與目前選取的 Reference 的差距，並給出 2-3 個具體改進建議。`) }}
+                                  title="雙擊匯入對話框討論"
+                                >
+                                  <div className="w-10 h-7 rounded overflow-hidden shrink-0 bg-muted">
+                                    {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
+                                  </div>
+                                  <span className="text-[10px] font-medium flex-1 truncate">{art.name}</span>
                                 </div>
-                              </div>
+                              )}
                               <button
                                 className="absolute top-1 right-1 w-4 h-4 bg-black/70 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                 onClick={e => { e.stopPropagation(); setArtworks(p => p.filter(a => a.id !== art.id)) }}
@@ -583,6 +597,7 @@ export default function ComparePage() {
                         <Button size="sm" variant="ghost" className="h-6 w-6 p-0 shrink-0" onClick={() => refUploadRef.current?.click()} title="上傳 Reference">
                           <Upload className="w-3 h-3" />
                         </Button>
+                        {/* mode toggle is shared — no separate toggle needed; ref list mirrors artwork mode */}
                       </div>
                       <input ref={refUploadRef} type="file" accept="image/*" multiple className="hidden" onChange={e => {
                         Array.from(e.target.files || []).forEach(file => {
@@ -623,11 +638,27 @@ export default function ComparePage() {
                             </div>
                           )}
                           {currentRefs.filter(ref => !!ref.image).map((ref, rIdx) => (
-                            <div
-                              key={ref.id}
-                              className={`rounded-xl transition-all ${selectedRef === rIdx ? "ring-2 ring-amber-500 ring-offset-1" : "hover:ring-1 hover:ring-amber-500/50"}`}
-                              onClick={() => setSelectedRef(rIdx)}
-                            >
+                            leftPanelMode === "browse" ? (
+                              /* ── Browse mode: compact ref row ── */
+                              <div key={ref.id}
+                                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedRef === rIdx ? "bg-amber-500/10 border border-amber-500/30" : "hover:bg-muted border border-transparent"}`}
+                                onClick={() => setSelectedRef(rIdx)}
+                                onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${ref.name}${ref.category ? ` (${ref.category})` : ""}` }]); callAgent(`請分析 Reference「${ref.name}」與目前 Artwork 的差距。`) }}
+                              >
+                                <div className="w-10 h-7 rounded overflow-hidden shrink-0 bg-muted relative">
+                                  {ref.image && <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />}
+                                  {ref.category && <span className={`absolute top-0 left-0 text-[7px] font-semibold px-1 rounded-br leading-tight ${CATEGORY_COLOR[ref.category] ?? "bg-white/80 text-gray-800"}`}>{ref.category}</span>}
+                                </div>
+                                <span className="text-[10px] flex-1 truncate">{ref.name}</span>
+                                {ref.importance && <span className={`text-[8px] px-1 py-0.5 rounded ${IMPORTANCE_COLOR[ref.importance] ? IMPORTANCE_COLOR[ref.importance] : "bg-muted"}`}>{ref.importance}</span>}
+                              </div>
+                            ) : (
+                              /* ── Expand mode: RefCard ── */
+                              <div
+                                key={ref.id}
+                                className={`rounded-xl transition-all ${selectedRef === rIdx ? "ring-2 ring-amber-500 ring-offset-1" : "hover:ring-1 hover:ring-amber-500/50"}`}
+                                onClick={() => setSelectedRef(rIdx)}
+                              >
                               <RefCard
                                 data={{
                                   id: String(ref.id),
@@ -677,7 +708,8 @@ export default function ComparePage() {
                                 showSave={true}
                                 className="cursor-pointer"
                               />
-                            </div>
+                              </div>
+                            )
                           ))}
                         </div>
                       </ScrollArea>

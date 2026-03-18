@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { FileText, Upload, AlertCircle, CheckCircle2, AlertTriangle, Bot, ChevronRight, ChevronDown, ChevronUp, FileCheck, Sparkles, PenTool, MessageSquare, Eraser, Type, MousePointer, ZoomIn, ZoomOut, Circle, Square, Trash2, Undo2, ImageIcon, X, Tag, Plus, Send, Save, BookOpen, User, Loader2 } from "lucide-react"
+import { FileText, Upload, LayoutList, Maximize2, AlertCircle, CheckCircle2, AlertTriangle, Bot, ChevronRight, ChevronDown, ChevronUp, FileCheck, Sparkles, PenTool, MessageSquare, Eraser, Type, MousePointer, ZoomIn, ZoomOut, Circle, Square, Trash2, Undo2, ImageIcon, X, Tag, Plus, Send, Save, BookOpen, User, Loader2 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -108,6 +108,7 @@ export default function QAPage() {
   const [brushOpacity, setBrushOpacity] = useState(1)
   const [brushSize, setBrushSize] = useState(3)
   const [textFontSize, setTextFontSize] = useState(16)
+  const [textFont, setTextFont] = useState("sans-serif")
   const [textBold, setTextBold] = useState(false)
   const [textItalic, setTextItalic] = useState(false)
   const [showStrokeDD, setShowStrokeDD] = useState(false)
@@ -127,7 +128,13 @@ export default function QAPage() {
   const [canvasAnnotations, setCanvasAnnotations] = useState<CanvasAnn[]>([])
   const [selectedAnnIdx, setSelectedAnnIdx] = useState<number|null>(null)
   const undoStackRef = useRef<CanvasAnn[][]>([])
+  const [refAnnotations, setRefAnnotations] = useState<CanvasAnn[]>([])
+  const [selectedRefAnnIdx, setSelectedRefAnnIdx] = useState<number|null>(null)
+  const [activePanel, setActivePanel] = useState<"work"|"ref">("work")
+  const refUndoStackRef = useRef<CanvasAnn[][]>([])
+
   const [qaSubmitted, setQaSubmitted] = useState(false)
+  const [leftPanelMode, setLeftPanelMode] = useState<"browse" | "expand">("browse")
   const [noteDialogRef, setNoteDialogRef] = useState<{ name: string; note: string; preview?: string; category?: string; importance?: string } | null>(null)
   const [chatLoading, setChatLoading] = useState(false)
   // ── Artwork & Refs from sessionStorage ───────────────────────
@@ -301,20 +308,22 @@ export default function QAPage() {
   const [supervisorSpec, setSupervisorSpec] = useState("")
 
   // ── Brief/Specs ───────────────────────────────────────────────
+  const BRIEF_LABELS: Record<string, string> = {
+    project_name: "專案名稱", client: "客戶", director: "導演", supervisor: "Supervisor",
+    confidentiality: "密等", selling_points: "產品賣點", keywords: "情緒關鍵詞",
+    restrictions: "禁忌事項", style: "風格關鍵字", mood: "色調/氛圍",
+    worldview: "世界觀", supervisor_spec: "Supervisor Spec",
+  }
+
   const directorSpecs = (() => {
     try {
-      const b = JSON.parse(SS.get("kickoff_brief")||"{}")
-      return {
-        items: Object.entries(b).filter(([k,v]) => v && k !== "supervisor_spec").map(([k,v]) => `${k}: ${v}`),
-        technical: [{ label:"Resolution", value:"4K (3840x2160)" }, { label:"Frame Rate", value:"24fps" }, { label:"Color Space", value:"ACES" }],
-        priorities: [{ id:"P0", text:"光影方向對齊 Ref" }, { id:"P1", text:"構圖符合黃金比例" }, { id:"P2", text:"色溫暖調 4500-5000K" }],
-      }
+      const b = JSON.parse(SS.get("kickoff_brief") || "{}")
+      const items = Object.entries(b)
+        .filter(([, v]) => v && String(v).trim())
+        .map(([k, v]) => `${BRIEF_LABELS[k] || k}：${v}`)
+      return { items, technical: [], priorities: [] }
     } catch {
-      return {
-        items: ["主光源必須從右側照射", "保持品牌 Logo 清晰可見", "氛圍要 warm & cozy", "主角臉部需要明確高光"],
-        technical: [{ label:"Resolution", value:"4K (3840x2160)" }, { label:"Frame Rate", value:"24fps" }, { label:"Color Space", value:"ACES" }],
-        priorities: [{ id:"P0", text:"光影方向對齊 Ref" }, { id:"P1", text:"構圖符合黃金比例" }, { id:"P2", text:"色溫暖調 4500-5000K" }],
-      }
+      return { items: [], technical: [], priorities: [] }
     }
   })()
 
@@ -403,112 +412,181 @@ export default function QAPage() {
   // ── Canvas ────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
+  const refCanvasRef = useRef<HTMLCanvasElement>(null)
+  const refCanvasContainerRef = useRef<HTMLDivElement>(null)
   const drawingRef = useRef<{x:number;y:number}[]>([])
   const shapeStartRef = useRef<{x:number;y:number}|null>(null)
 
-  const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current; const container = canvasContainerRef.current
-    if (!canvas || !container) return
-    const rect = container.getBoundingClientRect()
-    const newW = Math.floor(rect.width); const newH = Math.floor(rect.height)
-    if (canvas.width !== newW || canvas.height !== newH) {
-      // Save image before resize
-      const ctx = canvas.getContext("2d")
-      const imgData = ctx?.getImageData(0, 0, canvas.width, canvas.height)
-      canvas.width = newW; canvas.height = newH
-      // Restore image after resize (annotations will be redrawn by effect)
-      if (imgData && ctx) ctx.putImageData(imgData, 0, 0)
-    }
-  }, [])
+  // ── Canvas: transparent overlay on artwork only ──────────────────
+  // Pattern: <img> shows artwork normally; <canvas> sits on top (pointer-events:auto)
+  // redrawCanvas draws ONLY annotations (transparent bg). Save merges both.
 
   const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext("2d"); if (!ctx) return
-    ctx.clearRect(0,0,canvas.width,canvas.height)
-    canvasAnnotations.forEach((ann, idx) => {
-      const lw = ann.lineWidth ?? 3
-      const op = ann.opacity ?? 1
-      ctx.save()
-      ctx.globalAlpha = op
-      ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = lw
+    ctx.clearRect(0, 0, canvas.width, canvas.height)   // keep transparent — img shows through
 
-      if (ann.type==="brush" && ann.points && ann.points.length>1) {
+    canvasAnnotations.forEach((ann, idx) => {
+      const lw = ann.lineWidth ?? 3; const op = ann.opacity ?? 1
+      ctx.save(); ctx.globalAlpha = op; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round"
+
+      if (ann.type === "brush" && ann.points && ann.points.length > 1) {
         ctx.strokeStyle = ann.color; ctx.beginPath()
         const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
-        if (pts.length > 1) { ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke() }
-      } else if (ann.type==="eraser" && ann.points) {
-        ctx.globalCompositeOperation="destination-out"; ctx.lineWidth=lw*2
+        ctx.moveTo(pts[0].x, pts[0].y); for (let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke()
+      } else if (ann.type === "eraser" && ann.points) {
+        ctx.globalCompositeOperation = "destination-out"; ctx.lineWidth = lw * 2
         const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
-        if (pts.length>1) { ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke() }
-        ctx.globalCompositeOperation="source-over"
-      } else if (ann.type==="text" && ann.text && ann.x!=null && ann.y!=null) {
-        const fontSize = (ann as any).fontSize ?? 16
-        const bold = (ann as any).bold ? 'bold ' : ''
-        const italic = (ann as any).italic ? 'italic ' : ''
-        ctx.font=`${bold}${italic}${fontSize}px sans-serif`
-        const pad=4; const m=ctx.measureText(ann.text)
-        ctx.fillStyle="rgba(255,255,255,0.85)"; ctx.fillRect(ann.x-pad,ann.y-fontSize-pad,m.width+pad*2,fontSize+pad*2)
-        ctx.fillStyle=ann.color; ctx.fillText(ann.text,ann.x,ann.y)
-      } else if (ann.type==="circle" && ann.points) {
+        if (pts.length > 1) { ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke() }
+        ctx.globalCompositeOperation = "source-over"
+      } else if (ann.type === "text" && ann.text && ann.x != null && ann.y != null) {
+        const fs = (ann as any).fontSize ?? 16
+        const font = (ann as any).font ?? "sans-serif"
+        const bold = (ann as any).bold ? "bold " : ""
+        const italic = (ann as any).italic ? "italic " : ""
+        ctx.font = `${bold}${italic}${fs}px ${font}`
+        ctx.textBaseline = "top"   // y is TOP of text, consistent with textInput position
+        const m = ctx.measureText(ann.text)
+        const pad = 6
+        // White bg
+        ctx.save(); ctx.globalAlpha = 0.88; ctx.fillStyle = "#ffffff"
+        ctx.fillRect(ann.x - pad, ann.y - pad, m.width + pad*2, fs + pad*2); ctx.restore()
+        ctx.save(); ctx.strokeStyle = "#aaaaaa"; ctx.lineWidth = 1
+        ctx.strokeRect(ann.x - pad, ann.y - pad, m.width + pad*2, fs + pad*2); ctx.restore()
+        ctx.fillStyle = ann.color
+        ctx.fillText(ann.text, ann.x, ann.y)
+        ctx.textBaseline = "alphabetic"  // reset
+      } else if (ann.type === "circle" && ann.points) {
         const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
-        if (pts.length>=2) {
-          const dx=pts[1].x-pts[0].x; const dy=pts[1].y-pts[0].y; const r=Math.sqrt(dx*dx+dy*dy)
+        if (pts.length >= 2) {
+          const dx=pts[1].x-pts[0].x, dy=pts[1].y-pts[0].y, r=Math.sqrt(dx*dx+dy*dy)
           if (r > 0) {
-            ctx.beginPath(); ctx.arc(pts[0].x,pts[0].y,r,0,2*Math.PI)
-            if (ann.fillColor && ann.fillColor!=="transparent") { ctx.fillStyle=ann.fillColor; ctx.fill() }
-            ctx.strokeStyle=ann.color; ctx.stroke()
+            ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, r, 0, 2*Math.PI)
+            if (ann.fillColor && ann.fillColor !== "transparent") { ctx.fillStyle = ann.fillColor; ctx.fill() }
+            ctx.strokeStyle = ann.color; ctx.stroke()
           }
         }
-      } else if (ann.type==="rect" && ann.points) {
+      } else if (ann.type === "rect" && ann.points) {
         const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
-        if (pts.length>=2) {
-          const x=Math.min(pts[0].x,pts[1].x); const y=Math.min(pts[0].y,pts[1].y)
-          const w=Math.abs(pts[1].x-pts[0].x); const h=Math.abs(pts[1].y-pts[0].y)
-          if (w>0 && h>0) {
-            ctx.beginPath(); ctx.rect(x,y,w,h)
-            if (ann.fillColor && ann.fillColor!=="transparent") { ctx.fillStyle=ann.fillColor; ctx.fill() }
-            ctx.strokeStyle=ann.color; ctx.stroke()
+        if (pts.length >= 2) {
+          const x=Math.min(pts[0].x,pts[1].x), y=Math.min(pts[0].y,pts[1].y)
+          const w=Math.abs(pts[1].x-pts[0].x), h=Math.abs(pts[1].y-pts[0].y)
+          if (w > 0 && h > 0) {
+            ctx.beginPath(); ctx.rect(x, y, w, h)
+            if (ann.fillColor && ann.fillColor !== "transparent") { ctx.fillStyle = ann.fillColor; ctx.fill() }
+            ctx.strokeStyle = ann.color; ctx.stroke()
           }
         }
       }
+
       // Selection highlight
       if (idx === selectedAnnIdx) {
-        ctx.save()
-        ctx.strokeStyle = "#7c3aed"; ctx.lineWidth = 2; ctx.setLineDash([4,3]); ctx.globalAlpha = 0.9
+        ctx.save(); ctx.strokeStyle = "#7c3aed"; ctx.lineWidth = 2; ctx.setLineDash([4,3]); ctx.globalAlpha = 0.9
         if (ann.type === "text" && ann.x != null && ann.y != null) {
-          ctx.strokeRect(ann.x - 4, ann.y - 20, 120, 26)
+          const fs = (ann as any).fontSize ?? 16; const fnt = (ann as any).font ?? "sans-serif"
+          ctx.font = `${fs}px ${fnt}`; ctx.textBaseline = "top"
+          const mw = ctx.measureText(ann.text??"").width
+          const pad = 6
+          ctx.strokeRect(ann.x - pad, ann.y - pad, mw + pad*2, fs + pad*2)
+          ctx.textBaseline = "alphabetic"
         } else if ((ann.type === "circle" || ann.type === "rect") && ann.points) {
           const spts = ann.points.filter(Boolean) as {x:number;y:number}[]
-          if (spts.length >= 2) {
-            const sx = Math.min(spts[0].x,spts[1].x)-6, sy = Math.min(spts[0].y,spts[1].y)-6
-            ctx.strokeRect(sx, sy, Math.abs(spts[1].x-spts[0].x)+12, Math.abs(spts[1].y-spts[0].y)+12)
-          }
+          if (spts.length >= 2) { ctx.strokeRect(Math.min(spts[0].x,spts[1].x)-6, Math.min(spts[0].y,spts[1].y)-6, Math.abs(spts[1].x-spts[0].x)+12, Math.abs(spts[1].y-spts[0].y)+12) }
         } else if (ann.type === "brush" && ann.points) {
           const bpts = ann.points.filter(Boolean) as {x:number;y:number}[]
-          if (bpts.length > 0) {
-            const xs = bpts.map(p=>p.x), ys = bpts.map(p=>p.y)
-            ctx.strokeRect(Math.min(...xs)-6, Math.min(...ys)-6, Math.max(...xs)-Math.min(...xs)+12, Math.max(...ys)-Math.min(...ys)+12)
-          }
+          if (bpts.length > 0) { const xs=bpts.map(p=>p.x), ys=bpts.map(p=>p.y); ctx.strokeRect(Math.min(...xs)-6,Math.min(...ys)-6,Math.max(...xs)-Math.min(...xs)+12,Math.max(...ys)-Math.min(...ys)+12) }
         }
         ctx.restore()
       }
       ctx.restore()
     })
   }, [canvasAnnotations, selectedAnnIdx])
-  useEffect(() => { redrawCanvas() }, [canvasAnnotations, selectedAnnIdx, redrawCanvas])
-  useEffect(() => { resizeCanvas(); redrawCanvas() }, [resizeCanvas, redrawCanvas, selectedArtwork, selectedRef])
-  useEffect(() => {
-    const obs = new ResizeObserver(() => { resizeCanvas(); redrawCanvas() })
-    if (canvasContainerRef.current) obs.observe(canvasContainerRef.current)
-    return () => obs.disconnect()
-  }, [resizeCanvas, redrawCanvas])
 
-  const getCanvasPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  useEffect(() => { redrawCanvas() }, [canvasAnnotations, selectedAnnIdx, redrawCanvas])
+
+  const redrawRefCanvas = useCallback(() => {
+    const canvas = refCanvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext("2d"); if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    refAnnotations.forEach((ann, idx) => {
+      const lw = ann.lineWidth ?? 3; const op = ann.opacity ?? 1
+      ctx.save(); ctx.globalAlpha = op; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round"
+      if (ann.type === "brush" && ann.points && ann.points.length > 1) {
+        ctx.strokeStyle = ann.color; ctx.beginPath()
+        const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
+        ctx.moveTo(pts[0].x, pts[0].y); for (let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke()
+      } else if (ann.type === "eraser" && ann.points) {
+        ctx.globalCompositeOperation = "destination-out"; ctx.lineWidth = lw * 2
+        const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
+        if (pts.length > 1) { ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke() }
+        ctx.globalCompositeOperation = "source-over"
+      } else if (ann.type === "text" && ann.text && ann.x != null && ann.y != null) {
+        const fs = (ann as any).fontSize ?? 16; const font = (ann as any).font ?? "sans-serif"
+        const bold = (ann as any).bold ? "bold " : ""; const italic = (ann as any).italic ? "italic " : ""
+        ctx.font = `${bold}${italic}${fs}px ${font}`; ctx.textBaseline = "top"
+        const m = ctx.measureText(ann.text); const pad = 6
+        ctx.save(); ctx.globalAlpha = 0.88; ctx.fillStyle = "#ffffff"; ctx.fillRect(ann.x-pad, ann.y-pad, m.width+pad*2, fs+pad*2); ctx.restore()
+        ctx.save(); ctx.strokeStyle = "#aaaaaa"; ctx.lineWidth = 1; ctx.strokeRect(ann.x-pad, ann.y-pad, m.width+pad*2, fs+pad*2); ctx.restore()
+        ctx.fillStyle = ann.color; ctx.fillText(ann.text, ann.x, ann.y); ctx.textBaseline = "alphabetic"
+      } else if (ann.type === "circle" && ann.points) {
+        const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
+        if (pts.length >= 2) { const dx=pts[1].x-pts[0].x,dy=pts[1].y-pts[0].y,r=Math.sqrt(dx*dx+dy*dy); if(r>0){ctx.beginPath();ctx.arc(pts[0].x,pts[0].y,r,0,2*Math.PI);if(ann.fillColor&&ann.fillColor!=="transparent"){ctx.fillStyle=ann.fillColor;ctx.fill()};ctx.strokeStyle=ann.color;ctx.stroke()} }
+      } else if (ann.type === "rect" && ann.points) {
+        const pts = ann.points.filter(Boolean) as {x:number;y:number}[]
+        if (pts.length >= 2) { const x=Math.min(pts[0].x,pts[1].x),y=Math.min(pts[0].y,pts[1].y),w=Math.abs(pts[1].x-pts[0].x),h=Math.abs(pts[1].y-pts[0].y); if(w>0&&h>0){ctx.beginPath();ctx.rect(x,y,w,h);if(ann.fillColor&&ann.fillColor!=="transparent"){ctx.fillStyle=ann.fillColor;ctx.fill()};ctx.strokeStyle=ann.color;ctx.stroke()} }
+      }
+      if (idx === selectedRefAnnIdx) {
+        ctx.save(); ctx.strokeStyle="#7c3aed"; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.globalAlpha=0.9
+        if(ann.type==="text"&&ann.x!=null&&ann.y!=null){const fs=(ann as any).fontSize??16;ctx.font=`${fs}px sans-serif`;const mw=ctx.measureText(ann.text??"").width;ctx.strokeRect(ann.x-6,ann.y-fs*1.2,mw+12,fs*1.2+6)}
+        else if((ann.type==="circle"||ann.type==="rect")&&ann.points){const spts=ann.points.filter(Boolean) as {x:number;y:number}[];if(spts.length>=2){ctx.strokeRect(Math.min(spts[0].x,spts[1].x)-6,Math.min(spts[0].y,spts[1].y)-6,Math.abs(spts[1].x-spts[0].x)+12,Math.abs(spts[1].y-spts[0].y)+12)}}
+        ctx.restore()
+      }
+      ctx.restore()
+    })
+  }, [refAnnotations, selectedRefAnnIdx])
+  useEffect(() => { redrawRefCanvas() }, [refAnnotations, selectedRefAnnIdx, redrawRefCanvas])
+
+  // Annotation store keys + derived IDs
+  const annotationStoreKey = (id: string) => `qa_canvas_ann__${id}`
+  const refAnnotationStoreKey = (id: string) => `qa_ref_ann__${id}`
+  const currentArtId = artworks[selectedArtwork]?.id || ""
+  const currentRefId = currentArt?.refs[selectedRef]?.id || ""
+
+  useEffect(() => {
+    // Load saved annotations for this artwork
+    if (!currentArtId) return
+    try {
+      const saved = sessionStorage.getItem(annotationStoreKey(currentArtId))
+      setCanvasAnnotations(saved ? JSON.parse(saved) : [])
+    } catch { setCanvasAnnotations([]) }
+    undoStackRef.current = []
+  }, [currentArtId])
+
+  // Auto-save annotations on every change
+  useEffect(() => {
+    if (!currentArtId) return
+    try { sessionStorage.setItem(annotationStoreKey(currentArtId), JSON.stringify(canvasAnnotations)) } catch {}
+  }, [canvasAnnotations, currentArtId])
+
+  // Load/save ref annotations
+  useEffect(() => {
+    if (!currentRefId) return
+    try {
+      const saved = sessionStorage.getItem(refAnnotationStoreKey(currentRefId))
+      setRefAnnotations(saved ? JSON.parse(saved) : [])
+    } catch { setRefAnnotations([]) }
+    refUndoStackRef.current = []
+  }, [currentRefId])
+
+  useEffect(() => {
+    if (!currentRefId) return
+    try { sessionStorage.setItem(refAnnotationStoreKey(currentRefId), JSON.stringify(refAnnotations)) } catch {}
+  }, [refAnnotations, currentRefId])
+
+    const getCanvasPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!
-    // The canvas is scaled by artworkZoom/100 visually, so getBoundingClientRect reflects the scaled size.
-    // We need coordinates in the canvas's own pixel space (unscaled).
     const rect = canvas.getBoundingClientRect()
-    // rect already reflects the CSS transform scale
+    // canvas CSS size != canvas pixel size (naturalWidth/naturalHeight), so scale coords
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
     return { x, y, cssX: e.clientX - rect.left, cssY: e.clientY - rect.top }
@@ -530,53 +608,74 @@ export default function QAPage() {
     return false
   }
 
+  const getRefCanvasPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = refCanvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    return { x, y, cssX: e.clientX - rect.left, cssY: e.clientY - rect.top }
+  }
+
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const isRef = activePanel === "ref"
+    const annotations = isRef ? refAnnotations : canvasAnnotations
     if (canvasTool === "pointer") {
-      const pos = getCanvasPos(e)
-      const idx = canvasAnnotations.map((a, i) => ({ a, i })).reverse().find(({ a }) => hitTest(a, pos.x, pos.y))?.i ?? null
-      setSelectedAnnIdx(idx)
+      const pos = isRef ? getRefCanvasPos(e) : getCanvasPos(e)
+      const idx = annotations.map((a, i) => ({ a, i })).reverse().find(({ a }) => hitTest(a, pos.x, pos.y))?.i ?? null
+      isRef ? setSelectedRefAnnIdx(idx) : setSelectedAnnIdx(idx)
       return
     }
-    if (canvasTool==="text") { const p=getCanvasPos(e); setTextInputPos({x:p.x,y:p.y,cssX:p.cssX,cssY:p.cssY}); setTextInputValue(""); return }
+    if (canvasTool==="text") {
+      const p = isRef ? getRefCanvasPos(e) : getCanvasPos(e)
+      setTextInputPos({x:p.x,y:p.y,cssX:p.cssX,cssY:p.cssY})
+      setTextInputValue("")
+      return
+    }
     e.preventDefault()
-    isDrawingRef.current = true; const pos=getCanvasPos(e); drawingRef.current=[pos]
+    isDrawingRef.current = true
+    const pos = isRef ? getRefCanvasPos(e) : getCanvasPos(e)
+    drawingRef.current=[pos]
     if (canvasTool==="circle"||canvasTool==="rect") shapeStartRef.current={...pos}
   }
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawingRef.current||canvasTool==="pointer"||canvasTool==="text") return
-    const pos=getCanvasPos(e)
+    const pos = activePanel==="ref" ? getRefCanvasPos(e) : getCanvasPos(e)
     if (canvasTool==="brush") {
-      drawingRef.current.push(pos); const ctx=canvasRef.current?.getContext("2d")
-      if (ctx&&drawingRef.current.length>1) { ctx.strokeStyle=brushColor; ctx.lineWidth=3; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); const prev=drawingRef.current[drawingRef.current.length-2]; ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke() }
+      drawingRef.current.push(pos); const activeRef = activePanel==="ref"; const ctx=(activeRef?refCanvasRef:canvasRef).current?.getContext("2d")
+      if (ctx&&drawingRef.current.length>1) { ctx.strokeStyle=brushColor; ctx.lineWidth=brushSize; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); const prev=drawingRef.current[drawingRef.current.length-2]; ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke() }
     } else if (canvasTool==="eraser") {
-      drawingRef.current.push(pos); const ctx=canvasRef.current?.getContext("2d")
-      if (ctx) { ctx.globalCompositeOperation="destination-out"; ctx.lineWidth=20; ctx.lineCap="round"; if(drawingRef.current.length>1){const prev=drawingRef.current[drawingRef.current.length-2]; ctx.beginPath(); ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke()}; ctx.globalCompositeOperation="source-over"; ctx.lineWidth=3 }
+      drawingRef.current.push(pos); const activeRef = activePanel==="ref"; const ctx=(activeRef?refCanvasRef:canvasRef).current?.getContext("2d")
+      if (ctx) { ctx.globalCompositeOperation="destination-out"; ctx.lineWidth=brushSize*3; ctx.lineCap="round"; if(drawingRef.current.length>1){const prev=drawingRef.current[drawingRef.current.length-2]; ctx.beginPath(); ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke()}; ctx.globalCompositeOperation="source-over" }
     } else if ((canvasTool==="circle"||canvasTool==="rect")&&shapeStartRef.current) {
-      redrawCanvas(); const ctx=canvasRef.current?.getContext("2d")
+      const activeRef = activePanel==="ref"; if(activeRef) redrawRefCanvas(); else redrawCanvas(); const ctx=(activeRef?refCanvasRef:canvasRef).current?.getContext("2d")
       if (ctx) { ctx.strokeStyle=brushColor; ctx.lineWidth=3; ctx.setLineDash([5,5]); if(canvasTool==="circle"){const dx=pos.x-shapeStartRef.current.x; const dy=pos.y-shapeStartRef.current.y; ctx.beginPath(); ctx.arc(shapeStartRef.current.x,shapeStartRef.current.y,Math.sqrt(dx*dx+dy*dy),0,2*Math.PI); ctx.stroke()}else{const x=Math.min(shapeStartRef.current.x,pos.x); const y=Math.min(shapeStartRef.current.y,pos.y); ctx.strokeRect(x,y,Math.abs(pos.x-shapeStartRef.current.x),Math.abs(pos.y-shapeStartRef.current.y))}; ctx.setLineDash([]) }
     }
   }
   const handleCanvasMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawingRef.current) return
     isDrawingRef.current = false
-    const pos = getCanvasPos(e)
-    undoStackRef.current = [...undoStackRef.current.slice(-20), [...canvasAnnotations]]
+    const isRef = activePanel === "ref"
+    const pos = isRef ? getRefCanvasPos(e) : getCanvasPos(e)
     const props = { color: brushColor, fillColor, opacity: brushOpacity, lineWidth: brushSize }
+    const push = isRef
+      ? (fn: (p: CanvasAnn[]) => CanvasAnn[]) => { refUndoStackRef.current = [...refUndoStackRef.current.slice(-20), [...refAnnotations]]; setRefAnnotations(fn) }
+      : (fn: (p: CanvasAnn[]) => CanvasAnn[]) => { undoStackRef.current = [...undoStackRef.current.slice(-20), [...canvasAnnotations]]; setCanvasAnnotations(fn) }
     if (canvasTool==="brush" && drawingRef.current.length>1)
-      pushAnnotation(p=>[...p,{type:"brush",points:[...drawingRef.current],...props}])
+      push(p=>[...p,{type:"brush",points:[...drawingRef.current],...props}])
     else if (canvasTool==="eraser" && drawingRef.current.length>1)
-      pushAnnotation(p=>[...p,{type:"eraser",points:[...drawingRef.current],color:"white",lineWidth:brushSize*2,opacity:1}])
-    else if (canvasTool==="circle" && shapeStartRef.current) {
-      const start = {...shapeStartRef.current}
-      pushAnnotation(p=>[...p,{type:"circle",points:[start,{...pos}],...props}])
-    } else if (canvasTool==="rect" && shapeStartRef.current) {
-      const start = {...shapeStartRef.current}
-      pushAnnotation(p=>[...p,{type:"rect",points:[start,{...pos}],...props}])
-    }
+      push(p=>[...p,{type:"eraser",points:[...drawingRef.current],color:"white",lineWidth:brushSize*2,opacity:1}])
+    else if (canvasTool==="circle" && shapeStartRef.current)
+      push(p=>[...p,{type:"circle",points:[{...shapeStartRef.current!},{...pos}],...props}])
+    else if (canvasTool==="rect" && shapeStartRef.current)
+      push(p=>[...p,{type:"rect",points:[{...shapeStartRef.current!},{...pos}],...props}])
     drawingRef.current=[]; shapeStartRef.current=null
   }
   const handleTextSubmit = () => {
-    if (textInputPos&&textInputValue.trim()) pushAnnotation(p=>[...p,{type:"text",text:textInputValue,x:textInputPos.x,y:textInputPos.y,color:brushColor,opacity:brushOpacity,lineWidth:brushSize,fontSize:textFontSize,bold:textBold,italic:textItalic} as any])
+    if (textInputPos&&textInputValue.trim()) {
+      const ann = {type:"text",text:textInputValue,x:textInputPos.x,y:textInputPos.y,color:brushColor,opacity:brushOpacity,lineWidth:brushSize,fontSize:textFontSize,font:textFont,bold:textBold,italic:textItalic} as any
+      if (activePanel === "ref") { refUndoStackRef.current = [...refUndoStackRef.current.slice(-20), [...refAnnotations]]; setRefAnnotations(p=>[...p,ann]) }
+      else { undoStackRef.current = [...undoStackRef.current.slice(-20), [...canvasAnnotations]]; setCanvasAnnotations(p=>[...p,ann]) }
+    }
     setTextInputPos(null); setTextInputValue("")
   }
 
@@ -651,7 +750,11 @@ export default function QAPage() {
                         <ImageIcon className="w-3.5 h-3.5 text-teal-600" />
                         Artworks ({artworks.length})
                       </CardTitle>
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artworkFileRef.current?.click()} title="上傳 Artwork"><Upload className="w-3 h-3" /></Button>
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant={leftPanelMode==="browse"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("browse")} title="收納瀏覽模式"><LayoutList className="w-3 h-3" /></Button>
+                        <Button size="sm" variant={leftPanelMode==="expand"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("expand")} title="展開模式"><Maximize2 className="w-3 h-3" /></Button>
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artworkFileRef.current?.click()} title="上傳 Artwork"><Upload className="w-3 h-3" /></Button>
+                      </div>
                     </div>
                     <input ref={artworkFileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { handleArtworkUpload(Array.from(e.target.files||[])); e.target.value="" }} />
                   </CardHeader>
@@ -673,28 +776,45 @@ export default function QAPage() {
                         )}
                         {artworks.map((art, idx) => (
                           <div key={art.id}>
-                            <div
-                              className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedArtwork===idx ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted border border-transparent'}`}
-                              onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork===idx?null:idx) }}
-                              onDoubleClick={e => {
-                                e.stopPropagation()
-                                setChatMessages(p => [...p, { role:"user", content: `[討論 Artwork] ${art.name}` }])
-                                callAgent(`請觀察這張 Artwork「${art.name}」，分析它目前的光影、構圖、色彩與 Reference 的差距，並給出 2-3 個具體改進建議。`)
-                              }}
-                              title="雙擊匯入對話框討論"
-                            >
-                              {art.image ? (
-                                <div className="w-10 h-7 rounded overflow-hidden shrink-0">
-                                  <img src={art.image} alt={art.name} className="w-full h-full object-cover" />
+                            {leftPanelMode === "expand" ? (
+                              /* ── Expand mode: large thumbnail ── */
+                              <div className="relative group mb-1">
+                                <div
+                                  className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork===idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
+                                  onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork===idx?null:idx) }}
+                                  onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察這張 Artwork「${art.name}」，分析它與 Reference 的差距，給出具體改進建議。`) }}
+                                  title="雙擊匯入對話框討論"
+                                >
+                                  <div className="aspect-video bg-muted overflow-hidden relative">
+                                    {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
+                                  </div>
+                                  <div className="p-1.5 flex items-center justify-between">
+                                    <p className="text-[10px] font-medium truncate">{art.name}</p>
+                                    <ChevronDown className={`w-3 h-3 transition-transform shrink-0 ${expandedArtwork===idx?'rotate-180':''}`} onClick={e => { e.stopPropagation(); setExpandedArtwork(expandedArtwork===idx?null:idx) }} />
+                                  </div>
                                 </div>
-                              ) : (
-                                <div className="w-10 h-7 rounded shrink-0 bg-muted flex items-center justify-center">
-                                  <ImageIcon className="w-3 h-3 text-muted-foreground" />
-                                </div>
-                              )}
-                              <span className="text-[10px] font-medium flex-1 truncate">{art.name}</span>
-                              <ChevronDown className={`w-3 h-3 transition-transform shrink-0 ${expandedArtwork===idx?'rotate-180':''}`} />
-                            </div>
+                              </div>
+                            ) : (
+                              /* ── Browse mode: compact row ── */
+                              <div
+                                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedArtwork===idx ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted border border-transparent'}`}
+                                onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork===idx?null:idx) }}
+                                onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察這張 Artwork「${art.name}」，分析它與 Reference 的差距，給出具體改進建議。`) }}
+                                title="雙擊匯入對話框討論"
+                              >
+                                {art.image ? (
+                                  <div className="w-10 h-7 rounded overflow-hidden shrink-0">
+                                    <img src={art.image} alt={art.name} className="w-full h-full object-cover" />
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-7 rounded shrink-0 bg-muted flex items-center justify-center">
+                                    <ImageIcon className="w-3 h-3 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <span className="text-[10px] font-medium flex-1 truncate">{art.name}</span>
+                                <ChevronDown className={`w-3 h-3 transition-transform shrink-0 ${expandedArtwork===idx?'rotate-180':''}`} />
+                              </div>
+                            )}
                             {expandedArtwork === idx && art.refs.length > 0 && (
                               <div className="ml-3 pl-2 border-l-2 border-primary/20 space-y-0.5 mt-0.5 mb-1">
                                 {art.refs.filter(r => r.image).map((ref, rIdx) => (
@@ -753,9 +873,9 @@ export default function QAPage() {
               <div className="w-1.5 shrink-0 cursor-col-resize hover:bg-primary/30 rounded transition-colors self-stretch mx-1" onMouseDown={startHDrag("left")} />
 
               {/* CENTER: Canvas + Metrics */}
-              <div className="flex-1 min-w-0 flex flex-col gap-3 overflow-y-auto" style={{ height: COL_HEIGHT }}>
+              <div className="flex-1 min-w-0 flex flex-col" style={{ height: COL_HEIGHT }}>
                 {/* Canvas Card */}
-                <Card className="flex flex-col min-h-0 border-teal-500/30 overflow-hidden" style={{ flex:'0 1 auto', maxHeight:'48%', minHeight:0 }}>
+                <Card className="flex flex-col flex-1 min-h-0 border-teal-500/30 overflow-hidden">
                   <CardHeader className="pb-1 shrink-0 py-2">
                     <div className="flex items-center justify-between">
                       <div>
@@ -834,14 +954,43 @@ export default function QAPage() {
                         </div>
                         {canvasTool === "text" && (<>
                           <div className="w-px h-4 bg-border mx-0.5" />
+                          <select value={textFont} onChange={e=>setTextFont(e.target.value)} className="h-6 text-[9px] border rounded px-1 bg-background">
+                            <option value="sans-serif">Sans-serif</option>
+                            <option value="serif">Serif</option>
+                            <option value="monospace">Mono</option>
+                            <option value="cursive">Cursive</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Impact">Impact</option>
+                          </select>
                           <span className="text-[9px] text-muted-foreground">字號</span>
-                          <input type="number" min={8} max={72} value={textFontSize} className="w-10 h-6 text-xs border rounded px-1 text-center" onKeyDown={e=>e.stopPropagation()} onChange={e=>{const v=Number(e.target.value);if(!isNaN(v)&&v>0)setTextFontSize(Math.max(8,Math.min(72,v)))}} />
+                          <input type="number" min={8} max={120} value={textFontSize} className="w-10 h-6 text-xs border rounded px-1 text-center" onKeyDown={e=>e.stopPropagation()} onChange={e=>{const v=Number(e.target.value);if(!isNaN(v)&&v>0)setTextFontSize(Math.max(8,Math.min(120,v)))}} />
                           <button type="button" className={`h-6 w-6 rounded text-xs font-bold border transition-colors ${textBold?'bg-primary text-primary-foreground':'hover:bg-muted'}`} onClick={()=>setTextBold(p=>!p)}>B</button>
                           <button type="button" className={`h-6 w-6 rounded text-xs italic border transition-colors ${textItalic?'bg-primary text-primary-foreground':'hover:bg-muted'}`} onClick={()=>setTextItalic(p=>!p)}>I</button>
                         </>)}
                         <div className="w-px h-5 bg-border mx-1" />
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="復原" onClick={() => { const prev = undoStackRef.current.pop(); if (prev !== undefined) setCanvasAnnotations(prev) }}><Undo2 className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="全部清除" onClick={() => { undoStackRef.current = [...undoStackRef.current.slice(-20), [...canvasAnnotations]]; setCanvasAnnotations([]) }}><Trash2 className="w-3.5 h-3.5" /></Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="復原上一步" onClick={() => {
+                          if (activePanel==="ref") { const prev=refUndoStackRef.current.pop(); if(prev!==undefined) setRefAnnotations(prev) }
+                          else { const prev=undoStackRef.current.pop(); if(prev!==undefined) setCanvasAnnotations(prev) }
+                        }}><Undo2 className="w-3.5 h-3.5" /></Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="全部清除" onClick={() => {
+                          if (activePanel==="ref") { refUndoStackRef.current=[...refUndoStackRef.current.slice(-20),[...refAnnotations]]; setRefAnnotations([]) }
+                          else { undoStackRef.current=[...undoStackRef.current.slice(-20),[...canvasAnnotations]]; setCanvasAnnotations([]) }
+                        }}><Trash2 className="w-3.5 h-3.5" /></Button>
+                        <div className="w-px h-5 bg-border mx-0.5" />
+                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-teal-600 hover:bg-teal-700 text-white" title="下載標註圖" onClick={() => {
+                          const canvas = canvasRef.current
+                          const img = canvasContainerRef.current?.querySelector("img") as HTMLImageElement | null
+                          if (!canvas || !img) return
+                          const off = document.createElement("canvas")
+                          off.width = canvas.width; off.height = canvas.height
+                          const ctx = off.getContext("2d")!
+                          ctx.drawImage(img, 0, 0, off.width, off.height)
+                          ctx.drawImage(canvas, 0, 0)
+                          const link = document.createElement("a"); link.download = `${currentArt?.name||"review"}_annotated.png`; link.href = off.toDataURL("image/png"); document.body.appendChild(link); link.click(); document.body.removeChild(link)
+                        }}>
+                          <Save className="w-3.5 h-3.5" />儲存圖片
+                        </Button>
                       </div>
                       <div className="flex items-center gap-1">
                         <Badge variant="outline" className="text-[8px] h-4 bg-blue-500/10 text-blue-600 border-blue-500/30">Work</Badge>
@@ -895,65 +1044,105 @@ export default function QAPage() {
                           </div>
                           <ScrollArea className="flex-1 min-h-0">
                             <div className="p-2 space-y-2">
-                              <div><h4 className="text-[10px] font-semibold text-muted-foreground mb-1">Supervisor Specs</h4><ul className="space-y-0.5" suppressHydrationWarning>{hydrated && directorSpecs.items.slice(0,8).map((item,i) => <li key={i} className="text-[10px] flex items-start gap-1"><span className="text-teal-600 mt-0.5 shrink-0">•</span><span>{item}</span></li>)}</ul></div>
-                              <div><h4 className="text-[10px] font-semibold text-muted-foreground mb-1">Technical</h4><ul className="space-y-0.5" suppressHydrationWarning>{hydrated && directorSpecs.technical.map((t,i) => <li key={i} className="text-[10px] flex items-start gap-1"><span className="text-teal-600 mt-0.5 shrink-0">•</span><span>{t.label}: {t.value}</span></li>)}</ul></div>
-                              <div><h4 className="text-[10px] font-semibold text-muted-foreground mb-1">Priorities</h4><ul className="space-y-0.5" suppressHydrationWarning>{hydrated && directorSpecs.priorities.map(p => <li key={p.id} className="text-[10px] flex items-start gap-1"><span className="text-teal-600 mt-0.5 shrink-0">•</span><span>{p.id}: {p.text}</span></li>)}</ul></div>
+                              <div><h4 className="text-[10px] font-semibold text-muted-foreground mb-1">Supervisor Specs</h4><ul className="space-y-0.5" suppressHydrationWarning>{hydrated && directorSpecs.items.map((item,i) => <li key={i} className="text-[10px] flex items-start gap-1"><span className="text-teal-600 mt-0.5 shrink-0">•</span><span>{item}</span></li>)}</ul></div>
+
                             </div>
                           </ScrollArea>
                         </div>
                       )}
 
                       {/* Canvas center */}
-                      <div className="flex-1 relative overflow-hidden bg-neutral-900 min-w-0 flex flex-col" ref={canvasContainerRef}>
+                      <div className="flex-1 relative overflow-hidden bg-neutral-900 min-w-0 flex flex-col">
                         <div className="flex-1 flex min-h-0 relative">
-                          <div className="flex-1 relative flex items-center justify-center overflow-hidden" onWheel={handleWheel(setArtworkZoom)}
-                            onDoubleClick={() => {
-                              if (currentArt) {
-                                setChatMessages(p => [...p, { role:"user", content: `[討論 Artwork] ${currentArt.name}` }])
-                                callAgent(`請觀察這張 Artwork「${currentArt.name}」，分析它與目前選取的 Reference 的差距，並給出具體改進建議。`)
-                              }
-                            }}
-                            title="雙擊匯入對話框討論"
-                          >
-                            {currentArt?.image ? (
-                              <img src={currentArt.image} alt="Artwork" className="w-full h-full object-contain" crossOrigin="anonymous" style={{transform:`scale(${artworkZoom/100})`,transformOrigin:'center center',transition:'transform 0.2s ease'}} />
-                            ) : (
-                              <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Artwork</p></div>
-                            )}
-                            <Badge className="absolute top-2 left-2 bg-blue-500 text-[10px] h-5">Work</Badge>
-                            <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap">Ctrl/⌘ + 滾輪縮放</p>
+                          {/* Artwork: <img> shows image, <canvas> overlays annotations */}
+                          <div className="flex-1 relative overflow-hidden" onWheel={handleWheel(setArtworkZoom)}>
+                            <div ref={canvasContainerRef} className="absolute inset-0 flex items-center justify-center">
+                              {currentArt?.image ? (
+                                <div className="relative" style={{transform:`scale(${artworkZoom/100})`,transformOrigin:"center center"}}>
+                                  {/* Layer 1: artwork image */}
+                                  <img
+                                    src={currentArt.image}
+                                    alt="Artwork"
+                                    crossOrigin="anonymous"
+                                    style={{display:"block", maxWidth:"100%", maxHeight:"100%"}}
+                                    onLoad={e => {
+                                      const img = e.currentTarget
+                                      const canvas = canvasRef.current
+                                      if (canvas) { canvas.width = img.naturalWidth; canvas.height = img.naturalHeight }
+                                      redrawCanvas()
+                                    }}
+                                  />
+                                  {/* Layer 2: transparent annotation canvas — same size as img */}
+                                  <canvas ref={canvasRef}
+                                    className="absolute inset-0 w-full h-full"
+                                    style={{
+                                      cursor: canvasTool==="pointer"?"pointer":canvasTool==="text"?"text":canvasTool==="eraser"?"cell":"crosshair",
+                                    }}
+                                    onMouseDown={e => { setActivePanel("work"); setShowStrokeDD(false);setShowFillDD(false);setShowSizeDD(false);setShowOpacityDD(false); handleCanvasMouseDown(e) }}
+                                    onMouseMove={handleCanvasMouseMove}
+                                    onMouseUp={handleCanvasMouseUp}
+                                    onMouseLeave={e => { if(isDrawingRef.current) handleCanvasMouseUp(e) }}
+                                  />
+                                  {/* Layer 3: text input overlay */}
+                                  {textInputPos && (
+                                    <div className="absolute z-20" style={{left:textInputPos.cssX, top:textInputPos.cssY}}>
+                                      <Input autoFocus value={textInputValue}
+                                        onChange={e=>setTextInputValue(e.target.value)}
+                                        onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleTextSubmit()}if(e.key==="Escape"){setTextInputPos(null);setTextInputValue("")}}}
+                                        onBlur={handleTextSubmit}
+                                        className="text-sm h-8 w-52 bg-white/95 text-black border-2 border-teal-500 shadow-lg"
+                                        placeholder="輸入標註文字，Enter 確認..."
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Artwork</p></div>
+                              )}
+                            </div>
+                            <Badge className="absolute top-2 left-2 bg-blue-500 text-[10px] h-5 z-10 pointer-events-none">Work</Badge>
+                            <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap pointer-events-none">Ctrl/⌘ + 滾輪縮放</p>
                           </div>
                           <div className="w-px bg-white/30 shrink-0" />
-                          <div className="flex-1 relative flex items-center justify-center overflow-hidden" onWheel={handleWheel(setRefZoom)}>
-                            {currentRef?.image ? (
-                              <img src={currentRef.image} alt="Reference" className="w-full h-full object-contain" crossOrigin="anonymous" style={{transform:`scale(${refZoom/100})`,transformOrigin:'center center',transition:'transform 0.2s ease'}} />
-                            ) : (
-                              <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Reference</p></div>
-                            )}
+                          {/* Reference: img + canvas overlay, same as artwork */}
+                          <div className="flex-1 relative overflow-hidden" onWheel={handleWheel(setRefZoom)}>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              {currentRef?.image ? (
+                                <div className="relative" style={{transform:`scale(${refZoom/100})`,transformOrigin:"center center"}} onMouseEnter={() => setActivePanel("ref")} onMouseLeave={() => setActivePanel("work")}>
+                                  <img
+                                    src={currentRef.image} alt="Reference" crossOrigin="anonymous"
+                                    style={{display:"block", maxWidth:"100%", maxHeight:"100%"}}
+                                    onLoad={e => { const img=e.currentTarget; const canvas=refCanvasRef.current; if(canvas){canvas.width=img.naturalWidth;canvas.height=img.naturalHeight}; redrawRefCanvas() }}
+                                  />
+                                  <canvas ref={refCanvasRef}
+                                    className="absolute inset-0 w-full h-full"
+                                    style={{cursor:canvasTool==="pointer"?"pointer":canvasTool==="text"?"text":canvasTool==="eraser"?"cell":"crosshair"}}
+                                    onMouseDown={e => { setActivePanel("ref"); setShowStrokeDD(false);setShowFillDD(false);setShowSizeDD(false);setShowOpacityDD(false); handleCanvasMouseDown(e) }}
+                                    onMouseMove={handleCanvasMouseMove}
+                                    onMouseUp={handleCanvasMouseUp}
+                                    onMouseLeave={e => { if(isDrawingRef.current) handleCanvasMouseUp(e); setActivePanel("work") }}
+                                  />
+                                  {textInputPos && activePanel==="ref" && (
+                                    <div className="absolute z-20" style={{left:textInputPos.cssX, top:textInputPos.cssY}}>
+                                      <Input autoFocus value={textInputValue}
+                                        onChange={e=>setTextInputValue(e.target.value)}
+                                        onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleTextSubmit()}if(e.key==="Escape"){setTextInputPos(null);setTextInputValue("")}}}
+                                        onBlur={handleTextSubmit}
+                                        className="text-sm h-8 w-52 bg-white/95 text-black border-2 border-amber-500 shadow-lg"
+                                        placeholder="輸入標註文字，Enter 確認..."
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Reference</p></div>
+                              )}
+                            </div>
                             <Badge className="absolute top-2 right-2 bg-amber-500 text-[10px] h-5">Ref</Badge>
                             <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap">Ctrl/⌘ + 滾輪縮放</p>
                           </div>
                         </div>
-                        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full"
-                          style={{
-                            cursor:canvasTool==="pointer"?"pointer":canvasTool==="text"?"text":canvasTool==="eraser"?"cell":"crosshair",
-                            pointerEvents:"auto",
-                            zIndex:10,
-                            transform:`scale(${artworkZoom/100})`,
-                            transformOrigin:'center center',
-                            transition:'transform 0.2s ease',
-                          }}
-                          onMouseDown={e => { setShowStrokeDD(false); setShowFillDD(false); setShowSizeDD(false); setShowOpacityDD(false); handleCanvasMouseDown(e) }} onMouseMove={handleCanvasMouseMove} onMouseUp={handleCanvasMouseUp}
-                          onMouseLeave={e => { if(isDrawingRef.current) handleCanvasMouseUp(e) }} />
-                        {textInputPos && (
-                          <div className="absolute z-20" style={{left:textInputPos.cssX,top:textInputPos.cssY,transform:`scale(${artworkZoom/100})`,transformOrigin:'top left'}}>
-                            <Input autoFocus value={textInputValue} onChange={e=>setTextInputValue(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')handleTextSubmit();if(e.key==='Escape'){setTextInputPos(null);setTextInputValue("")}}} onBlur={handleTextSubmit} className="text-xs h-7 w-48 bg-white text-black border-2 border-teal-500" placeholder="輸入標註文字..." />
-                          </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-1.5 flex items-center gap-2 z-[5]">
-                          <Badge variant="outline" className="text-[9px] h-4 border-amber-500/50 text-amber-300">Gap</Badge>
-                          <span className="text-[10px] text-white/80 flex-1">{currentRef?.gapSummary || "選擇 Reference 以顯示差距摘要"}</span>
-                        </div>
+
                       </div>
 
                       {/* Feedback Panel */}
@@ -1002,7 +1191,7 @@ export default function QAPage() {
                     </div>
 
                     {/* Bottom: Annotations + Labels + Specs */}
-                    <div className="border-t shrink-0 overflow-hidden" style={{maxHeight:'120px'}}>
+                    <div className="border-t shrink-0 overflow-hidden" style={{maxHeight:'350px'}}>
                       <ScrollArea className="h-full">
                         <div className="divide-y">
                           <div className="px-3 py-1">
@@ -1036,6 +1225,8 @@ export default function QAPage() {
                   </CardContent>
                 </Card>
 
+                {/* Scrollable bottom section */}
+                <div className="shrink-0 flex flex-col gap-1">
                 {/* Multi-Agent Metrics */}
                 <Collapsible open={showMetrics} onOpenChange={setShowMetrics}>
                   <Card className="shrink-0 mt-1">
@@ -1099,11 +1290,12 @@ export default function QAPage() {
                 </Collapsible>
               </div>
 
+                </div>{/* end scrollable bottom */}
               {/* RIGHT DRAG HANDLE */}
               <div className="w-1.5 shrink-0 cursor-col-resize hover:bg-primary/30 rounded transition-colors self-stretch mx-1" onMouseDown={startHDrag("right")} />
 
               {/* RIGHT: AI Assistant */}
-              <div className="shrink-0 flex flex-col gap-3" style={{ width: rightW, height: COL_HEIGHT }}>
+              <div className="shrink-0 flex flex-col" style={{ width: rightW, height: COL_HEIGHT }}>
                 <Card className="border-teal-500/30 flex flex-col flex-1 min-h-0">
                   <CardHeader className="pb-1 shrink-0 py-2">
                     <div className="flex items-center gap-2"><Bot className="w-4 h-4 text-teal-600"/><div><CardTitle className="text-xs">AI 助手</CardTitle><CardDescription className="text-[10px]">AI 調整語氣風格輸出</CardDescription></div></div>

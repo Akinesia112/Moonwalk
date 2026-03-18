@@ -1,0 +1,35 @@
+{
+  "versions": [
+    {
+      "version": 0,
+      "timestamp": "2026-03-19T03:01:28.116796",
+      "annotation_type": "brush"
+    },
+    {
+      "version": 1,
+      "timestamp": "2026-03-19T03:02:55.615636",
+      "annotation_type": "brush"
+    },
+    {
+      "version": 2,
+      "timestamp": "2026-03-19T03:03:05.079403",
+      "annotation_type": "brush"
+    },
+    {
+      "version": 3,
+      "timestamp": "2026-03-19T03:04:59.506129",
+      "annotation_type": "eraser"
+    },
+    {
+      "version": 4,
+      "timestamp": "2026-03-19T03:07:22.730786",
+      "annotation_type": "circle"
+    },
+    {
+      "version": 5,
+      "timestamp": "2026-03-19T03:18:51.029206",
+      "annotation_type": "brush"
+    }
+  ],
+  "current": 5
+}
