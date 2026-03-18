@@ -15,6 +15,7 @@ import { Loader2, FileText, ImageIcon, Bot, Send, ChevronRight, ChevronDown, Che
   RefreshCw, Beaker, Lightbulb, Trash2 } from "lucide-react"
 import { TopBar } from "@/components/top-bar"
 import { PipelineSidebar } from "@/components/pipeline-sidebar"
+import { RefCard, type RefCardData, CATEGORY_COLOR, IMPORTANCE_COLOR } from "@/components/ref-card"
 
 // Strip markdown from AI responses
 function stripBold(text: string): string {
@@ -30,7 +31,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 const PROJECT_ID = "proj_001"
 
 type ChatMsg = { role: "ai" | "user"; content: string; image?: string }
-type Ref = { id: string; title: string; note: string; is_pinned: boolean; localPreview?: string; file_url?: string; thumbnail_url?: string }
+type Ref = { id: string; title: string; note: string; is_pinned: boolean; localPreview?: string; file_url?: string; thumbnail_url?: string; category?: string; importance?: string; usage?: string }
 type MindNode = { id: string; text: string; priority: number; done: boolean }
 
 // ── renderMarkdown (strip ** and --- to readable text) ──────────
@@ -135,20 +136,44 @@ function ArtistReflectionContent() {
     scrollBottom.current?.scrollIntoView({ behavior: "smooth" })
   }, [agentMessages, agentLoading])
 
-  // ── Load refs from backend ────────────────────────────────────
-  useEffect(() => {
+  // ── Load refs: directly from refhub_refs sessionStorage ──
+  // reference-hub is the single source of truth — no API needed
+  const loadRefs = () => {
     setRefsLoading(true)
-    fetch(`${API}/search/references?project_id=${PROJECT_ID}`)
-      .then(r => r.json())
-      .then((data: any[]) => {
-        setRefs(data.filter(r => r.file_url?.trim() || r.thumbnail_url?.trim()).map(r => {
-          const raw = r.thumbnail_url || r.file_url || ""
-          const thumb = raw.startsWith("/") ? `${API}${raw}` : raw
-          return { ...r, localPreview: thumb || undefined }
-        }))
-      })
-      .catch(() => {})
-      .finally(() => setRefsLoading(false))
+    try {
+      const deletedIds = new Set<string>()
+      try { JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]").forEach((id: string) => deletedIds.add(id)) } catch {}
+
+      const raw = sessionStorage.getItem("refhub_refs")
+      if (raw) {
+        const cached: any[] = JSON.parse(raw)
+        const filtered = cached
+          .filter(c => c.preview && !deletedIds.has(c.id))
+          .map(c => ({
+            id: c.id,
+            title: c.title || c.id,
+            note: c.note || "",
+            is_pinned: !!c.is_pinned,
+            category: c.category || "",
+            importance: c.importance || (c.is_pinned ? "Main" : "Secondary"),
+            usage: c.usage || "",
+            localPreview: c.preview,
+          }))
+        setRefs(filtered)
+      } else {
+        setRefs([])
+      }
+    } catch {
+      setRefs([])
+    }
+    setRefsLoading(false)
+  }
+
+  useEffect(() => {
+    loadRefs()
+    const onVisible = () => { if (document.visibilityState === 'visible') loadRefs() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   // ── Load project questions from AutoGen once brief+refs ready ─
@@ -320,7 +345,7 @@ ${specAndRefs}
   const specFields = ALL_SPEC_FIELDS.filter(f => brief[f.key]?.trim())
 
   // ── Panel resize state ──────────────────────────────────────
-  const [col1Width, setCol1Width] = useState(700)   // px, default max
+  const [col1Width, setCol1Width] = useState(350)   // px, default
   const [col3Width, setCol3Width] = useState(700)   // px, default max
   const dragging = useRef<{ col: 1 | 3; startX: number; startW: number } | null>(null)
 
@@ -503,24 +528,60 @@ ${specAndRefs}
                           <>
                             <p className="text-[10px] text-muted-foreground italic mb-2">點擊 Reference 可自動加入 Agent 追問</p>
                             <ScrollArea className="flex-1 min-h-0">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pr-1">
+                            <div className="grid grid-cols-2 gap-3 pr-1">
                               {refs.map(ref => (
-                                <Card key={ref.id} className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-500/50 transition-all"
-                                  onClick={() => injectToChat(`[點擊 Reference] ${ref.title}${ref.note ? `\n備註：${ref.note}` : ""}\n\n請問我這張圖的核心特質、與 Spec 的關聯，以及我打算從中借鑑哪些元素。`)}>
-                                  <div className="aspect-video bg-muted overflow-hidden">
-                                    {ref.localPreview && (
-                                      <img src={ref.localPreview} alt={ref.title} className="w-full h-full object-cover"
-                                        onError={e => { (e.target as HTMLImageElement).style.display = "none" }} />
-                                    )}
-                                  </div>
-                                  <div className="p-1.5">
-                                    <div className="flex items-center gap-1 mb-0.5">
-                                      {ref.is_pinned && <Badge className="bg-amber-500 text-white text-[9px] h-3.5 px-1">Main</Badge>}
-                                      <h4 className="font-medium text-[11px] truncate">{ref.title}</h4>
-                                    </div>
-                                    {ref.note && <p className="text-[10px] text-muted-foreground truncate">{ref.note}</p>}
-                                  </div>
-                                </Card>
+                                <RefCard
+                                  key={ref.id}
+                                  data={{
+                                    id: ref.id,
+                                    title: ref.title,
+                                    preview: ref.localPreview,
+                                    category: ref.category,
+                                    importance: ref.is_pinned ? "Main" : (ref.importance ?? "Secondary"),
+                                    usage: ref.usage,
+                                    note: ref.note,
+                                  }}
+                                  onChange={updated => {
+                                    setRefs(prev => {
+                                      const next = prev.map(r => r.id === ref.id ? {
+                                        ...r,
+                                        category: updated.category,
+                                        importance: updated.importance,
+                                        usage: updated.usage,
+                                        note: updated.note ?? r.note,
+                                        is_pinned: updated.importance === "Main",
+                                      } : r)
+                                      // Persist back to sessionStorage so reference-hub stays in sync
+                                      try {
+                                        const cached = JSON.parse(sessionStorage.getItem("refhub_refs") || "[]")
+                                        const cacheMap: Record<string, any> = {}
+                                        cached.forEach((c: any) => { cacheMap[c.id] = c })
+                                        const upd = next.find(r => r.id === ref.id)
+                                        if (upd) cacheMap[upd.id] = { ...cacheMap[upd.id], category: upd.category, note: upd.note, is_pinned: upd.is_pinned, importance: updated.importance, usage: upd.usage, preview: upd.localPreview }
+                                        sessionStorage.setItem("refhub_refs", JSON.stringify(Object.values(cacheMap)))
+                                      } catch {}
+                                      return next
+                                    })
+                                  }}
+                                  onSave={updated => {
+                                    // On explicit save: persist to sessionStorage
+                                    try {
+                                      const cached = JSON.parse(sessionStorage.getItem("refhub_refs") || "[]")
+                                      const cacheMap: Record<string, any> = {}
+                                      cached.forEach((c: any) => { cacheMap[c.id] = c })
+                                      cacheMap[ref.id] = { ...cacheMap[ref.id], category: updated.category, note: updated.note, is_pinned: updated.importance === "Main", importance: updated.importance, usage: updated.usage, preview: ref.localPreview }
+                                      sessionStorage.setItem("refhub_refs", JSON.stringify(Object.values(cacheMap)))
+                                    } catch {}
+                                  }}
+                                  showSave={true}
+                                  className="cursor-pointer hover:ring-2 hover:ring-indigo-500/50 transition-all"
+                                  onDiscuss={d => {
+                                    callAgent(`[點擊 Reference] ${d.title}${d.note ? `
+備注：${d.note}` : ""}
+
+請問我這張圖的核心特質、與 Spec 的關聯，以及我打算從中借鑑哪些元素。`)
+                                  }}
+                                />
                               ))}
                             </div>
                             </ScrollArea>

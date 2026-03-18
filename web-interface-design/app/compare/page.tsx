@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { TopBar } from "@/components/top-bar"
 import { PipelineSidebar } from "@/components/pipeline-sidebar"
+import { RefCard } from "@/components/ref-card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -38,7 +39,7 @@ function stripMd(t: string) {
 }
 
 type DeltaItem = { id: string; type: string; severity: string; detail: string }
-type ArtItem = { id: number; name: string; image: string }
+type ArtItem = { id: string; name: string; image: string; category?: string; importance?: string; usage?: string; note?: string; artworkId?: string }
 type ChatMsg = { role: string; content: string }
 
 export default function ComparePage() {
@@ -107,7 +108,16 @@ export default function ComparePage() {
   ]
 
   const artworkList = artworks
-  const currentRefs = allRefs
+
+  // Each artwork sees only its bound refs + unbound refs.
+  // "bound to another artwork" refs are hidden.
+  const selectedArtworkId = artworkList[selectedArtwork]?.id ?? ""
+  const currentRefs = allRefs.filter(r => {
+    const rid = r.artworkId ?? ""
+    if (!rid) return true                    // empty/unbound → shared, show for all
+    if (!selectedArtworkId) return true      // no artwork selected yet → show all
+    return rid === selectedArtworkId         // bound → only show for its artwork
+  })
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise(resolve => {
@@ -133,7 +143,7 @@ export default function ComparePage() {
     const imgs = files.filter(f => f.type.startsWith("image/"))
     if (imgs.length === 0) return
     const newItems = await Promise.all(imgs.map(async (file, i) => ({
-      id: artworks.length + i,
+      id: `aw_${Date.now()}_${i}`,
       name: file.name.replace(/\.[^.]+$/, ""),
       image: await fileToBase64(file),
     })))
@@ -144,7 +154,7 @@ export default function ComparePage() {
     const imgs = files.filter(f => f.type.startsWith("image/"))
     if (imgs.length === 0) return
     const newItems = await Promise.all(imgs.map(async (file, i) => ({
-      id: allRefs.length + i,
+      id: `ref_${Date.now()}_${i}`,
       name: file.name.replace(/\.[^.]+$/, ""),
       image: await fileToBase64(file),
     })))
@@ -158,17 +168,59 @@ export default function ComparePage() {
       if (raw) {
         const parsed: { id: string; preview: string; name: string }[] = JSON.parse(raw)
         if (parsed.length > 0)
-          setArtworks(parsed.map((p, i) => ({ id: i, name: p.name || p.id, image: p.preview })))
+          setArtworks(parsed.map(p => ({ id: p.id, name: p.name || p.id, image: p.preview })))
       }
     } catch {}
     try {
-      const list: ArtItem[] = []
+      // Build a merged map: c04_ref_previews + refhub_refs, deduplicated by id
+      const refMap: Record<string, ArtItem> = {}
       const ar = SS.get("c04_ref_previews")
-      if (ar) JSON.parse(ar).forEach((r: any, i: number) =>
-        list.push({ id: i, name: r.title || r.id, image: r.preview || "" }))
+      if (ar) JSON.parse(ar).forEach((r: any, i: number) => {
+        refMap[r.id ?? i] = {
+          id: r.id ?? String(i),
+          name: r.title || r.id,
+          image: r.preview || "",
+          category: r.category || "",
+          importance: r.label || r.importance || "Secondary",
+          usage: r.usage || "",
+          note: r.note || "",
+          artworkId: r.artworkId || "",
+        }
+      })
+      // refhub_refs may have newer metadata — override/supplement
       const hr = SS.get("refhub_refs")
-      if (hr) JSON.parse(hr).forEach((r: any, i: number) =>
-        list.push({ id: list.length + i, name: r.title || r.id, image: "" }))
+      if (hr) JSON.parse(hr).forEach((r: any, i: number) => {
+        const existing = refMap[r.id]
+        if (existing) {
+          // update metadata, keep preview from c04 if refhub has none
+          refMap[r.id] = {
+            ...existing,
+            image: r.preview || existing.image,
+            category: r.category || existing.category || "",
+            importance: r.importance || (r.is_pinned ? "Main" : (existing.importance || "Secondary")),
+            usage: r.usage || existing.usage || "",
+            note: r.note || existing.note || "",
+            artworkId: r.artworkId || existing.artworkId || "",
+          }
+        } else if (r.preview) {
+          refMap[r.id] = {
+            id: r.id,
+            name: r.title || r.id,
+            image: r.preview,
+            category: r.category || "",
+            importance: r.importance || (r.is_pinned ? "Main" : "Secondary"),
+            usage: r.usage || "",
+            note: r.note || "",
+            artworkId: r.artworkId || "",
+          }
+        }
+      })
+      let list = Object.values(refMap)
+      // Filter using explicit deleted_ref_ids (set by removeRef in reference-hub)
+      try {
+        const deletedIds = new Set(JSON.parse(SS.get("deleted_ref_ids") || "[]"))
+        if (deletedIds.size > 0) list = list.filter(r => !deletedIds.has(String(r.id)))
+      } catch {}
       if (list.length > 0) setAllRefs(list)
     } catch {}
     try { const b = SS.get("kickoff_brief"); if (b) setBrief(JSON.parse(b)) } catch {}
@@ -191,6 +243,9 @@ export default function ComparePage() {
       }
     } catch {}
   }, [])
+
+  // Reset ref selection when artwork changes (different artwork = different ref set)
+  useEffect(() => { setSelectedRef(0) }, [selectedArtwork])
 
   useEffect(() => { SS.set("compare_chat", JSON.stringify(chatMessages)) }, [chatMessages])
   useEffect(() => { chatScrollRef.current?.scrollIntoView({ behavior: "smooth" }) }, [chatMessages, chatLoading])
@@ -441,7 +496,7 @@ export default function ComparePage() {
                         Array.from(e.target.files || []).forEach(file => {
                           const reader = new FileReader()
                           reader.onload = ev => {
-                            setArtworks(p => [...p, { id: Date.now() + Math.random(), name: file.name.replace(/\.[^.]+$/, ""), image: ev.target?.result as string }])
+                            setArtworks(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/, ""), image: ev.target?.result as string }])
                           }
                           reader.readAsDataURL(file)
                         })
@@ -455,7 +510,7 @@ export default function ComparePage() {
                           onDrop={e => {
                             e.preventDefault()
                             Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                              const r = new FileReader(); r.onload = ev => setArtworks(p => [...p, { id: Date.now()+Math.random(), name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                              const r = new FileReader(); r.onload = ev => setArtworks(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
                             })
                           }}>
                           {artworkList.length === 0 && (
@@ -467,7 +522,7 @@ export default function ComparePage() {
                               onDrop={e => {
                                 e.preventDefault(); e.currentTarget.classList.remove("border-primary","bg-primary/5")
                                 Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                                  const r = new FileReader(); r.onload = ev => setArtworks(p => [...p, { id: Date.now()+Math.random(), name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                                  const r = new FileReader(); r.onload = ev => setArtworks(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
                                 })
                               }}
                             >
@@ -480,9 +535,17 @@ export default function ComparePage() {
                               <div
                                 className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork === idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                                 onClick={() => { setSelectedArtwork(idx); setSelectedRef(0) }}
+                                onDoubleClick={() => {
+                                  setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${art.name}` }])
+                                  callAgent(`請觀察 Artwork「${art.name}」，分析它與目前選取的 Reference 的差距，並給出 2-3 個具體改進建議。`)
+                                }}
+                                title="雙擊匯入對話框討論"
                               >
-                                <div className="aspect-video bg-muted overflow-hidden">
+                                <div className="aspect-video bg-muted overflow-hidden relative group">
                                   {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                    <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">雙擊討論</span>
+                                  </div>
                                 </div>
                                 <div className="p-1.5">
                                   <p className="text-[10px] font-medium truncate">{art.name}</p>
@@ -525,7 +588,7 @@ export default function ComparePage() {
                         Array.from(e.target.files || []).forEach(file => {
                           const reader = new FileReader()
                           reader.onload = ev => {
-                            setAllRefs(p => [...p, { id: Date.now() + Math.random(), name: file.name.replace(/\.[^.]+$/, ""), image: ev.target?.result as string }])
+                            setAllRefs(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/, ""), image: ev.target?.result as string }])
                           }
                           reader.readAsDataURL(file)
                         })
@@ -539,7 +602,7 @@ export default function ComparePage() {
                           onDrop={e => {
                             e.preventDefault()
                             Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                              const r = new FileReader(); r.onload = ev => setAllRefs(p => [...p, { id: Date.now()+Math.random(), name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                              const r = new FileReader(); r.onload = ev => setAllRefs(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
                             })
                           }}>
                           {currentRefs.filter(ref => !!ref.image).length === 0 && (
@@ -551,7 +614,7 @@ export default function ComparePage() {
                               onDrop={e => {
                                 e.preventDefault(); e.currentTarget.classList.remove("border-amber-500","bg-amber-500/5")
                                 Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                                  const r = new FileReader(); r.onload = ev => setAllRefs(p => [...p, { id: Date.now()+Math.random(), name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                                  const r = new FileReader(); r.onload = ev => setAllRefs(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
                                 })
                               }}
                             >
@@ -560,24 +623,60 @@ export default function ComparePage() {
                             </div>
                           )}
                           {currentRefs.filter(ref => !!ref.image).map((ref, rIdx) => (
-                            <div key={ref.id} className="relative group">
-                              <div
-                                className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedRef === rIdx ? "border-amber-500 ring-2 ring-amber-500/30" : "border-border hover:border-amber-500/50"}`}
-                                onClick={() => setSelectedRef(rIdx)}
-                              >
-                                <div className="aspect-video bg-muted overflow-hidden">
-                                  {ref.image && <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />}
-                                </div>
-                                <div className="p-1.5">
-                                  <p className="text-[10px] font-medium truncate">{ref.name}</p>
-                                </div>
-                              </div>
-                              <button
-                                className="absolute top-1 right-1 w-4 h-4 bg-black/70 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                onClick={e => { e.stopPropagation(); setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
-                              >
-                                <XIcon className="w-2.5 h-2.5 text-white" />
-                              </button>
+                            <div
+                              key={ref.id}
+                              className={`rounded-xl transition-all ${selectedRef === rIdx ? "ring-2 ring-amber-500 ring-offset-1" : "hover:ring-1 hover:ring-amber-500/50"}`}
+                              onClick={() => setSelectedRef(rIdx)}
+                            >
+                              <RefCard
+                                data={{
+                                  id: String(ref.id),
+                                  title: ref.name,
+                                  preview: ref.image,
+                                  category: ref.category,
+                                  importance: ref.importance ?? "Secondary",
+                                  usage: ref.usage,
+                                  note: ref.note,
+                                }}
+                                artworkOptions={artworks.map(a => ({ id: a.id, name: a.name }))}
+                                onChange={updated => {
+                                  setAllRefs(p => p.map(r => r.id === ref.id ? {
+                                    ...r,
+                                    category: updated.category,
+                                    importance: updated.importance,
+                                    usage: updated.usage,
+                                    note: updated.note,
+                                    artworkId: updated.artworkId,
+                                  } : r))
+                                }}
+                                onDelete={() => { setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
+                                onDiscuss={d => {
+                                  setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
+備注：${d.note}` : ""}` }])
+                                  callAgent(`請分析 Reference「${d.title}」${d.category ? `（${d.category}）` : ""}的視覺特徵，並找出它與目前選取的 Artwork 之間的主要差距。${d.note ? `備注：${d.note}` : ""}`)
+                                }}
+                                onSave={updated => {
+                                  try {
+                                    const cached = JSON.parse(SS.get("refhub_refs") || "[]")
+                                    const cacheMap: Record<string, any> = {}
+                                    cached.forEach((c: any) => { cacheMap[c.id] = c })
+                                    if (cacheMap[String(ref.id)]) {
+                                      cacheMap[String(ref.id)] = { ...cacheMap[String(ref.id)], category: updated.category, note: updated.note, importance: updated.importance, usage: updated.usage, artworkId: updated.artworkId }
+                                      SS.set("refhub_refs", JSON.stringify(Object.values(cacheMap)))
+                                    }
+                                    // Also update c04_ref_previews
+                                    const ar = JSON.parse(SS.get("c04_ref_previews") || "[]")
+                                    const arMap: Record<string, any> = {}
+                                    ar.forEach((r: any) => { arMap[r.id] = r })
+                                    if (arMap[String(ref.id)]) {
+                                      arMap[String(ref.id)] = { ...arMap[String(ref.id)], category: updated.category, note: updated.note, importance: updated.importance, usage: updated.usage, artworkId: updated.artworkId }
+                                      SS.set("c04_ref_previews", JSON.stringify(Object.values(arMap)))
+                                    }
+                                  } catch {}
+                                }}
+                                showSave={true}
+                                className="cursor-pointer"
+                              />
                             </div>
                           ))}
                         </div>

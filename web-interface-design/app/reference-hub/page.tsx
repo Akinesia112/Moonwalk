@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { TopBar } from "@/components/top-bar"
 import { PipelineSidebar } from "@/components/pipeline-sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { RefCard } from "@/components/ref-card"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 const PROJECT_ID = "proj_001"
@@ -124,6 +125,7 @@ function ReferenceHubContent() {
 
   // Restore sessionStorage + clear stale states on mount (client-only)
   const [hydrated, setHydrated] = useState(false)
+  const skipPersistRef = useRef(true)  // prevent writing [] on initial mount before API loads
   useEffect(() => {
     try {
       const savedChat = sessionStorage.getItem("refhub_chat")
@@ -144,7 +146,7 @@ function ReferenceHubContent() {
         const MOCK_IDS = ["ref_001", "ref_002", "ref_003"]
         const valid = data.filter((r: any) =>
           !MOCK_IDS.includes(r.id) &&
-          (r.file_url?.trim() || r.thumbnail_url?.trim())  // must have non-empty image src
+          (r.file_url?.trim() || r.thumbnail_url?.trim())
         )
         const loaded = valid.map((r: any) => {
           const rawThumb = r.thumbnail_url || r.file_url || ""
@@ -152,15 +154,67 @@ function ReferenceHubContent() {
           const isImg = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(rawThumb) || rawThumb.startsWith(API)
           return { ...r, localPreview: isImg ? thumb : undefined }
         })
-        // Persist ref metadata + categories for upload-analyze
+        // Deduplicate by title — keep only the most recent (last uploaded) per title
+        const seenTitles = new Set<string>()
+        const deduped = loaded.filter((r: any) => {
+          const key = (r.title || r.id || "").toLowerCase().replace(/\.[^.]+$/, "")
+          if (seenTitles.has(key)) return false
+          seenTitles.add(key)
+          return true
+        })
+        // Merge sessionStorage edits back, and respect deletions:
+        // If refhub_refs exists and is non-empty, only show refs that are still in it.
+        // If refhub_refs is empty array [], it means user deleted everything — show nothing.
+        let merged = deduped
         try {
-          sessionStorage.setItem("refhub_refs", JSON.stringify(
-            loaded.map((r: any) => ({ id: r.id, title: r.title || r.id, category: r.category || "", note: r.note || "", is_pinned: !!r.is_pinned }))
-          ))
+          const raw = sessionStorage.getItem("refhub_refs")
+          if (raw !== null) {
+            const cached: any[] = JSON.parse(raw)
+            // Build a set of IDs the user still has
+            const cacheMap: Record<string, any> = {}
+            cached.forEach((c: any) => { cacheMap[c.id] = c })
+            const userHasCache = cached.length > 0
+
+            if (userHasCache) {
+              // Only keep API refs that user hasn't deleted, merge their metadata
+              const deletedIds = new Set(JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"))
+              merged = deduped
+                .filter((r: any) => !deletedIds.has(r.id))  // remove explicitly deleted
+                .map((r: any) => {
+                  const c = cacheMap[r.id]
+                  return {
+                    ...r,
+                    note: c.note || r.note || "",
+                    category: c.category || r.category || "",
+                    is_pinned: c.is_pinned ?? r.is_pinned,
+                    importance: c.importance || r.importance || "",
+                    priority: c.priority || r.priority || "secondary",
+                    artworkId: c.artworkId || "",
+                    localPreview: c.preview || r.localPreview,
+                  }
+                })
+              // Also add local-only refs (uploaded after page load, not in API yet)
+              const apiIds = new Set(deduped.map((r: any) => r.id))
+              const localOnly = cached.filter((c: any) => !apiIds.has(c.id) && c.preview)
+                .map((c: any) => ({
+                  id: c.id, title: c.title || c.id, confidentiality: "internal",
+                  is_pinned: !!c.is_pinned, category: c.category || "",
+                  note: c.note || "", priority: c.priority || "secondary",
+                  importance: c.importance || "",
+                  artworkId: c.artworkId || "",
+                  localPreview: c.preview,
+                }))
+              merged = [...merged, ...localOnly]
+            } else {
+              // User deleted everything — show nothing
+              merged = []
+            }
+          }
         } catch {}
-        setRefs(loaded)
+        setRefs(merged)
+        skipPersistRef.current = false  // API loaded — safe to persist now
       })
-      .catch(() => setRefs([]))
+      .catch(() => { setRefs([]); skipPersistRef.current = false })
       .finally(() => setLoading(false))
   }, [])
 
@@ -169,6 +223,26 @@ function ReferenceHubContent() {
     if (!hydrated) return
     try { sessionStorage.setItem("refhub_chat", JSON.stringify(chatMessages)) } catch {}
   }, [chatMessages, hydrated])
+
+  // Auto-persist refs on every change — including deletions (write empty array too)
+  useEffect(() => {
+    if (!hydrated || skipPersistRef.current) return
+    try {
+      sessionStorage.setItem("refhub_refs", JSON.stringify(
+        refs.map(r => ({
+          id: r.id,
+          title: r.title || r.id,
+          category: r.category || "",
+          note: r.note || "",
+          is_pinned: !!r.is_pinned,
+          importance: r.importance || (r.is_pinned || r.priority === "Main" || r.priority === "main" ? "Main" : "Secondary"),
+          priority: r.priority || (r.is_pinned ? "Main" : "Secondary"),
+          preview: r.localPreview || "",
+          artworkId: r.artworkId || "",
+        }))
+      ))
+    } catch {}
+  }, [refs, hydrated])
 
   // Auto-scroll chat
   useEffect(() => {
@@ -191,35 +265,45 @@ function ReferenceHubContent() {
     setUploading(true)
     for (const file of files) {
       const localPreview = await fileToBase64(file)
+      const newTitle = file.name.replace(/\.[^/.]+$/, "")
+      // Delete existing refs with same title from backend before uploading
+      setRefs(prev => {
+        const dupes = prev.filter(r => (r.title || "").toLowerCase() === newTitle.toLowerCase())
+        dupes.forEach(d => {
+          apiFetch(`/Modification/reference/${d.id}`, { method: "DELETE" }).catch(() => {})
+        })
+        return prev.filter(r => (r.title || "").toLowerCase() !== newTitle.toLowerCase())
+      })
       try {
         const result = await apiUploadFile(file, PROJECT_ID, uploadCategory, uploadPriority, uploadNote)
         const newRef: Reference = {
           id: result.id,
           title: file.name.replace(/\.[^/.]+$/, ""),
           confidentiality: "internal",
-          is_pinned: uploadPriority === "main",
+          is_pinned: uploadPriority === "Main",
           category: uploadCategory,
           note: uploadNote,
           thumbnail_url: result.thumbnail_url || "",
           file_url: result.file_url || "",
-          priority: uploadPriority,
+          priority: uploadPriority, importance: uploadPriority,
           localPreview,
         }
-        setRefs(prev => [newRef, ...prev])
+        // Replace existing ref with same title (dedup by filename)
+        setRefs(prev => { const without = prev.filter(r => r.title !== newRef.title); return [newRef, ...without] })
         setUploadNote("")
       } catch {
         const fallbackRef: Reference = {
           id: `local_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,
           title: file.name.replace(/\.[^/.]+$/, ""),
           confidentiality: "internal",
-          is_pinned: uploadPriority === "main",
+          is_pinned: uploadPriority === "Main",
           category: uploadCategory,
           note: uploadNote,
           thumbnail_url: "",
           localPreview,
-          priority: uploadPriority,
+          priority: uploadPriority, importance: uploadPriority,
         }
-        setRefs(prev => [fallbackRef, ...prev])
+        setRefs(prev => { const without = prev.filter(r => r.title !== fallbackRef.title); return [fallbackRef, ...without] })
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = ""
@@ -238,18 +322,18 @@ function ReferenceHubContent() {
     try {
       const result = await apiFetch("/search/url", {
         method: "POST",
-        body: JSON.stringify({ url, project_id: PROJECT_ID, category: uploadCategory, priority: uploadPriority, instruction: uploadNote }),
+        body: JSON.stringify({ url, project_id: PROJECT_ID, category: uploadCategory, priority: uploadPriority, importance: uploadPriority, instruction: uploadNote }),
       })
       const newRef: Reference = {
         id: result.id || `url_${Date.now()}`,
         title: result.title || url.split("/").pop()?.split("?")[0]?.slice(0, 60) || "URL Import",
         confidentiality: "internal",
-        is_pinned: uploadPriority === "main",
+        is_pinned: uploadPriority === "Main",
         category: uploadCategory,
         note: uploadNote,
         thumbnail_url: result.thumbnail_url || "",
         file_url: url,
-        priority: uploadPriority,
+        priority: uploadPriority, importance: uploadPriority,
         localPreview: isImageUrl ? url : undefined,
       }
       setRefs(prev => [newRef, ...prev])
@@ -261,12 +345,12 @@ function ReferenceHubContent() {
           id: `url_${Date.now()}`,
           title: url.split("/").pop()?.split("?")[0]?.slice(0, 60) || "URL Import",
           confidentiality: "internal",
-          is_pinned: uploadPriority === "main",
+          is_pinned: uploadPriority === "Main",
           category: uploadCategory,
           note: uploadNote,
           thumbnail_url: "",
           file_url: url,
-          priority: uploadPriority,
+          priority: uploadPriority, importance: uploadPriority,
           localPreview: url,
         }, ...prev])
         setUrlInput("")
@@ -297,6 +381,12 @@ function ReferenceHubContent() {
   // ── Remove ref ─────────────────────────────────────────────
   const removeRef = async (id: string) => {
     setRefs(prev => prev.filter(r => r.id !== id))
+    // Track deletion explicitly so other pages can filter correctly
+    try {
+      const existing = new Set(JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"))
+      existing.add(id)
+      sessionStorage.setItem("deleted_ref_ids", JSON.stringify([...existing]))
+    } catch {}
     try { await apiFetch(`/Modification/reference/${id}`, { method: "DELETE" }) } catch {}
   }
 
@@ -313,7 +403,7 @@ function ReferenceHubContent() {
           clicked_ref_id: null,
           all_refs_context: refs.map(r => ({
             id: r.id, title: r.title, category: r.category,
-            note: r.note, is_pinned: r.is_pinned, priority: r.priority || (r.is_pinned ? "main" : "secondary"),
+            note: r.note, is_pinned: r.is_pinned, priority: r.priority || (r.is_pinned ? "Main" : "Secondary"),
           })),
           history: chatMessages.slice(-4).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         }),
@@ -329,8 +419,19 @@ function ReferenceHubContent() {
     try {
       await apiFetch("/Modification/references/batch", {
         method: "PUT",
-        body: JSON.stringify({ references: refs.map(r => ({ id: r.id, priority: r.priority || (r.is_pinned ? "main" : "secondary"), category: r.category, note: r.note, confidentiality: r.confidentiality })) }),
+        body: JSON.stringify({ references: refs.map(r => ({ id: r.id, priority: r.priority || (r.is_pinned ? "Main" : "Secondary"), category: r.category, note: r.note, confidentiality: r.confidentiality })) }),
       })
+      // Save full ref data including previews for upload-analyze
+      try {
+        const refData = refs.map(r => ({
+          id: r.id, title: r.title || r.id, category: r.category || "",
+          note: r.note || "", is_pinned: !!r.is_pinned,
+          importance: r.is_pinned ? "Main" : (r.priority === "Main" || priority === "main" ? "Main" : "Secondary"),
+          priority: r.priority || (r.is_pinned ? "Main" : "Secondary"),
+          preview: r.localPreview || "",
+        }))
+        sessionStorage.setItem("refhub_refs", JSON.stringify(refData))
+      } catch {}
       setSubmitted(true)
       if (submitTimer.current) clearTimeout(submitTimer.current)
       submitTimer.current = setTimeout(() => setSubmitted(false), 2000)
@@ -445,10 +546,14 @@ function ReferenceHubContent() {
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">重要性</Label>
                         <Select value={uploadPriority} onValueChange={setUploadPriority}>
-                          <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="main">⭐ Main Ref</SelectItem>
-                            <SelectItem value="secondary">Secondary</SelectItem>
+                            <SelectItem value="Main">⭐ Main</SelectItem>
+                            <SelectItem value="Secondary">Secondary</SelectItem>
+                            <SelectItem value="Style">Style</SelectItem>
+                            <SelectItem value="Composition">Composition</SelectItem>
+                            <SelectItem value="Color">Color</SelectItem>
+                            <SelectItem value="Lighting">Lighting</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -476,9 +581,9 @@ function ReferenceHubContent() {
                           }))
                           try {
                             const result = await apiUploadFile(file, PROJECT_ID, uploadCategory, uploadPriority, uploadNote)
-                            setRefs(prev => [{ id: result.id, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: uploadPriority==="main", category: uploadCategory, note: uploadNote, thumbnail_url: result.thumbnail_url||"", file_url: result.file_url||"", priority: uploadPriority, localPreview }, ...prev])
+                            setRefs(prev => { const r = { id: result.id, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: uploadPriority==="main", category: uploadCategory, note: uploadNote, thumbnail_url: result.thumbnail_url||"", file_url: result.file_url||"", priority: uploadPriority, importance: uploadPriority, localPreview }; return [r, ...prev.filter(x => x.title !== r.title)] })
                           } catch {
-                            setRefs(prev => [{ id:`local_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: false, category: uploadCategory, note: uploadNote, thumbnail_url:"", localPreview, priority: uploadPriority }, ...prev])
+                            setRefs(prev => { const r = { id:`local_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: false, category: uploadCategory, note: uploadNote, thumbnail_url:"", localPreview, priority: uploadPriority, importance: uploadPriority }; return [r, ...prev.filter(x => x.title !== r.title)] })
                           }
                         }
                         setUploading(false)
@@ -525,109 +630,43 @@ function ReferenceHubContent() {
                       {refs.filter(ref => ref.localPreview || ref.file_url?.trim() || ref.thumbnail_url?.trim()).map(ref => {
                         const saveState = saveStates[ref.id] || "idle"
                         return (
-                          <Card key={ref.id} className="overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all group">
-                            {/* Thumbnail */}
-                            <div
-                              className="aspect-video bg-muted relative cursor-pointer"
-                              onClick={() => handleRefClick(ref)}
-                            >
-                              {ref.localPreview ? (
-                                <img
-                                  src={ref.localPreview}
-                                  alt={ref.title}
-                                  className="w-full h-full object-cover"
-                                  onError={() => removeRef(ref.id)}
-                                />
-                              ) : null}
-                              {/* Overlay badges */}
-                              {ref.is_pinned && (
-                                <div className="absolute top-2 left-2">
-                                  <Badge className="bg-amber-500 text-white text-[10px] gap-1">
-                                    <Star className="w-2.5 h-2.5" />Main Ref
-                                  </Badge>
-                                </div>
-                              )}
-                              {ref.confidentiality === "nda-strict" && (
-                                <div className="absolute top-2 right-2">
-                                  <Badge variant="destructive" className="text-[10px] gap-1">
-                                    <Lock className="w-2.5 h-2.5" />NDA
-                                  </Badge>
-                                </div>
-                              )}
-                              {ref.category && (
-                                <div className="absolute bottom-2 left-2">
-                                  <Badge className={`text-[10px] ${CATEGORY_COLORS[ref.category] || "bg-muted"}`}>
-                                    {ref.category}
-                                  </Badge>
-                                </div>
-                              )}
-                              {/* Remove button */}
-                              <button
-                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={e => { e.stopPropagation(); removeRef(ref.id) }}
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-
-                            {/* Controls */}
-                            <div className="p-3 space-y-2">
-                              <p className="font-medium text-sm truncate" title={ref.title}>{ref.title}</p>
-
-                              <div className="flex gap-2">
-                                {/* Category */}
-                                <Select value={ref.category} onValueChange={v => { updateField(ref.id, "category", v); saveRef(ref.id, { category: v }) }}>
-                                  <SelectTrigger className="flex-1 h-7 text-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>{REF_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                                </Select>
-
-                                {/* Priority */}
-                                <Select value={ref.is_pinned ? "main" : "secondary"} onValueChange={v => { const pinned = v === "main"; updateField(ref.id, "is_pinned", pinned); saveRef(ref.id, { is_pinned: pinned }) }}>
-                                  <SelectTrigger className="w-28 h-7 text-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="main">⭐ Main</SelectItem>
-                                    <SelectItem value="secondary">Secondary</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              {/* Confidentiality */}
-                              <Select value={ref.confidentiality} onValueChange={v => { updateField(ref.id, "confidentiality", v); saveRef(ref.id, { confidentiality: v }) }}>
-                                <SelectTrigger className="w-full h-7 text-xs"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="public">Public</SelectItem>
-                                  <SelectItem value="internal">Internal</SelectItem>
-                                  <SelectItem value="client-sensitive">Client-Sensitive</SelectItem>
-                                  <SelectItem value="nda-strict">NDA-Strict</SelectItem>
-                                </SelectContent>
-                              </Select>
-
-                              {/* Note */}
-                              <div className="space-y-1">
-                                <Textarea
-                                  placeholder="這張 ref 要看什麼？例：主光從右側，硬光質感，陰影邊緣銳利..."
-                                  value={ref.note}
-                                  onChange={e => updateField(ref.id, "note", e.target.value)}
-                                  className="text-xs resize-none"
-                                  rows={2}
-                                />
-                                <div className="flex justify-end">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-6 text-xs px-2"
-                                    onClick={() => saveRef(ref.id, { note: ref.note, category: ref.category, is_pinned: ref.is_pinned, confidentiality: ref.confidentiality })}
-                                    disabled={saveState === "saving"}
-                                  >
-                                    {saveState === "saving" && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-                                    {saveState === "saved" && <CheckCircle2 className="w-3 h-3 mr-1 text-green-500" />}
-                                    {saveState === "idle" && <Save className="w-3 h-3 mr-1" />}
-                                    {saveState === "saved" ? "已儲存" : "儲存"}
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </Card>
+                          <RefCard
+                            key={ref.id}
+                            data={{
+                              id: ref.id,
+                              title: ref.title,
+                              preview: ref.localPreview,
+                              category: ref.category,
+                              importance: ref.is_pinned ? "Main" : (ref.priority === "Main" || ref.priority === "main" ? "Main" : (ref.importance || "Secondary")),
+                              usage: ref.confidentiality,
+                              note: ref.note,
+                            }}
+                            onChange={updated => {
+                              const pinned = updated.importance === "Main"
+                              updateField(ref.id, "category", updated.category ?? ref.category)
+                              updateField(ref.id, "is_pinned", pinned)
+                              updateField(ref.id, "note", updated.note ?? ref.note)
+                              updateField(ref.id, "confidentiality", updated.usage ?? ref.confidentiality)
+                            }}
+                            onDelete={() => removeRef(ref.id)}
+                            onDiscuss={d => {
+                              setClickedRef(ref)
+                              setChatInput(`這張「${d.title}」（${d.category || "未分類"}）我想參考的是`)
+                              setChatMessages(prev => [...prev, { role: "user", content: `[討論] ${d.title}${d.note ? `
+備注：${d.note}` : ""}` }])
+                              handleChatSend(`請分析「${d.title}」${d.category ? `（${d.category}）` : ""}的視覺特徵，以及它在這個 reference set 中的角色與作用。${d.note ? `Artist 備注：${d.note}` : ""}`)
+                            }}
+                            onSave={updated => {
+                              const pinned = updated.importance === "Main"
+                              saveRef(ref.id, {
+                                note: updated.note ?? ref.note,
+                                category: updated.category ?? ref.category,
+                                is_pinned: pinned,
+                                confidentiality: updated.usage ?? ref.confidentiality,
+                              })
+                            }}
+                            showSave={true}
+                          />
                         )
                       })}
                     </div>

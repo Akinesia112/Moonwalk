@@ -19,12 +19,13 @@ import {
 } from "lucide-react"
 import { TopBar } from "@/components/top-bar"
 import { PipelineSidebar } from "@/components/pipeline-sidebar"
+import { RefCard, type RefCardData, CATEGORY_OPTIONS, IMPORTANCE_OPTIONS, USAGE_OPTIONS } from "@/components/ref-card"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 const PROJECT_ID = "proj_001"
 
 interface UploadedArtwork { id: string; file: File; preview: string }
-interface ArtworkRef { id: string; label: string; localPreview: string | null; file?: File; title: string }
+interface ArtworkRef { id: string; label: string; localPreview: string | null; file?: File; title: string; note?: string; category?: string; importance?: string; usage?: string; artworkId?: string }
 interface ChatMsg { role: "user" | "ai"; content: string }
 interface MetricResult {
   id: string; name: string; score: number; disagreement: number
@@ -237,12 +238,55 @@ function UploadAnalyzeContent() {
     const savedRef = SS.get("c04_ref_previews")
     if (savedRef) {
       try {
-        const previews: { id: string; label: string; title: string; preview: string }[] = JSON.parse(savedRef)
+        const previews: { id: string; label: string; title: string; preview: string; category?: string; note?: string; usage?: string }[] = JSON.parse(savedRef)
         if (previews.length > 0) {
-          setArtistRefs(previews.map(p => ({ id: p.id, label: p.label, title: p.title, localPreview: p.preview })))
+          setArtistRefs(previews.map(p => ({ id: p.id, label: p.label, title: p.title, localPreview: p.preview, category: p.category || "", note: p.note || "", usage: p.usage || "", artworkId: (p as any).artworkId || "" })))
         }
       } catch {}
     }
+    // Always merge reference-hub refs that have previews and aren't already in local refs
+    try {
+      const hubRaw = SS.get("refhub_refs")
+      if (hubRaw) {
+        const hubRefs: { id: string; title: string; category: string; note: string; preview?: string; importance?: string; usage?: string; is_pinned?: boolean; artworkId?: string }[] = JSON.parse(hubRaw)
+        // Remove refs explicitly deleted in reference-hub
+        const deletedIds = new Set<string>()
+        try { JSON.parse(SS.get("deleted_ref_ids") || "[]").forEach((id: string) => deletedIds.add(id)) } catch {}
+        if (deletedIds.size > 0) setArtistRefs(prev => prev.filter(r => !deletedIds.has(r.id)))
+        const withPreview = hubRefs.filter(r => r.preview)
+        if (withPreview.length > 0) {
+          setArtistRefs(prev => {
+            const existingIds = new Set(prev.map(r => r.id))
+            const newFromHub = withPreview
+              .filter(r => !existingIds.has(r.id))
+              .map(r => ({
+                id: r.id,
+                label: r.importance || (r.is_pinned ? "Main" : (r.category || "Secondary")),
+                title: r.title,
+                localPreview: r.preview || "",
+                category: r.category || "",
+                note: r.note || "",
+                usage: r.usage || "",
+                artworkId: r.artworkId || "",
+              }))
+            // Also update existing refs that came from hub (refresh their metadata)
+            const updated = prev.map(r => {
+              const hub = hubRefs.find(h => h.id === r.id)
+              if (!hub) return r
+              return {
+                ...r,
+                category: hub.category || r.category || "",
+                note: hub.note || r.note || "",
+                label: hub.importance || (hub.is_pinned ? "Main" : r.label),
+                usage: hub.usage || r.usage || "",
+                localPreview: hub.preview || r.localPreview,
+              }
+            })
+            return newFromHub.length > 0 ? [...updated, ...newFromHub] : updated
+          })
+        }
+      }
+    } catch {}
     // Allow persist effects to run after this tick (restore is complete)
     setTimeout(() => { skipPersistRef.current = false }, 100)
   }, [])
@@ -250,15 +294,28 @@ function UploadAnalyzeContent() {
   // Persist artist ref previews as base64
   const saveRefPreviews = useCallback(async (refs: ArtworkRef[]) => {
     const previews = await Promise.all(refs.map(async r => {
-      if (!r.localPreview) return { id: r.id, label: r.label, title: r.title, preview: "" }
-      if (r.localPreview.startsWith("data:")) return { id: r.id, label: r.label, title: r.title, preview: r.localPreview }
+      const base = { id: r.id, label: r.label, title: r.title, category: r.category || "", note: r.note || "", usage: r.usage || "", artworkId: r.artworkId || "" }
+      if (!r.localPreview) return { ...base, preview: "" }
+      if (r.localPreview.startsWith("data:")) return { ...base, preview: r.localPreview }
       if (r.file && r.file.size > 0) {
         const b64 = await fileToBase64(r.file)
-        return { id: r.id, label: r.label, title: r.title, preview: b64 || r.localPreview }
+        return { ...base, preview: b64 || r.localPreview }
       }
-      return { id: r.id, label: r.label, title: r.title, preview: r.localPreview }
+      return { ...base, preview: r.localPreview }
     }))
     try { SS.set("c04_ref_previews", JSON.stringify(previews)) } catch {}
+    // Also write back to refhub_refs so reference-hub stays in sync
+    try {
+      const cached = JSON.parse(SS.get("refhub_refs") || "[]")
+      const cacheMap: Record<string, any> = {}
+      cached.forEach((c: any) => { cacheMap[c.id] = c })
+      refs.forEach(r => {
+        if (cacheMap[r.id]) {
+          cacheMap[r.id] = { ...cacheMap[r.id], category: r.category || "", note: r.note || "", importance: r.label, usage: r.usage || "" }
+        }
+      })
+      SS.set("refhub_refs", JSON.stringify(Object.values(cacheMap)))
+    } catch {}
   }, [fileToBase64])
 
   // ── Auto-persist after useCallbacks ──────────────────────────
@@ -279,11 +336,10 @@ function UploadAnalyzeContent() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || [])
     setArtworks(prev => {
-      const updated = [...prev, ...newFiles.map(file => ({
-        id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,
-        file, preview: URL.createObjectURL(file)
-      }))]
-      // Store preview URLs (they stay valid while page is open)
+      const updated = [
+        ...prev.filter(a => !newFiles.some(f => f.name.toLowerCase().replace(/\.[^.]+$/,"") === (a.file?.name||"").toLowerCase().replace(/\.[^.]+$/,""))),
+        ...newFiles.map(file => ({ id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, file, preview: URL.createObjectURL(file) }))
+      ]
       saveArtworkPreviews(updated)
       return updated
     })
@@ -294,10 +350,10 @@ function UploadAnalyzeContent() {
     e.preventDefault()
     const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"))
     setArtworks(prev => {
-      const updated = [...prev, ...dropped.map(file => ({
-        id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,
-        file, preview: URL.createObjectURL(file)
-      }))]
+      const updated = [
+        ...prev.filter(a => !dropped.some(f => f.name.toLowerCase().replace(/\.[^.]+$/,"") === (a.file?.name||"").toLowerCase().replace(/\.[^.]+$/,""))),
+        ...dropped.map(file => ({ id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, file, preview: URL.createObjectURL(file) }))
+      ]
       saveArtworkPreviews(updated)
       return updated
     })
@@ -582,13 +638,25 @@ function UploadAnalyzeContent() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-1.5"
-                      onDrop={e => { e.preventDefault(); const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")||f.type.startsWith("video/")); if(files.length>0){setArtworks(prev=>[...prev,...files.map(file=>({id:`aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,file,preview:URL.createObjectURL(file)}))]); setArtworkSaved(false)} }}
+                      onDrop={e => { e.preventDefault(); const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")||f.type.startsWith("video/")); if(files.length>0){setArtworks(prev=>{const updated=[...prev.filter(a=>!files.some(f=>f.name.toLowerCase().replace(/\.[^.]+$/,'') === (a.file?.name||'').toLowerCase().replace(/\.[^.]+$/,''))), ...files.map(file=>({id:`aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,file,preview:URL.createObjectURL(file)}))]; saveArtworkPreviews(updated); return updated}); setArtworkSaved(false)} }}
                       onDragOver={e => e.preventDefault()}>
                       {artworks.map(aw => (
-                        <div key={aw.id} className="relative aspect-square rounded overflow-hidden border bg-muted">
-                          <img src={aw.preview} alt={aw.file.name} className="w-full h-full object-cover" />
+                        <div
+                          key={aw.id}
+                          className="relative aspect-square rounded overflow-hidden border bg-muted cursor-pointer group"
+                          title="雙擊匯入對話框討論"
+                          onDoubleClick={() => {
+                            const name = aw.file?.name || aw.id
+                            setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${name}` }])
+                            callAgent(`請觀察這張 Artwork「${name}」，從光影、構圖、色彩等面向給出具體分析與改進建議。`)
+                          }}
+                        >
+                          <img src={aw.preview} alt={aw.file?.name || aw.id} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">雙擊討論</span>
+                          </div>
                           <button className="absolute top-0.5 right-0.5 w-4 h-4 bg-background/80 rounded flex items-center justify-center"
-                            onClick={() => { setArtworks(p => p.filter(a => a.id !== aw.id)); setArtworkSaved(false) }}>
+                            onClick={e => { e.stopPropagation(); setArtworks(p => p.filter(a => a.id !== aw.id)); setArtworkSaved(false) }}>
                             <X className="w-2.5 h-2.5" />
                           </button>
                         </div>
@@ -712,7 +780,7 @@ function UploadAnalyzeContent() {
                       <p className="text-[10px] text-muted-foreground">點擊或拖曳新增 Reference</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-1.5"
+                    <div className="grid grid-cols-2 gap-3"
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => {
                         e.preventDefault()
@@ -726,34 +794,54 @@ function UploadAnalyzeContent() {
                         setRefsSaved(false)
                       }}>
                       {artistRefs.map(ref => (
-                        <div key={ref.id} className="relative group">
-                          <div className="aspect-square rounded-lg overflow-hidden bg-muted border">
-                            {ref.localPreview
-                              ? <img src={ref.localPreview} alt={ref.title} className="w-full h-full object-cover" />
-                              : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-4 h-4 text-muted-foreground" /></div>}
-                          </div>
-                          {/* Label badge overlay */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 rounded-b-lg px-1 py-0.5">
-                            <Select value={ref.label} onValueChange={v => { setArtistRefs(p => p.map(r => r.id === ref.id ? {...r, label: v} : r)); setRefsSaved(false) }}>
-                              <SelectTrigger className="h-4 text-[8px] px-1 bg-transparent border-0 text-white p-0 gap-0.5 [&>svg]:w-2 [&>svg]:h-2">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {REF_LABEL_OPTIONS.map(opt => <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          {/* Delete button */}
-                          <button className="absolute top-0.5 right-0.5 w-4 h-4 bg-background/80 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => { setArtistRefs(p => p.filter(r => r.id !== ref.id)); setRefsSaved(false) }}>
-                            <X className="w-2.5 h-2.5" />
-                          </button>
-                        </div>
+                        <RefCard
+                          key={ref.id}
+                          data={{
+                            id: ref.id,
+                            title: ref.title,
+                            preview: ref.localPreview,
+                            category: ref.category,
+                            importance: ref.label,
+                            usage: ref.usage,
+                            note: ref.note,
+                            artworkId: ref.artworkId,
+                          }}
+                          artworkOptions={artworks.map(a => ({ id: a.id, name: a.file?.name?.replace(/\.[^.]+$/, "") || a.id }))}
+                          onChange={updated => {
+                            setArtistRefs(p => p.map(r => r.id === ref.id ? {
+                              ...r,
+                              category: updated.category,
+                              label: updated.importance ?? r.label,
+                              usage: updated.usage,
+                              note: updated.note,
+                              artworkId: updated.artworkId,
+                            } : r))
+                            setRefsSaved(false)
+                          }}
+                          onDelete={() => { setArtistRefs(p => p.filter(r => r.id !== ref.id)); setRefsSaved(false) }}
+                          onDiscuss={d => {
+                            setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
+備注：${d.note}` : ""}` }])
+                            callAgent(`請分析這張 Reference「${d.title}」${d.category ? `（類別：${d.category}）` : ""}的視覺特徵，以及它對當前作品的參考價值。${d.note ? `Artist 的備注：${d.note}` : ""}`)
+                          }}
+                          onSave={updated => {
+                            setRefsSaved(true)
+                            try {
+                              const cached = JSON.parse(SS.get("refhub_refs") || "[]")
+                              const cacheMap: Record<string, any> = {}
+                              cached.forEach((c: any) => { cacheMap[c.id] = c })
+                              if (cacheMap[ref.id]) {
+                                cacheMap[ref.id] = { ...cacheMap[ref.id], category: updated.category, note: updated.note, importance: updated.importance, usage: updated.usage, artworkId: updated.artworkId }
+                                SS.set("refhub_refs", JSON.stringify(Object.values(cacheMap)))
+                              }
+                            } catch {}
+                          }}
+                        />
                       ))}
                       {/* Add more */}
-                      <div className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                      <div className="flex items-center justify-center rounded-xl border-2 border-dashed cursor-pointer hover:border-primary/50 transition-colors min-h-[200px]"
                         onClick={() => refInputRef.current?.click()}>
-                        <Plus className="w-4 h-4 text-muted-foreground" />
+                        <Plus className="w-5 h-5 text-muted-foreground" />
                       </div>
                     </div>
                   )}
@@ -762,7 +850,7 @@ function UploadAnalyzeContent() {
 
 
               {/* Send All to Agent */}
-              <Button size="sm" className="w-full gap-1.5 h-9 text-xs"
+              <Button size="lg" className="w-full gap-2 py-4 text-sm"
                 disabled={artworks.length === 0 && artistRefs.length === 0}
                 onClick={() => {
                   const parts: string[] = []
@@ -772,7 +860,7 @@ function UploadAnalyzeContent() {
                   setChatMessages(p => [...p, { role: "user", content: msg }])
                   callAgent(`Artist 提交了以下創作資料，請給出整體觀察與建議：\n\n${parts.join("\n")}`)
                 }}>
-                <Send className="w-3.5 h-3.5" />與AI 分析助手討論
+                <Send className="w-4 h-4" />與AI 分析助手討論
               </Button>
 
               {/* Reflection Notes */}
