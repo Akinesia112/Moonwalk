@@ -122,6 +122,12 @@ function ArtistReflectionContent() {
       if (saved) setAgentMessages(JSON.parse(saved))
     } catch {}
 
+    // Load 我的理解筆記 (persisted for QA page to read)
+    try {
+      const saved = sessionStorage.getItem("reflection_notes")
+      if (saved) setReflectionNotes(saved)
+    } catch {}
+
     setHydrated(true)
   }, [])
 
@@ -130,6 +136,12 @@ function ArtistReflectionContent() {
     if (!hydrated) return
     try { sessionStorage.setItem("reflection_chat", JSON.stringify(agentMessages)) } catch {}
   }, [agentMessages, hydrated])
+
+  // Persist 我的理解筆記 — QA page reads "reflection_notes"
+  useEffect(() => {
+    if (!hydrated) return
+    try { sessionStorage.setItem("reflection_notes", reflectionNotes) } catch {}
+  }, [reflectionNotes, hydrated])
 
   // Auto-scroll
   useEffect(() => {
@@ -332,8 +344,7 @@ ${specAndRefs}
   const ALL_SPEC_FIELDS = [
     { label: "專案名稱", key: "project_name" },
     { label: "客戶", key: "client" },
-    { label: "導演/創意總監", key: "director" },
-    { label: "Supervisor", key: "supervisor" },
+    { label: "導演/創意總監 & Supervisor", key: "director" },
     { label: "密等", key: "confidentiality" },
     { label: "產品賣點", key: "selling_points" },
     { label: "情緒關鍵詞", key: "keywords" },

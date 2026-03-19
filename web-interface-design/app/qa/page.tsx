@@ -123,7 +123,9 @@ export default function QAPage() {
   const [showFeedbackPanel, setShowFeedbackPanel] = useState(true)
   const [toneStyle, setToneStyle] = useState("professional")
   const isDrawingRef = useRef(false)  // ref not state — avoids re-render during drawing
-  const [textInputPos, setTextInputPos] = useState<{x:number;y:number;cssX:number;cssY:number}|null>(null)
+  const [textInputPos, setTextInputPos] = useState<{x:number;y:number;cssX:number;cssY:number;panel:"work"|"ref";scale:number}|null>(null)
+  const lastEnterRef = useRef<number>(0)  // track double-Enter timing
+  const isComposingRef = useRef(false)    // track IME composition state
   const [textInputValue, setTextInputValue] = useState("")
   const [canvasAnnotations, setCanvasAnnotations] = useState<CanvasAnn[]>([])
   const [selectedAnnIdx, setSelectedAnnIdx] = useState<number|null>(null)
@@ -143,32 +145,45 @@ export default function QAPage() {
   const artworkFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    // Build label-grouped refs (Main, Secondary, Lighting, Color, etc)
-    const refMap: Record<string, { id: string; name: string; image: string; label: string; category?: string; importance?: string; note?: string; usage?: string }> = {}
-    try {
-      const ar = SS.get("c04_ref_previews")
-      if (ar) JSON.parse(ar).forEach((r: any) => {
-        if (r.preview) refMap[r.id] = { id: r.id, name: r.title || r.id, image: r.preview, label: r.importance || r.label || "Secondary", category: r.category || "", importance: r.importance || r.label || "Secondary", note: r.note || "", usage: r.usage || "", artworkId: r.artworkId || "" }
-      })
-    } catch {}
+    // refhub_refs is the single source of truth — title-dedup so re-uploads replace stale refs
+    const deletedIds = new Set<string>()
+    try { JSON.parse(SS.get("deleted_ref_ids") || "[]").forEach((id: string) => deletedIds.add(id)) } catch {}
+
+    let labeledRefs: { id: string; name: string; image: string; label: string; category?: string; importance?: string; note?: string; usage?: string; artworkId?: string }[] = []
     try {
       const hr = SS.get("refhub_refs")
-      if (hr) JSON.parse(hr).forEach((r: any) => {
-        if (!r.preview) return
-        const imp = r.importance || (r.is_pinned ? "Main" : (r.category || "Secondary"))
-        if (refMap[r.id]) {
-          refMap[r.id] = { ...refMap[r.id], image: r.preview || refMap[r.id].image, category: r.category || refMap[r.id].category || "", importance: imp, note: r.note || refMap[r.id].note || "", usage: r.usage || refMap[r.id].usage || "", label: imp, artworkId: r.artworkId || refMap[r.id].artworkId || "" }
-        } else {
-          refMap[r.id] = { id: r.id, name: r.title || r.id, image: r.preview, label: imp, category: r.category || "", importance: imp, note: r.note || "", usage: r.usage || "", artworkId: r.artworkId || "" }
+      if (hr) {
+        const seen = new Set<string>()
+        JSON.parse(hr).forEach((r: any) => {
+          if (deletedIds.has(r.id)) return
+          const img = r.preview || r.file_url || r.thumbnail_url || ""
+          if (!img) return
+          const key = (r.title || r.id).toLowerCase()
+          if (seen.has(key)) return  // title-dedup: newest first wins (refhub writes newest at top)
+          seen.add(key)
+          const imp = r.importance || (r.is_pinned ? "Main" : (r.category || "Secondary"))
+          labeledRefs.push({ id: r.id, name: r.title || r.id, image: img, label: imp, category: r.category || "", importance: imp, note: r.note || "", usage: r.usage || "", artworkId: r.artworkId || "" })
+        })
+      }
+    } catch {}
+    // Fallback to c04_ref_previews if refhub_refs empty
+    if (labeledRefs.length === 0) {
+      try {
+        const ar = SS.get("c04_ref_previews")
+        if (ar) {
+          const seen = new Set<string>()
+          JSON.parse(ar).forEach((r: any) => {
+            if (deletedIds.has(r.id)) return
+            const img = r.preview || r.file_url || r.thumbnail_url || ""
+            if (!img) return
+            const key = (r.title || r.id).toLowerCase()
+            if (seen.has(key)) return
+            seen.add(key)
+            labeledRefs.push({ id: r.id, name: r.title || r.id, image: img, label: r.importance || r.label || "Secondary", category: r.category || "", importance: r.importance || r.label || "Secondary", note: r.note || "", usage: r.usage || "", artworkId: r.artworkId || "" })
+          })
         }
-      })
-    } catch {}
-    // Filter using explicit deleted_ref_ids
-    let labeledRefs = Object.values(refMap)
-    try {
-      const deletedIds = new Set(JSON.parse(SS.get("deleted_ref_ids") || "[]"))
-      if (deletedIds.size > 0) labeledRefs = labeledRefs.filter(r => !deletedIds.has(r.id))
-    } catch {}
+      } catch {}
+    }
 
     try {
       const aw = SS.get("c04_artwork_previews")
@@ -249,8 +264,91 @@ export default function QAPage() {
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
     setHydrated(true)
-    try { setArtistNote(SS.get("c04_notes") || "") } catch {}
+    try { setArtistNote(SS.get("reflection_notes") || "") } catch {}   // artist-reflection 理解筆記
+    try { setReflectionNote(SS.get("c04_notes") || "") } catch {}       // upload-analyze 創作反思筆記
     try { const b = JSON.parse(SS.get("kickoff_brief") || "{}"); setSupervisorSpec(b.supervisor_spec || "") } catch {}
+    // Restore text annotations / labels / specs / chat
+    try { const v = SS.get("qa_annotations"); if (v) setAnnotations(JSON.parse(v)) } catch {}
+    try { const v = SS.get("qa_labels"); if (v) setLabels(JSON.parse(v)) } catch {}
+    try { const v = SS.get("qa_specs"); if (v) setInlineSpecs(JSON.parse(v)) } catch {}
+    try { const v = SS.get("qa_chat"); if (v) setChatMessages(JSON.parse(v)) } catch {}
+
+    // Load labels from ref categories (done here not in useState to avoid SSR mismatch)
+    try {
+      const cats = new Set<string>()
+      JSON.parse(sessionStorage.getItem("refhub_refs") || "[]").forEach((r: any) => { if (r.category?.trim()) cats.add(r.category.trim()) })
+      JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]").forEach((r: any) => { if (r.category?.trim()) cats.add(r.category.trim()) })
+      const catList = Array.from(cats)
+      if (catList.length > 0) setLabels(catList)
+    } catch {}
+
+    // Load upload-analyze 分項指標 → feedbackItems
+    try {
+      const raw = SS.get("c04_analysis")
+      if (raw) {
+        const a = JSON.parse(raw)
+        if (Array.isArray(a.metrics) && a.metrics.length > 0) {
+          setFeedbackItems(a.metrics.map((m: any) => ({
+            id: "c04-" + (m.id || m.name),
+            text: "[" + m.name + "] " + (m.agentA?.opinion || m.summary || ""),
+            source: "AI", priority: m.status === "red" ? "P0" : m.status === "yellow" ? "P1" : "P2",
+            supplement: "", addressed: false,
+            aiDraft: m.suggestions?.join("；") || m.agentB?.opinion || "",
+          })))
+        }
+      }
+    } catch {}
+    // Load compare Delta List → merge into feedbackItems
+    try {
+      const raw = SS.get("compare_delta_list")
+      if (raw) {
+        const deltas = JSON.parse(raw)
+        if (Array.isArray(deltas) && deltas.length > 0) {
+          setFeedbackItems(prev => {
+            const existingIds = new Set(prev.map((f: any) => f.id))
+            const newItems = deltas
+              .filter((d: any) => !existingIds.has("delta-" + (d.id || d.metric)))
+              .map((d: any) => ({
+                id: "delta-" + (d.id || d.metric),
+                text: "[" + (d.metric || d.name) + "] " + (d.gap || d.summary || ""),
+                source: "AI", priority: d.severity === "high" ? "P0" : d.severity === "medium" ? "P1" : "P2",
+                supplement: "", addressed: false, aiDraft: d.suggestion || d.fix || "",
+              }))
+            return [...prev, ...newItems]
+          })
+        }
+      }
+    } catch {}
+    // Live sync: pick up changes made in other tabs/pages without full reload
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "reflection_notes") setArtistNote(e.newValue || "")
+      if (e.key === "c04_notes")        setReflectionNote(e.newValue || "")
+      // Evict stale refs when reference-hub replaces a duplicate upload
+      if (e.key === "refhub_refs" || e.key === "deleted_ref_ids") {
+        try {
+          const deletedIds = new Set<string>(JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"))
+          if (deletedIds.size > 0) {
+            setArtworks(prev => prev.map(art => ({
+              ...art,
+              refs: art.refs.filter(r => !deletedIds.has(r.id))
+            })))
+          }
+          const raw = sessionStorage.getItem("refhub_refs")
+          if (!raw) return
+          const hubRefs: any[] = JSON.parse(raw)
+          setArtworks(prev => prev.map(art => ({
+            ...art,
+            refs: art.refs.map(r => {
+              const hub = hubRefs.find(h => h.id === r.id)
+              if (!hub) return r
+              return { ...r, image: hub.preview || hub.file_url || hub.thumbnail_url || r.image, note: hub.note || r.note, category: hub.category || r.category }
+            })
+          })))
+        } catch {}
+      }
+    }
+    window.addEventListener("storage", onStorage)
+    return () => window.removeEventListener("storage", onStorage)
   }, [])
   useEffect(() => {
     // Restore canvas annotations from sessionStorage
@@ -282,19 +380,17 @@ export default function QAPage() {
     SS.set(canvasKey, JSON.stringify(canvasAnnotations))
   }, [canvasAnnotations, canvasKey, hydrated])
 
+
+
   // ── Feedback & chat persist ───────────────────────────────────
-  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([
-    { id: "ai-1", text: "主體 rim light 不足，需加強", source: "AI", priority: "P0", supplement: "", addressed: false, aiDraft: "建議增強主體的 rim light，讓角色輪廓更加清晰突出，與背景產生更好的層次分離。" },
-    { id: "ai-2", text: "色溫偏冷，建議調至 4500K", source: "AI", priority: "P1", supplement: "", addressed: false, aiDraft: "目前畫面色溫偏冷（約 6500K），建議調整至 4500K 左右的暖色調。" },
-    { id: "ai-3", text: "構圖比例基本符合，輕微右偏", source: "AI", priority: "P2", supplement: "", addressed: false },
-  ])
+  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const [newAnnotationText, setNewAnnotationText] = useState("")
   const [newFeedbackText, setNewFeedbackText] = useState("")
   const [newFeedbackPriority, setNewFeedbackPriority] = useState("P1")
-  const [annotations, setAnnotations] = useState([{ id:"d1", text:"右上角光線需要更柔和", time:"剛剛" }, { id:"d2", text:"前景物件位置偏左", time:"2 分鐘前" }])
-  const [labels, setLabels] = useState(["Lighting", "Composition"])
+  const [annotations, setAnnotations] = useState<{id:string;text:string;time:string;ai?:boolean}[]>([])
+  const [labels, setLabels] = useState<string[]>(["Lighting", "Composition"])
   const [newLabel, setNewLabel] = useState("")
-  const [inlineSpecs, setInlineSpecs] = useState(["主光源必須從右側照射", "氛圍要 warm & cozy"])
+  const [inlineSpecs, setInlineSpecs] = useState<string[]>([])
   const [newSpecText, setNewSpecText] = useState("")
   const [showArtistNotes, setShowArtistNotes] = useState(true)
   const [chatInput, setChatInput] = useState("")
@@ -304,13 +400,22 @@ export default function QAPage() {
 
   useEffect(() => { chatScrollRef.current?.scrollIntoView({ behavior: "smooth" }) }, [chatMessages])
 
+  // Auto-persist text annotations / labels / specs / chat
+  useEffect(() => { if (hydrated) try { SS.set("qa_annotations", JSON.stringify(annotations)) } catch {} }, [annotations, hydrated])
+  useEffect(() => { if (hydrated) try { SS.set("qa_labels", JSON.stringify(labels)) } catch {} }, [labels, hydrated])
+  useEffect(() => { if (hydrated) try { SS.set("qa_specs", JSON.stringify(inlineSpecs)) } catch {} }, [inlineSpecs, hydrated])
+  useEffect(() => { if (hydrated) try { SS.set("qa_chat", JSON.stringify(chatMessages)) } catch {} }, [chatMessages, hydrated])
+
   // Artist notes from sessionStorage
+  // artistNote     = 理解筆記    from artist-reflection  (key: "reflection_notes")
+  // reflectionNote = 創作反思筆記 from upload-analyze     (key: "c04_notes")
   const [artistNote, setArtistNote] = useState("")
+  const [reflectionNote, setReflectionNote] = useState("")
   const [supervisorSpec, setSupervisorSpec] = useState("")
 
   // ── Brief/Specs ───────────────────────────────────────────────
   const BRIEF_LABELS: Record<string, string> = {
-    project_name: "專案名稱", client: "客戶", director: "導演", supervisor: "Supervisor",
+    project_name: "專案名稱", client: "客戶", director: "導演/創意總監 & Supervisor",
     confidentiality: "密等", selling_points: "產品賣點", keywords: "情緒關鍵詞",
     restrictions: "禁忌事項", style: "風格關鍵字", mood: "色調/氛圍",
     worldview: "世界觀", supervisor_spec: "Supervisor Spec",
@@ -319,9 +424,10 @@ export default function QAPage() {
   const directorSpecs = (() => {
     try {
       const b = JSON.parse(SS.get("kickoff_brief") || "{}")
+      const EXCLUDE = new Set(["supervisor"])   // merged into director field
       const items = Object.entries(b)
-        .filter(([, v]) => v && String(v).trim())
-        .map(([k, v]) => `${BRIEF_LABELS[k] || k}：${v}`)
+        .filter(([k, v]) => !EXCLUDE.has(k) && v && String(v).trim() && BRIEF_LABELS[k])
+        .map(([k, v]) => `${BRIEF_LABELS[k]}：${v}`)
       return { items, technical: [], priorities: [] }
     } catch {
       return { items: [], technical: [], priorities: [] }
@@ -331,8 +437,10 @@ export default function QAPage() {
   const currentArt = artworks[selectedArtwork]
   const currentRef = currentArt?.refs[selectedRef]
 
-  // ── Metrics ───────────────────────────────────────────────────
-  const metrics = [
+  // ── Metrics — dynamic from c04_analysis, fallback to static ────
+  type MetricItem = { id:string; name:string; status:string; agents:string[]; consensus:boolean; refBasis:string; supervisorNote:string|null }
+  type MetricDetail = { analysis: string; suggestions: string[]; agentOpinions: { agent: string; opinion: string; confidence: number }[]; debate?: { agentA: {name:string;opinion:string;severity:string}; agentB: {name:string;opinion:string;severity:string}; consensus: string } }
+  const STATIC_METRICS: MetricItem[] = [
     { id:"composition", name:"構圖", status:"red", agents:["Composition_J","Composition_K"], consensus:false, refBasis:"Reference #2", supervisorNote:"建議參考非對稱構圖" },
     { id:"lighting", name:"光影", status:"yellow", agents:["Light_J","Light_K"], consensus:true, refBasis:"Reference #1", supervisorNote:"補光強度微調" },
     { id:"color", name:"色彩", status:"green", agents:["Color_J","Color_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
@@ -342,12 +450,54 @@ export default function QAPage() {
     { id:"exposure", name:"曝光", status:"red", agents:["Exposure_J","Exposure_K"], consensus:true, refBasis:"Reference #1", supervisorNote:"優先修正" },
     { id:"style", name:"風格", status:"green", agents:["Style_J","Style_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
   ]
-  type MetricDetail = { analysis: string; suggestions: string[]; agentOpinions: { agent: string; opinion: string; confidence: number }[]; debate?: { agentA: {name:string;opinion:string;severity:string}; agentB: {name:string;opinion:string;severity:string}; consensus: string } }
-  const metricDetails: Record<string, MetricDetail> = {
+  const STATIC_DETAILS: Record<string, MetricDetail> = {
     composition: { analysis:"構圖重心偏左 15%", suggestions:["主體右移 10-15%","調整留白","參考 Ref #2"], agentOpinions:[{agent:"Composition_J",opinion:"不符合三分法",confidence:85},{agent:"Composition_K",opinion:"動態構圖邊緣案例",confidence:72}], debate:{agentA:{name:"Composition_J",opinion:"偏左",severity:"high"},agentB:{name:"Composition_K",opinion:"動態構圖可接受",severity:"medium"},consensus:"是否嚴格遵循三分法"} },
     lighting: { analysis:"補光不足，陰影過重", suggestions:["左側補光 +20%","色溫 4800K"], agentOpinions:[{agent:"Light_J",opinion:"偏暗",confidence:88},{agent:"Light_K",opinion:"色溫輕微",confidence:82}] },
     exposure: { analysis:"高光過曝 clipping 8%", suggestions:["曝光 -0.5 stops","漸層濾鏡"], agentOpinions:[{agent:"Exposure_J",opinion:"過曝",confidence:95},{agent:"Exposure_K",opinion:"高光損失",confidence:93}] },
   }
+  const [c04Metrics, setC04Metrics] = useState<MetricItem[]>([])
+  const [c04Details, setC04Details] = useState<Record<string, MetricDetail>>({})
+  useEffect(() => {
+    try {
+      const raw = SS.get("c04_analysis"); if (!raw) return
+      const a = JSON.parse(raw)
+      if (!Array.isArray(a.metrics) || a.metrics.length === 0) return
+      const items: MetricItem[] = a.metrics.map((m: any) => ({
+        id: m.id || m.name, name: m.name,
+        status: m.status || (m.score >= 80 ? "green" : m.score >= 50 ? "yellow" : "red"),
+        agents: [m.agentA?.name || "Agent A", m.agentB?.name || "Agent B"],
+        consensus: m.consensus !== false, refBasis: m.refBasis || "Spec", supervisorNote: m.supervisorNote || null,
+      }))
+      const details: Record<string, MetricDetail> = {}
+      a.metrics.forEach((m: any) => {
+        const key = m.id || m.name
+        // Store by both id and Chinese name for robust lookup from dialog
+        const entry = {
+          analysis: m.agentA?.opinion || m.summary || "",
+          suggestions: m.suggestions || [],
+          agentOpinions: [
+            { agent: m.agentA?.name || "Agent A", opinion: m.agentA?.opinion || "", confidence: m.agentA?.confidence || 80 },
+            { agent: m.agentB?.name || "Agent B", opinion: m.agentB?.opinion || "", confidence: m.agentB?.confidence || 75 },
+          ],
+          // Map from upload-analyze format: debate.positionA/B/conclusion
+          debate: m.debate ? {
+            agentA: { name: m.agentA?.name || "Agent A", opinion: m.debate.positionA || m.agentA?.opinion || "", severity: m.agentA?.score < 50 ? "high" : "medium" },
+            agentB: { name: m.agentB?.name || "Agent B", opinion: m.debate.positionB || m.agentB?.opinion || "", severity: m.agentB?.score < 50 ? "high" : "medium" },
+            consensus: m.debate.conclusion || "",
+          } : (m.agentA?.opinion && m.agentB?.opinion ? {
+            agentA: { name: m.agentA.name || "Agent A", opinion: m.agentA.opinion, severity: "medium" },
+            agentB: { name: m.agentB.name || "Agent B", opinion: m.agentB.opinion, severity: "medium" },
+            consensus: "",
+          } : undefined),
+        }
+        details[key] = entry          // by id (e.g. "light")
+        if (m.name) details[m.name] = entry   // by Chinese name (e.g. "光影")
+      })
+      setC04Metrics(items); setC04Details(details)
+    } catch {}
+  }, [hydrated])
+  const metrics = c04Metrics.length > 0 ? c04Metrics : STATIC_METRICS
+  const metricDetails = Object.keys(c04Details).length > 0 ? c04Details : STATIC_DETAILS
 
   const getStatusIcon = (s: string) => s==="red" ? <AlertCircle className="w-4 h-4 text-red-500"/> : s==="yellow" ? <AlertTriangle className="w-4 h-4 text-amber-500"/> : <CheckCircle2 className="w-4 h-4 text-green-500"/>
   const getStatusBg = (s: string) => s==="red" ? "bg-red-500/10 border-red-500/30" : s==="yellow" ? "bg-amber-500/10 border-amber-500/30" : "bg-green-500/10 border-green-500/30"
@@ -356,11 +506,29 @@ export default function QAPage() {
   // ── Agent chat ────────────────────────────────────────────────
   const callAgent = useCallback(async (msg: string) => {
     setChatLoading(true)
-    const ctx = `作品：${currentArt?.name || ""}\nReference：${currentRef?.name || ""}`
+
+    // Build rich context so multi-agents understand full artist intent
+    const ctxParts = [
+      `作品：${currentArt?.name || "（未選取）"}`,
+      `Reference：${currentRef?.name || "（未選取）"}`,
+    ]
+    if (artistNote?.trim())
+      ctxParts.push(`理解筆記（Artist Reflection）：\n${artistNote.trim()}`)
+    if (reflectionNote?.trim())
+      ctxParts.push(`創作反思筆記（Upload Analyze）：\n${reflectionNote.trim()}`)
+    if (supervisorSpec?.trim())
+      ctxParts.push(`Supervisor Spec：\n${supervisorSpec.trim()}`)
+    const ctx = ctxParts.join("\n\n")
+
     try {
       const res = await fetch(`${API}/suggestion/chat/analysis`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_id: PROJECT_ID, message: msg, context: ctx, history: chatMessages.slice(-6).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })) }),
+        body: JSON.stringify({
+          project_id: PROJECT_ID,
+          message: msg,
+          context: ctx,
+          history: chatMessages.slice(-6).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
+        }),
       })
       const data = await res.json()
       setChatMessages(p => [...p, { role: "ai", content: stripMd(data.response || data.reply || "抱歉，無法回應。") }])
@@ -368,20 +536,67 @@ export default function QAPage() {
       setChatMessages(p => [...p, { role: "ai", content: "連線失敗，請確認後端。" }])
     }
     setChatLoading(false)
-  }, [currentArt, currentRef, chatMessages])
+  }, [currentArt, currentRef, chatMessages, artistNote, reflectionNote, supervisorSpec])
+
+  // ── AI-generated annotation & spec suggestions ────────────────
+  const [suggestedAnnotations, setSuggestedAnnotations] = useState<string[]>([])
+  const [suggestedSpecs, setSuggestedSpecs] = useState<string[]>([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [suggestedLabels, setSuggestedLabels] = useState<string[]>([])
+  useEffect(() => {
+    if (!currentArt?.name || !currentRef?.name) return
+    setSuggestedAnnotations([]); setSuggestedSpecs([]); setSuggestedLabels([])
+    setLoadingSuggestions(true)
+    // Build context from analysis results and feedback so agents can generate targeted suggestions
+    const analysisCtx = (() => {
+      try {
+        const a = JSON.parse(sessionStorage.getItem("c04_analysis") || "{}")
+        if (!Array.isArray(a.metrics)) return ""
+        return a.metrics.filter((m: any) => m.status !== "green")
+          .map((m: any) => m.name + "：" + (m.agentA?.opinion || "")).join("\n")
+      } catch { return "" }
+    })()
+    const ctx = ["作品：" + currentArt.name, "Reference：" + currentRef.name, analysisCtx ? "AI分析問題：\n" + analysisCtx : ""].filter(Boolean).join("\n")
+    const prompt = "根據作品「" + currentArt.name + "」與 Reference「" + currentRef.name + "」的 VFX 差距分析，用繁體中文生成：\n1. 3個具體畫面標註（10-20字，指出具體位置＋問題，例如「右上角主光 rim light 不足」）\n2. 3個 Supervisor Spec 規範（10-20字，針對具體視覺指標，例如「主光源方向須從右側 45° 照射」）\n3. 3個 Label 標籤（從 Lighting/Color/Composition/Style/Texture/Motion/Mood/VFX 選最相關）\n只回傳 JSON，格式：{\"annotations\":[\"...\"],\"specs\":[\"...\"],\"labels\":[\"...\"]}"
+    fetch(API + "/suggestion/chat/analysis", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_id: PROJECT_ID, message: prompt, context: ctx }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const raw = (data.response || data.reply || "").replace(/```json|```/g, "").trim()
+        const match = raw.match(/\{[\s\S]*\}/)
+        if (match) {
+          try {
+            const parsed = JSON.parse(match[0])
+            if (Array.isArray(parsed.annotations)) setSuggestedAnnotations(parsed.annotations.slice(0, 3))
+            if (Array.isArray(parsed.specs)) setSuggestedSpecs(parsed.specs.slice(0, 3))
+            if (Array.isArray(parsed.labels)) setSuggestedLabels(parsed.labels.filter((l: string) => !labels.includes(l)).slice(0, 3))
+          } catch {}
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSuggestions(false))
+  }, [currentArt?.id, currentRef?.id])
 
   const handleMetricCheck = (metricId: string, checked: boolean) => {
     if (checked) {
       setCheckedMetrics(p => [...p, metricId])
       const metric = metrics.find(m => m.id === metricId)
-      const detail = metric ? metricDetails[metricId] : null
+      const detail = metric ? (metricDetails[metricId] || metricDetails[metric.name]) : null
       if (metric && detail) {
-        setFeedbackItems(p => [...p, { id:`metric-${Date.now()}`, text:`[${metric.name}] ${detail.analysis}. 建議：${detail.suggestions.join("、")}`, source:"AI", priority: metric.status==="red"?"P0":metric.status==="yellow"?"P1":"P2", supplement:"", addressed:false }])
+        setFeedbackItems(p => [...p, { id:"metric-"+Date.now(), text:"["+metric.name+"] "+detail.analysis+(detail.suggestions.length?". 建議："+detail.suggestions.join("、"):""), source:"AI", priority: metric.status==="red"?"P0":metric.status==="yellow"?"P1":"P2", supplement:"", addressed:false }])
       }
       if (metric) {
-        const msg = `[勾選 Metric] ${metric.name} (${metric.status==="red"?"紅燈":metric.status==="yellow"?"黃燈":"綠燈"}) - ${metric.refBasis}`
+        // Build full context: analysis + Agent A/B opinions + Debate
+        const parts: string[] = ["[勾選 Metric] " + metric.name + " (" + (metric.status==="red"?"紅燈":metric.status==="yellow"?"黃燈":"綠燈") + ") - " + metric.refBasis]
+        if (detail?.agentOpinions?.[0]?.opinion) parts.push("Agent A（" + detail.agentOpinions[0].agent + "）：" + detail.agentOpinions[0].opinion)
+        if (detail?.agentOpinions?.[1]?.opinion) parts.push("Agent B（" + detail.agentOpinions[1].agent + "）：" + detail.agentOpinions[1].opinion)
+        if (detail?.debate?.consensus) parts.push("Debate 結論：" + detail.debate.consensus)
+        if (detail?.analysis) parts.push("分析：" + detail.analysis)
+        const msg = parts.join("\n")
         setChatMessages(p => [...p, { role:"user", content: msg }])
-        callAgent(`請分析「${metric.name}」指標的問題並給出具體改進建議。${detail ? `分析：${detail.analysis}` : ""}`)
+        callAgent("針對「" + metric.name + "」指標，根據以下 Agent Debate 內容給出具體改進建議：\n" + msg)
       }
     } else {
       setCheckedMetrics(p => p.filter(id => id !== metricId))
@@ -617,8 +832,8 @@ export default function QAPage() {
     return { x, y, cssX: e.clientX - rect.left, cssY: e.clientY - rect.top }
   }
 
-  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const isRef = activePanel === "ref"
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>, panelOverride?: "work" | "ref") => {
+    const isRef = (panelOverride ?? activePanel) === "ref"
     const annotations = isRef ? refAnnotations : canvasAnnotations
     if (canvasTool === "pointer") {
       const pos = isRef ? getRefCanvasPos(e) : getCanvasPos(e)
@@ -628,7 +843,9 @@ export default function QAPage() {
     }
     if (canvasTool==="text") {
       const p = isRef ? getRefCanvasPos(e) : getCanvasPos(e)
-      setTextInputPos({x:p.x,y:p.y,cssX:p.cssX,cssY:p.cssY})
+      const cvs = isRef ? refCanvasRef.current : canvasRef.current
+      const sf = cvs ? cvs.width / cvs.getBoundingClientRect().width : 1
+      setTextInputPos({x:p.x,y:p.y,cssX:p.cssX,cssY:p.cssY,panel:isRef?"ref":"work",scale:sf})
       setTextInputValue("")
       return
     }
@@ -691,8 +908,10 @@ export default function QAPage() {
   }
   const handleTextSubmit = () => {
     if (textInputPos&&textInputValue.trim()) {
-      const ann = {type:"text",text:textInputValue,x:textInputPos.x,y:textInputPos.y,color:brushColor,opacity:brushOpacity,lineWidth:brushSize,fontSize:textFontSize,font:textFont,bold:textBold,italic:textItalic} as any
-      if (activePanel === "ref") {
+      const scaledFontSize = Math.round(textFontSize * (textInputPos.scale || 1))
+      const ann = {type:"text",text:textInputValue,x:textInputPos.x,y:textInputPos.y,color:brushColor,opacity:brushOpacity,lineWidth:brushSize,fontSize:scaledFontSize,font:textFont,bold:textBold,italic:textItalic} as any
+      // Use textInputPos.panel — activePanel may have changed (onMouseLeave resets to "work")
+      if (textInputPos.panel === "ref") {
         globalUndoRef.current = [...globalUndoRef.current.slice(-40), {panel:"ref", anns:[...refAnnotations]}]
         setRefAnnotations(p=>[...p,ann])
       } else {
@@ -1009,7 +1228,7 @@ export default function QAPage() {
                           setRefAnnotations([])
                         }}><Trash2 className="w-3.5 h-3.5" /></Button>
                         <div className="w-px h-5 bg-border mx-0.5" />
-                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-teal-600 hover:bg-teal-700 text-white" title="下載標註圖" onClick={() => {
+                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-teal-600 hover:bg-teal-700 text-white" title="輸出 Artwork 標註圖" onClick={() => {
                           const canvas = canvasRef.current
                           const img = canvasContainerRef.current?.querySelector("img") as HTMLImageElement | null
                           if (!canvas || !img) return
@@ -1018,9 +1237,22 @@ export default function QAPage() {
                           const ctx = off.getContext("2d")!
                           ctx.drawImage(img, 0, 0, off.width, off.height)
                           ctx.drawImage(canvas, 0, 0)
-                          const link = document.createElement("a"); link.download = `${currentArt?.name||"review"}_annotated.png`; link.href = off.toDataURL("image/png"); document.body.appendChild(link); link.click(); document.body.removeChild(link)
+                          const link = document.createElement("a"); link.download = `${currentArt?.name||"artwork"}_annotated.png`; link.href = off.toDataURL("image/png"); document.body.appendChild(link); link.click(); document.body.removeChild(link)
                         }}>
-                          <Save className="w-3.5 h-3.5" />儲存圖片
+                          <Save className="w-3.5 h-3.5" />輸出 Work
+                        </Button>
+                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-cyan-600 hover:bg-cyan-700 text-white" title="輸出 Reference 標註圖" onClick={() => {
+                          const canvas = refCanvasRef.current
+                          const img = refCanvasContainerRef.current?.querySelector("img") as HTMLImageElement | null
+                          if (!canvas || !img) return
+                          const off = document.createElement("canvas")
+                          off.width = canvas.width; off.height = canvas.height
+                          const ctx = off.getContext("2d")!
+                          ctx.drawImage(img, 0, 0, off.width, off.height)
+                          ctx.drawImage(canvas, 0, 0)
+                          const link = document.createElement("a"); link.download = `${currentRef?.name||"reference"}_annotated.png`; link.href = off.toDataURL("image/png"); document.body.appendChild(link); link.click(); document.body.removeChild(link)
+                        }}>
+                          <Save className="w-3.5 h-3.5" />輸出 Ref
                         </Button>
                       </div>
                       <div className="flex items-center gap-1">
@@ -1114,23 +1346,48 @@ export default function QAPage() {
                                     onMouseUp={handleCanvasMouseUp}
                                     onMouseLeave={e => { if(isDrawingRef.current) handleCanvasMouseUp(e) }}
                                   />
-                                  {/* Layer 3: text input overlay */}
-                                  {textInputPos && (
-                                    <div className="absolute z-20" style={{left:textInputPos.cssX, top:textInputPos.cssY}}>
-                                      <Input autoFocus value={textInputValue}
-                                        onChange={e=>setTextInputValue(e.target.value)}
-                                        onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleTextSubmit()}if(e.key==="Escape"){setTextInputPos(null);setTextInputValue("")}}}
-                                        onBlur={handleTextSubmit}
-                                        className="text-sm h-8 w-52 bg-white/95 text-black border-2 border-teal-500 shadow-lg"
-                                        placeholder="輸入標註文字，Enter 確認..."
-                                      />
-                                    </div>
-                                  )}
                                 </div>
                               ) : (
                                 <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Artwork</p></div>
                               )}
                             </div>
+                            {/* Work text overlay — outside scaled container */}
+                            {textInputPos && textInputPos.panel !== "ref" && (
+                              <div
+                                className="absolute z-30 flex flex-col gap-1 pointer-events-auto"
+                                style={{left: textInputPos.cssX, top: Math.max(0, textInputPos.cssY - textFontSize - 36)}}
+                                onMouseDown={e => e.stopPropagation()}
+                              >
+                                <div className="flex items-center gap-1 bg-zinc-900/95 border border-zinc-700 rounded-lg px-2 py-1 shadow-xl">
+                                  <input type="number" min={8} max={120} value={textFontSize}
+                                    className="w-10 h-5 text-[10px] text-center rounded bg-zinc-800 border border-zinc-600 text-zinc-100 px-1 focus:outline-none"
+                                    onKeyDown={e=>e.stopPropagation()}
+                                    onChange={e=>{const v=Number(e.target.value);if(!isNaN(v)&&v>0)setTextFontSize(Math.max(8,Math.min(120,v)))}}
+                                  />
+                                  <input type="color" value={brushColor} onChange={e=>setBrushColor(e.target.value)}
+                                    className="w-5 h-5 rounded cursor-pointer border border-zinc-600 bg-transparent p-0" title="顏色"
+                                  />
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();setTextBold(p=>!p)}}
+                                    className={`h-5 w-5 rounded text-[10px] font-bold border transition-colors ${textBold?"bg-teal-500 text-white border-teal-400":"text-zinc-300 border-zinc-600 hover:bg-zinc-700"}`}>B</button>
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();setTextItalic(p=>!p)}}
+                                    className={`h-5 w-5 rounded text-[10px] italic border transition-colors ${textItalic?"bg-teal-500 text-white border-teal-400":"text-zinc-300 border-zinc-600 hover:bg-zinc-700"}`}>I</button>
+                                  <div className="w-px h-4 bg-zinc-700 mx-0.5"/>
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();handleTextSubmit()}}
+                                    disabled={!textInputValue.trim()}
+                                    className="h-5 px-1.5 rounded text-[10px] text-green-400 border border-zinc-600 hover:bg-green-500/20 disabled:opacity-40">✓</button>
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();setTextInputPos(null);setTextInputValue("")}}
+                                    className="h-5 px-1.5 rounded text-[10px] text-red-400 border border-zinc-600 hover:bg-red-500/20">✕</button>
+                                </div>
+                                <input
+                                  autoFocus type="text" value={textInputValue}
+                                  onChange={e=>setTextInputValue(e.target.value)}
+                                  onCompositionStart={()=>{isComposingRef.current=true}} onCompositionEnd={()=>{isComposingRef.current=false}} onKeyDown={e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(isComposingRef.current)return;const now=Date.now();if(now-lastEnterRef.current<400){lastEnterRef.current=0;handleTextSubmit()}else{lastEnterRef.current=now}}if(e.key==="Escape"&&!isComposingRef.current){e.preventDefault();setTextInputPos(null);setTextInputValue("")}}}
+                                  placeholder="輸入文字… 雙按 Enter 確認"
+                                  className="min-w-[140px] border-2 border-teal-500 rounded px-2 py-0.5 shadow-lg outline-none bg-white/90 placeholder:text-zinc-400"
+                                  style={{font:`${textBold?"bold ":""}${textItalic?"italic ":""}${textFontSize}px ${textFont}`,color:brushColor}}
+                                />
+                              </div>
+                            )}
                             <Badge className="absolute top-2 left-2 bg-blue-500 text-[10px] h-5 z-10 pointer-events-none">Work</Badge>
                             <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap pointer-events-none">Ctrl/⌘ + 滾輪縮放</p>
                           </div>
@@ -1139,7 +1396,7 @@ export default function QAPage() {
                           <div className="flex-1 relative overflow-hidden" onWheel={handleWheel(setRefZoom)}>
                             <div className="absolute inset-0 flex items-center justify-center">
                               {currentRef?.image ? (
-                                <div className="relative" style={{transform:`scale(${refZoom/100})`,transformOrigin:"center center"}} onMouseEnter={() => setActivePanel("ref")} onMouseLeave={() => setActivePanel("work")}>
+                                <div ref={refCanvasContainerRef} className="relative" style={{transform:`scale(${refZoom/100})`,transformOrigin:"center center"}} onMouseEnter={() => setActivePanel("ref")} onMouseLeave={() => setActivePanel("work")}>
                                   <img
                                     src={currentRef.image} alt="Reference" crossOrigin="anonymous"
                                     style={{display:"block", maxWidth:"100%", maxHeight:"100%"}}
@@ -1148,27 +1405,53 @@ export default function QAPage() {
                                   <canvas ref={refCanvasRef}
                                     className="absolute inset-0 w-full h-full"
                                     style={{cursor:canvasTool==="pointer"?"pointer":canvasTool==="text"?"text":canvasTool==="eraser"?"cell":"crosshair"}}
-                                    onMouseDown={e => { setActivePanel("ref"); setShowStrokeDD(false);setShowFillDD(false);setShowSizeDD(false);setShowOpacityDD(false); handleCanvasMouseDown(e) }}
+                                    onMouseDown={e => { setActivePanel("ref"); setShowStrokeDD(false);setShowFillDD(false);setShowSizeDD(false);setShowOpacityDD(false); handleCanvasMouseDown(e, "ref") }}
                                     onMouseMove={handleCanvasMouseMove}
                                     onMouseUp={handleCanvasMouseUp}
                                     onMouseLeave={e => { if(isDrawingRef.current) handleCanvasMouseUp(e); setActivePanel("work") }}
                                   />
-                                  {textInputPos && activePanel==="ref" && (
-                                    <div className="absolute z-20" style={{left:textInputPos.cssX, top:textInputPos.cssY}}>
-                                      <Input autoFocus value={textInputValue}
-                                        onChange={e=>setTextInputValue(e.target.value)}
-                                        onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleTextSubmit()}if(e.key==="Escape"){setTextInputPos(null);setTextInputValue("")}}}
-                                        onBlur={handleTextSubmit}
-                                        className="text-sm h-8 w-52 bg-white/95 text-black border-2 border-amber-500 shadow-lg"
-                                        placeholder="輸入標註文字，Enter 確認..."
-                                      />
-                                    </div>
-                                  )}
                                 </div>
                               ) : (
                                 <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Reference</p></div>
                               )}
                             </div>
+                            {/* Ref text overlay — outside scaled container, unaffected by zoom */}
+                            {textInputPos && textInputPos.panel==="ref" && (
+                              <div
+                                className="absolute z-30 flex flex-col gap-1 pointer-events-auto"
+                                style={{left: textInputPos.cssX, top: Math.max(0, textInputPos.cssY - textFontSize - 36)}}
+                                onMouseDown={e => e.stopPropagation()}
+                              >
+                                <div className="flex items-center gap-1 bg-zinc-900/95 border border-zinc-700 rounded-lg px-2 py-1 shadow-xl">
+                                  <input type="number" min={8} max={120} value={textFontSize}
+                                    className="w-10 h-5 text-[10px] text-center rounded bg-zinc-800 border border-zinc-600 text-zinc-100 px-1 focus:outline-none"
+                                    onKeyDown={e=>e.stopPropagation()}
+                                    onChange={e=>{const v=Number(e.target.value);if(!isNaN(v)&&v>0)setTextFontSize(Math.max(8,Math.min(120,v)))}}
+                                  />
+                                  <input type="color" value={brushColor} onChange={e=>setBrushColor(e.target.value)}
+                                    className="w-5 h-5 rounded cursor-pointer border border-zinc-600 bg-transparent p-0" title="顏色"
+                                  />
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();setTextBold(p=>!p)}}
+                                    className={`h-5 w-5 rounded text-[10px] font-bold border transition-colors ${textBold?"bg-amber-500 text-white border-amber-400":"text-zinc-300 border-zinc-600 hover:bg-zinc-700"}`}>B</button>
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();setTextItalic(p=>!p)}}
+                                    className={`h-5 w-5 rounded text-[10px] italic border transition-colors ${textItalic?"bg-amber-500 text-white border-amber-400":"text-zinc-300 border-zinc-600 hover:bg-zinc-700"}`}>I</button>
+                                  <div className="w-px h-4 bg-zinc-700 mx-0.5"/>
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();handleTextSubmit()}}
+                                    disabled={!textInputValue.trim()}
+                                    className="h-5 px-1.5 rounded text-[10px] text-green-400 border border-zinc-600 hover:bg-green-500/20 disabled:opacity-40">✓</button>
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();setTextInputPos(null);setTextInputValue("")}}
+                                    className="h-5 px-1.5 rounded text-[10px] text-red-400 border border-zinc-600 hover:bg-red-500/20">✕</button>
+                                </div>
+                                <input
+                                  autoFocus type="text" value={textInputValue}
+                                  onChange={e=>setTextInputValue(e.target.value)}
+                                  onCompositionStart={()=>{isComposingRef.current=true}} onCompositionEnd={()=>{isComposingRef.current=false}} onKeyDown={e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(isComposingRef.current)return;const now=Date.now();if(now-lastEnterRef.current<400){lastEnterRef.current=0;handleTextSubmit()}else{lastEnterRef.current=now}}if(e.key==="Escape"&&!isComposingRef.current){e.preventDefault();setTextInputPos(null);setTextInputValue("")}}}
+                                  placeholder="輸入文字… 雙按 Enter 確認"
+                                  className="min-w-[140px] border-2 border-amber-500 rounded px-2 py-0.5 shadow-lg outline-none bg-white/90 placeholder:text-zinc-400"
+                                  style={{font:`${textBold?"bold ":""}${textItalic?"italic ":""}${textFontSize}px ${textFont}`,color:brushColor}}
+                                />
+                              </div>
+                            )}
                             <Badge className="absolute top-2 right-2 bg-amber-500 text-[10px] h-5">Ref</Badge>
                             <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap">Ctrl/⌘ + 滾輪縮放</p>
                           </div>
@@ -1213,7 +1496,7 @@ export default function QAPage() {
                           </ScrollArea>
                           <div className="p-1.5 border-t shrink-0">
                             <div className="flex gap-1">
-                              <Input placeholder="新增回饋..." value={newFeedbackText} onChange={e=>setNewFeedbackText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newFeedbackText.trim()){setFeedbackItems(p=>[...p,{id:`dir-${Date.now()}`,text:newFeedbackText,source:"Supervisor",priority:newFeedbackPriority,supplement:"",addressed:false}]);setNewFeedbackText("")}}} className="text-[10px] h-6 flex-1"/>
+                              <Input placeholder="新增回饋..." value={newFeedbackText} onChange={e=>setNewFeedbackText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-6 flex-1"/>
                               <Button size="sm" className="h-6 w-6 p-0 shrink-0" onClick={() => {if(newFeedbackText.trim()){setFeedbackItems(p=>[...p,{id:`dir-${Date.now()}`,text:newFeedbackText,source:"Supervisor",priority:newFeedbackPriority,supplement:"",addressed:false}]);setNewFeedbackText("")}}}><Plus className="w-3 h-3"/></Button>
                             </div>
                           </div>
@@ -1222,26 +1505,67 @@ export default function QAPage() {
                     </div>
 
                     {/* Bottom: Annotations + Labels + Specs */}
-                    <div className="border-t shrink-0 overflow-hidden" style={{maxHeight:'350px'}}>
+                    <div className="border-t shrink-0 overflow-hidden" style={{maxHeight:'220px'}}>
                       <ScrollArea className="h-full">
                         <div className="divide-y">
                           <div className="px-3 py-1">
-                            <h4 className="text-[10px] font-semibold mb-0.5">新增註解</h4>
-                            <div className="flex gap-1 mb-0.5">
-                              <Input placeholder="輸入導演註解..." value={newAnnotationText} onChange={e=>setNewAnnotationText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newAnnotationText.trim()){setAnnotations(p=>[...p,{id:`ann-${Date.now()}`,text:newAnnotationText,time:"剛剛"}]);setNewAnnotationText("")}}} className="text-[10px] h-5"/>
-                              <Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={() => {if(newAnnotationText.trim()){setAnnotations(p=>[...p,{id:`ann-${Date.now()}`,text:newAnnotationText,time:"剛剛"}]);setNewAnnotationText("")}}}><Plus className="w-2.5 h-2.5"/></Button>
+                            <div className="flex items-center gap-1 mb-0.5">
+                              <h4 className="text-[10px] font-semibold">新增註解</h4>
+                              {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
                             </div>
-                            {annotations.length>0&&<div className="space-y-0">{annotations.map(ann=><div key={ann.id} className="flex items-center justify-between"><div className="flex items-center gap-1"><Tag className="w-2 h-2 text-teal-600"/><span className="text-[8px]">{ann.text}</span></div><span className="text-[7px] text-muted-foreground">{ann.time}</span></div>)}</div>}
+                            {suggestedAnnotations.length > 0 && (
+                              <div className="flex flex-wrap gap-0.5 mb-1">
+                                {suggestedAnnotations.map((s, i) => (
+                                  <button key={i} type="button"
+                                    className="text-[8px] px-1.5 py-0.5 rounded-full border border-teal-500/40 text-teal-700 bg-teal-500/5 hover:bg-teal-500/15 transition-colors text-left"
+                                    onClick={() => { setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:s,time:"剛剛",ai:true}]); setSuggestedAnnotations(p=>p.filter((_,j)=>j!==i)) }}
+                                  >{s}</button>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex gap-1 mb-0.5">
+                              <Input placeholder="輸入導演註解..." value={newAnnotationText} onChange={e=>setNewAnnotationText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-5"/>
+                              <Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={() => {if(newAnnotationText.trim()){setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:newAnnotationText,time:"剛剛"}]);setNewAnnotationText("")}}}><Plus className="w-2.5 h-2.5"/></Button>
+                            </div>
+                            {annotations.length>0&&<div className="space-y-0">{annotations.map(ann=><div key={ann.id} className="flex items-center justify-between"><div className="flex items-center gap-1"><Tag className="w-2 h-2 text-teal-600"/>{(ann as any).ai&&<Bot className="w-2 h-2 text-teal-500"/>}<span className="text-[8px]">{ann.text}</span></div><span className="text-[7px] text-muted-foreground">{ann.time}</span></div>)}</div>}
                           </div>
                           <div className="px-3 py-1">
-                            <div className="flex items-center gap-1 mb-0.5"><Tag className="w-2.5 h-2.5"/><h4 className="text-[10px] font-semibold">Labels</h4></div>
+                            <div className="flex items-center gap-1 mb-0.5">
+                              <Tag className="w-2.5 h-2.5"/>
+                              <h4 className="text-[10px] font-semibold">Labels</h4>
+                              {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
+                            </div>
+                            {suggestedLabels.length > 0 && (
+                              <div className="flex flex-wrap gap-0.5 mb-1">
+                                {suggestedLabels.map((s, i) => (
+                                  <button key={i} type="button"
+                                    className="text-[8px] px-1.5 py-0.5 rounded-full border border-amber-500/40 text-amber-700 bg-amber-500/5 hover:bg-amber-500/15 transition-colors"
+                                    onClick={() => { setLabels(p => p.includes(s) ? p : [...p, s]); setSuggestedLabels(p => p.filter((_,j) => j !== i)) }}
+                                  >{s}</button>
+                                ))}
+                              </div>
+                            )}
                             <div className="flex items-center gap-1 flex-wrap mb-0.5">{labels.map((label,i)=><Badge key={i} variant="outline" className="text-[8px] gap-0.5 h-3.5">{label}<button type="button" onClick={()=>setLabels(p=>p.filter((_,j)=>j!==i))} className="ml-0.5 hover:text-red-500"><X className="w-1.5 h-1.5"/></button></Badge>)}</div>
-                            <div className="flex gap-1"><Input placeholder="新增 Label..." value={newLabel} onChange={e=>setNewLabel(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newLabel.trim()){setLabels(p=>[...p,newLabel]);setNewLabel("")}}} className="text-[10px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newLabel.trim()){setLabels(p=>[...p,newLabel]);setNewLabel("")}}}><Plus className="w-2 h-2"/></Button></div>
+                            <div className="flex gap-1"><Input placeholder="新增 Label..." value={newLabel} onChange={e=>setNewLabel(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newLabel.trim()){setLabels(p=>[...p,newLabel]);setNewLabel("")}}}><Plus className="w-2 h-2"/></Button></div>
                           </div>
                           <div className="px-3 py-1">
-                            <div className="flex items-center gap-1 mb-0.5"><FileCheck className="w-2.5 h-2.5"/><h4 className="text-[10px] font-semibold">Specs</h4></div>
+                            <div className="flex items-center gap-1 mb-0.5">
+                              <FileCheck className="w-2.5 h-2.5"/>
+                              <h4 className="text-[10px] font-semibold">Specs</h4>
+                              {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
+                            </div>
+                            {suggestedSpecs.length > 0 && (
+                              <div className="flex flex-wrap gap-0.5 mb-1">
+                                {suggestedSpecs.map((s, i) => (
+                                  <button key={i} type="button"
+                                    className="text-[8px] px-1.5 py-0.5 rounded-full border border-violet-500/40 text-violet-700 bg-violet-500/5 hover:bg-violet-500/15 transition-colors text-left"
+                                    onClick={() => { setInlineSpecs(p=>[...p,s]); setSuggestedSpecs(p=>p.filter((_,j)=>j!==i)) }}
+                                  >{s}</button>
+                                ))}
+                              </div>
+                            )}
                             {inlineSpecs.length>0&&<div className="space-y-0 mb-0.5">{inlineSpecs.map((spec,i)=><div key={i} className="flex items-center justify-between"><div className="flex items-center gap-1"><CheckCircle2 className="w-2 h-2 text-teal-500"/><span className="text-[8px]">{spec}</span></div><button type="button" onClick={()=>setInlineSpecs(p=>p.filter((_,j)=>j!==i))} className="text-muted-foreground hover:text-red-500"><X className="w-2 h-2"/></button></div>)}</div>}
-                            <div className="flex gap-1"><Input placeholder="新增 Spec..." value={newSpecText} onChange={e=>setNewSpecText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newSpecText.trim()){setInlineSpecs(p=>[...p,newSpecText]);setNewSpecText("")}}} className="text-[10px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newSpecText.trim()){setInlineSpecs(p=>[...p,newSpecText]);setNewSpecText("")}}}><Plus className="w-2 h-2"/></Button></div>
+                            <div className="flex gap-1"><Input placeholder="新增 Spec..." value={newSpecText} onChange={e=>setNewSpecText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newSpecText.trim()){setInlineSpecs(p=>[...p,newSpecText]);setNewSpecText("")}}}><Plus className="w-2 h-2"/></Button></div>
                           </div>
                           <div className="px-3 py-1.5 border-t bg-teal-500/5">
                             <Button size="sm" className="w-full h-7 text-xs gap-1" onClick={() => {
@@ -1278,7 +1602,11 @@ export default function QAPage() {
                       <CardContent className="pt-0 pb-2 px-3">
                         <div className="grid grid-cols-4 gap-1">
                           {metrics.map(m => (
-                            <div key={m.id} className={`p-1.5 rounded-lg ${getStatusBg(m.status)} ${isMetricMentioned(m.id)?"border-2":"border border-dashed"} cursor-pointer`} onClick={()=>{setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}>
+                            <div key={m.id} className={`p-1.5 rounded-lg ${getStatusBg(m.status)} ${isMetricMentioned(m.id)?"border-2":"border border-dashed"} cursor-pointer select-none`}
+                              onClick={()=>{setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
+                              onDoubleClick={e=>{e.stopPropagation();setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
+                              title="單擊/雙擊查看詳情・勾選 checkbox 送入 AI 對話"
+                            >
                               <div className="flex items-center gap-1">
                                 <Checkbox checked={checkedMetrics.includes(m.id)} onCheckedChange={c=>handleMetricCheck(m.id,c as boolean)} className="h-3 w-3" onClick={e=>e.stopPropagation()}/>
                                 {getStatusIcon(m.status)}
@@ -1302,19 +1630,78 @@ export default function QAPage() {
                     <CollapsibleTrigger asChild>
                       <CardHeader className="cursor-pointer hover:bg-muted/50 py-1.5 px-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5 text-indigo-600"/><CardTitle className="text-xs">Artist Creation Intentions</CardTitle><Badge variant="outline" className="text-[8px] h-3.5 bg-indigo-500/10 text-indigo-600 border-indigo-500/30">C03</Badge></div>
-                          {showArtistNotes?<ChevronUp className="w-3 h-3"/>:<ChevronDown className="w-3 h-3"/>}
+                          <div className="flex items-center gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5 text-indigo-600"/>
+                            <CardTitle className="text-xs">Artist Creation Intentions</CardTitle>
+                            <Badge variant="outline" className="text-[8px] h-3.5 bg-indigo-500/10 text-indigo-600 border-indigo-500/30">C03</Badge>
+                            {/* Live badge showing how many notes are filled */}
+                            {[artistNote, reflectionNote].filter(Boolean).length > 0 && (
+                              <Badge variant="outline" className="text-[8px] h-3.5 bg-green-500/10 text-green-600 border-green-500/30">
+                                {[artistNote, reflectionNote].filter(Boolean).length}/2
+                              </Badge>
+                            )}
+                          </div>
+                          {showArtistNotes ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
                         </div>
                       </CardHeader>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <CardContent className="pt-0 pb-2 px-3">
-                        {(artistNote || supervisorSpec) ? (
-                          <div className="space-y-2">
-                            {artistNote&&<div><div className="flex items-center gap-1 mb-1"><User className="w-2.5 h-2.5 text-indigo-600"/><span className="text-[9px] font-semibold text-indigo-700">Artist Reflection Notes</span></div><div className="p-1.5 rounded bg-background border text-[9px] leading-relaxed whitespace-pre-line">{artistNote}</div></div>}
-                            {supervisorSpec&&<div><div className="flex items-center gap-1 mb-1"><FileCheck className="w-2.5 h-2.5 text-indigo-600"/><span className="text-[9px] font-semibold text-indigo-700">Supervisor Spec</span></div><div className="p-1.5 rounded bg-background border text-[9px] leading-relaxed">{supervisorSpec}</div></div>}
+                      <CardContent className="pt-0 pb-2 px-3 space-y-2">
+
+                        {/* 理解筆記 — from artist-reflection page */}
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <User className="w-2.5 h-2.5 text-indigo-500"/>
+                            <span className="text-[9px] font-semibold text-indigo-700">理解筆記</span>
+                            <span className="text-[8px] text-muted-foreground">· Artist Reflection</span>
+                            {artistNote && (
+                              <button
+                                className="ml-auto text-[8px] text-indigo-500 hover:text-indigo-700 transition-colors"
+                                onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[理解筆記] ${artistNote}` }]); callAgent(`Artist 的理解筆記如下，請結合當前作品給出具體 VFX 改進建議：\n${artistNote}`) }}
+                              >
+                                發送給 AI →
+                              </button>
+                            )}
                           </div>
-                        ) : <p className="text-[10px] text-muted-foreground py-2">尚無 Artist 反思記錄</p>}
+                          <div className={`p-1.5 rounded border text-[9px] leading-relaxed whitespace-pre-line min-h-[32px] ${artistNote ? "bg-background" : "bg-muted/30 text-muted-foreground italic"}`}>
+                            {artistNote || "尚無理解筆記（來自 Artist Reflection 頁面）"}
+                          </div>
+                        </div>
+
+                        {/* 反思筆記 — from upload-analyze page */}
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Sparkles className="w-2.5 h-2.5 text-violet-500"/>
+                            <span className="text-[9px] font-semibold text-violet-700">創作反思筆記</span>
+                            <span className="text-[8px] text-muted-foreground">· Upload Analyze</span>
+                            {reflectionNote && (
+                              <button
+                                className="ml-auto text-[8px] text-violet-500 hover:text-violet-700 transition-colors"
+                                onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[創作反思] ${reflectionNote}` }]); callAgent(`Artist 的創作反思如下，請結合當前作品與 Reference 給出具體改進建議：\n${reflectionNote}`) }}
+                              >
+                                發送給 AI →
+                              </button>
+                            )}
+                          </div>
+                          <div className={`p-1.5 rounded border text-[9px] leading-relaxed whitespace-pre-line min-h-[32px] ${reflectionNote ? "bg-background" : "bg-muted/30 text-muted-foreground italic"}`}>
+                            {reflectionNote || "尚無創作反思筆記（來自 Upload Analyze 頁面）"}
+                          </div>
+                        </div>
+
+                        {/* Supervisor Spec */}
+                        {supervisorSpec && (
+                          <div>
+                            <div className="flex items-center gap-1 mb-1">
+                              <FileCheck className="w-2.5 h-2.5 text-indigo-600"/>
+                              <span className="text-[9px] font-semibold text-indigo-700">Supervisor Spec</span>
+                            </div>
+                            <div className="p-1.5 rounded bg-background border text-[9px] leading-relaxed">{supervisorSpec}</div>
+                          </div>
+                        )}
+
+                        {!artistNote && !reflectionNote && !supervisorSpec && (
+                          <p className="text-[10px] text-muted-foreground py-1">尚無任何 Artist 筆記或 Spec</p>
+                        )}
                       </CardContent>
                     </CollapsibleContent>
                   </Card>
@@ -1367,17 +1754,109 @@ export default function QAPage() {
 
           {/* Metric Detail Dialog */}
           <Dialog open={showMetricDetailDialog} onOpenChange={setShowMetricDetailDialog}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader><DialogTitle className="flex items-center gap-2">{selectedMetricDetail&&getStatusIcon(selectedMetricDetail.status)}{selectedMetricDetail?.name}</DialogTitle><DialogDescription>{selectedMetricDetail?.agents.join(" & ")}</DialogDescription></DialogHeader>
-              {selectedMetricDetail&&metricDetails[selectedMetricDetail.id]&&(
-                <div className="space-y-4">
-                  <Card className={`p-4 ${getStatusBg(selectedMetricDetail.status)}`}><p className="text-sm text-muted-foreground">{metricDetails[selectedMetricDetail.id].analysis}</p></Card>
-                  <div className="grid grid-cols-2 gap-3">{metricDetails[selectedMetricDetail.id].agentOpinions.map((op,i)=><Card key={i} className="p-3"><span className="text-xs text-muted-foreground">{op.agent}</span><Badge variant="outline" className="text-xs ml-2">{op.confidence}%</Badge><p className="text-sm mt-1">{op.opinion}</p></Card>)}</div>
-                  {metricDetails[selectedMetricDetail.id].debate&&<div className="p-2 bg-teal-500/10 rounded text-sm text-teal-700"><strong>Debate:</strong> {metricDetails[selectedMetricDetail.id].debate!.consensus}</div>}
-                  <div className="flex justify-end gap-2"><Button variant="outline" onClick={()=>setShowMetricDetailDialog(false)} className="bg-transparent">關閉</Button><Button><CheckCircle2 className="w-4 h-4 mr-2"/>已確認</Button></div>
+            <DialogContent className="max-w-2xl w-full flex flex-col" style={{maxHeight:"85vh"}}>
+              <DialogHeader className="shrink-0"><DialogTitle className="flex items-center gap-2">{selectedMetricDetail&&getStatusIcon(selectedMetricDetail.status)}{selectedMetricDetail?.name}</DialogTitle><DialogDescription>{selectedMetricDetail?.agents.join(" & ")}</DialogDescription></DialogHeader>
+              <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+              {selectedMetricDetail&&(metricDetails[selectedMetricDetail.id]||Object.values(metricDetails).find(d=>d.analysis))&&(
+                <div className="space-y-3">
+                  {/* Summary */}
+                  {(() => {
+                    // Resolve detail: try exact id match, then name match, then first available
+                    const detail = metricDetails[selectedMetricDetail.id]
+                      || Object.values(metricDetails).find(d =>
+                          selectedMetricDetail.name && d.analysis?.includes(selectedMetricDetail.name.slice(0,2)))
+                      || Object.values(metricDetails)[0]
+                    if (!detail) return null
+                    return (<>
+                  <Card className={`p-3 ${getStatusBg(selectedMetricDetail.status)}`}>
+                    <p className="text-sm text-muted-foreground">{detail.analysis}</p>
+                  </Card>
+                  {/* Agent A/B — 雙擊送入對話框 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {detail.agentOpinions.map((op,i)=>(
+                      <Card key={i} className="p-3 cursor-pointer hover:ring-1 hover:ring-teal-400 transition-all select-none"
+                        title="雙擊送入 AI 對話"
+                        onDoubleClick={()=>{
+                          if(!op.opinion) return
+                          const msg = "[" + op.agent + " 觀點]\n" + op.opinion
+                          setChatMessages(p=>[...p,{role:"user",content:msg}])
+                          callAgent("針對以下觀點給出具體改進建議：\n" + msg)
+                          setShowMetricDetailDialog(false)
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium text-muted-foreground">{op.agent}</span>
+                          {op.confidence > 0 && <Badge variant="outline" className="text-xs">{op.confidence}%</Badge>}
+                          <span className="ml-auto text-[9px] text-muted-foreground/50">雙擊送入</span>
+                        </div>
+                        <p className="text-sm">{op.opinion}</p>
+                      </Card>
+                    ))}
+                  </div>
+                  {/* Debate — 每個區塊可雙擊送入對話框 */}
+                  {detail.debate && (() => {
+                    const d = detail.debate!
+                    return (
+                      <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 overflow-hidden">
+                        <div className="px-3 py-1.5 border-b border-teal-500/20 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-teal-600"/>
+                          <span className="text-xs font-semibold text-teal-700">Agent Debate</span>
+                          <span className="ml-auto text-[9px] text-muted-foreground/50">雙擊任一區塊送入</span>
+                        </div>
+                        {d.agentA.opinion && (
+                          <div className="px-3 py-2 border-b border-teal-500/10 cursor-pointer hover:bg-blue-500/5 transition-colors select-none"
+                            title="雙擊送入 AI 對話"
+                            onDoubleClick={()=>{
+                              const msg = "[Debate " + d.agentA.name + "]\n" + d.agentA.opinion
+                              setChatMessages(p=>[...p,{role:"user",content:msg}])
+                              callAgent("針對以下 Debate 立場給出具體改進建議：\n" + msg)
+                              setShowMetricDetailDialog(false)
+                            }}
+                          >
+                            <p className="text-[10px] font-semibold text-blue-600 mb-0.5">{d.agentA.name}</p>
+                            <p className="text-sm text-foreground whitespace-pre-wrap">{d.agentA.opinion}</p>
+                          </div>
+                        )}
+                        {d.agentB.opinion && (
+                          <div className="px-3 py-2 border-b border-teal-500/10 cursor-pointer hover:bg-violet-500/5 transition-colors select-none"
+                            title="雙擊送入 AI 對話"
+                            onDoubleClick={()=>{
+                              const msg = "[Debate " + d.agentB.name + "]\n" + d.agentB.opinion
+                              setChatMessages(p=>[...p,{role:"user",content:msg}])
+                              callAgent("針對以下 Debate 立場給出具體改進建議：\n" + msg)
+                              setShowMetricDetailDialog(false)
+                            }}
+                          >
+                            <p className="text-[10px] font-semibold text-violet-600 mb-0.5">{d.agentB.name}</p>
+                            <p className="text-sm text-foreground whitespace-pre-wrap">{d.agentB.opinion}</p>
+                          </div>
+                        )}
+                        {d.consensus && (
+                          <div className="px-3 py-2 bg-teal-500/10 cursor-pointer hover:bg-teal-500/20 transition-colors select-none"
+                            title="雙擊送入 AI 對話"
+                            onDoubleClick={()=>{
+                              const msg = "[Debate 結論]\n" + d.consensus
+                              setChatMessages(p=>[...p,{role:"user",content:msg}])
+                              callAgent("根據以下 Debate 結論給出最終改進步驟：\n" + msg)
+                              setShowMetricDetailDialog(false)
+                            }}
+                          >
+                            <p className="text-[10px] font-semibold text-teal-700 mb-0.5">結論</p>
+                            <p className="text-sm text-teal-800 whitespace-pre-wrap">{d.consensus}</p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={()=>setShowMetricDetailDialog(false)} className="bg-transparent">關閉</Button>
+                    <Button><CheckCircle2 className="w-4 h-4 mr-2"/>已確認</Button>
+                  </div>
+                  </>)
+                  })()}
                 </div>
               )}
-              {selectedMetricDetail&&!metricDetails[selectedMetricDetail.id]&&<div className="p-4 text-center text-muted-foreground">資料尚未載入</div>}
+              </div>
             </DialogContent>
           </Dialog>
         </main>

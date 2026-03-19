@@ -61,6 +61,10 @@ export default function ComparePage() {
   const [expandedAnnotation, setExpandedAnnotation] = useState<string | null>(null)
   const [compareSubmitted, setCompareSubmitted] = useState(false)
   const [deltaAnalyzing, setDeltaAnalyzing] = useState(false)
+  const [autoAnalyzing, setAutoAnalyzing] = useState(false)
+  const [deltaListOpen, setDeltaListOpen] = useState(true)
+  // Pre-computed debate results keyed by delta.id — shown instantly on double-click
+  const [deltaDebateCache, setDeltaDebateCache] = useState<Record<string, string>>({})
   const [leftPanelMode, setLeftPanelMode] = useState<"expand" | "browse">("expand")
 
   // Vertical resize center (viewer vs delta list)
@@ -91,11 +95,7 @@ export default function ComparePage() {
   const [artworks, setArtworks] = useState<ArtItem[]>([])
   const [allRefs, setAllRefs] = useState<ArtItem[]>([])
   const [brief, setBrief] = useState<Record<string, string>>({})
-  const [deltas, setDeltas] = useState<DeltaItem[]>([
-    { id: "d1", type: "構圖", severity: "medium", detail: "主體位置偏右 15%" },
-    { id: "d2", type: "光影", severity: "high", detail: "高光不足，建議增強 rim light" },
-    { id: "d3", type: "色調", severity: "low", detail: "暖色調偏弱，建議色溫 -500K" },
-  ])
+  const [deltas, setDeltas] = useState<DeltaItem[]>([])
 
   const fallbackArtworks: ArtItem[] = [
     { id: 0, name: "Shot_005_v04", image: "/vfx-work-in-progress-shot.jpg" },
@@ -148,7 +148,11 @@ export default function ComparePage() {
       name: file.name.replace(/\.[^.]+$/, ""),
       image: await fileToBase64(file),
     })))
-    setArtworks(prev => [...prev, ...newItems])
+    setArtworks(prev => {
+      const merged = [...prev]
+      newItems.forEach(ni => { const idx = merged.findIndex(a => a.name === ni.name); idx >= 0 ? merged[idx] = ni : merged.push(ni) })
+      return merged
+    })
   }
 
   const handleRefUpload = async (files: File[]) => {
@@ -159,7 +163,11 @@ export default function ComparePage() {
       name: file.name.replace(/\.[^.]+$/, ""),
       image: await fileToBase64(file),
     })))
-    setAllRefs(prev => [...prev, ...newItems])
+    setAllRefs(prev => {
+      const merged = [...prev]
+      newItems.forEach(ni => { const idx = merged.findIndex(r => r.name === ni.name); idx >= 0 ? merged[idx] = ni : merged.push(ni) })
+      return merged
+    })
   }
 
   // ── Load sessionStorage ───────────────────────────────────────
@@ -173,82 +181,80 @@ export default function ComparePage() {
       }
     } catch {}
     try {
-      // Build a merged map: c04_ref_previews + refhub_refs, deduplicated by id
-      const refMap: Record<string, ArtItem> = {}
-      const ar = SS.get("c04_ref_previews")
-      if (ar) JSON.parse(ar).forEach((r: any, i: number) => {
-        refMap[r.id ?? i] = {
-          id: r.id ?? String(i),
-          name: r.title || r.id,
-          image: r.preview || "",
-          category: r.category || "",
-          importance: r.label || r.importance || "Secondary",
-          usage: r.usage || "",
-          note: r.note || "",
-          artworkId: r.artworkId || "",
-        }
-      })
-      // refhub_refs may have newer metadata — override/supplement
+      // refhub_refs is the single source of truth — load it directly, title-deduplicated
+      const deletedIds = new Set<string>()
+      try { JSON.parse(SS.get("deleted_ref_ids") || "[]").forEach((id: string) => deletedIds.add(id)) } catch {}
       const hr = SS.get("refhub_refs")
-      if (hr) JSON.parse(hr).forEach((r: any, i: number) => {
-        const existing = refMap[r.id]
-        if (existing) {
-          // update metadata, keep preview from c04 if refhub has none
-          refMap[r.id] = {
-            ...existing,
-            image: r.preview || existing.image,
-            category: r.category || existing.category || "",
-            importance: r.importance || (r.is_pinned ? "Main" : (existing.importance || "Secondary")),
-            usage: r.usage || existing.usage || "",
-            note: r.note || existing.note || "",
-            artworkId: r.artworkId || existing.artworkId || "",
-          }
-        } else if (r.preview) {
-          refMap[r.id] = {
-            id: r.id,
-            name: r.title || r.id,
-            image: r.preview,
-            category: r.category || "",
-            importance: r.importance || (r.is_pinned ? "Main" : "Secondary"),
-            usage: r.usage || "",
-            note: r.note || "",
-            artworkId: r.artworkId || "",
-          }
+      if (hr) {
+        const hubRefs: any[] = JSON.parse(hr)
+        const seen = new Set<string>()
+        const list: ArtItem[] = []
+        hubRefs.forEach(r => {
+          if (deletedIds.has(r.id)) return
+          const img = r.preview || r.file_url || r.thumbnail_url || ""
+          if (!img) return
+          const key = (r.title || r.id).toLowerCase()
+          if (seen.has(key)) return   // title-dedup: skip older same-name entry
+          seen.add(key)
+          list.push({ id: r.id, name: r.title || r.id, image: img, category: r.category || "", importance: r.importance || (r.is_pinned ? "Main" : "Secondary"), usage: r.usage || "", note: r.note || "", artworkId: r.artworkId || "" })
+        })
+        if (list.length > 0) setAllRefs(list)
+      } else {
+        // fallback: c04_ref_previews
+        const ar = SS.get("c04_ref_previews")
+        if (ar) {
+          const refs: any[] = JSON.parse(ar)
+          const seen2 = new Set<string>()
+          const list2: ArtItem[] = []
+          refs.forEach((r: any) => {
+            if (deletedIds.has(r.id)) return
+            const key = (r.title || r.id).toLowerCase()
+            if (seen2.has(key)) return
+            seen2.add(key)
+            list2.push({ id: r.id, name: r.title || r.id, image: r.preview || "", category: r.category || "", importance: r.label || r.importance || "Secondary", usage: r.usage || "", note: r.note || "", artworkId: r.artworkId || "" })
+          })
+          if (list2.length > 0) setAllRefs(list2)
         }
-      })
-      let list = Object.values(refMap)
-      // Filter using explicit deleted_ref_ids (set by removeRef in reference-hub)
-      try {
-        const deletedIds = new Set(JSON.parse(SS.get("deleted_ref_ids") || "[]"))
-        if (deletedIds.size > 0) list = list.filter(r => !deletedIds.has(String(r.id)))
-      } catch {}
-      if (list.length > 0) setAllRefs(list)
+      }
     } catch {}
     try { const b = SS.get("kickoff_brief"); if (b) setBrief(JSON.parse(b)) } catch {}
     try { const c = SS.get("compare_chat"); if (c) setChatMessages(JSON.parse(c)) } catch {}
     try { const a = SS.get("compare_annotations"); if (a) setDeltaAnnotations(JSON.parse(a)) } catch {}
-    try {
-      const a = SS.get("c04_analysis")
-      if (a) {
-        const analysis = JSON.parse(a)
-        if (analysis.metrics?.length > 0) {
-          setDeltas(analysis.metrics
-            .filter((m: any) => m.status !== "green")
-            .map((m: any, i: number) => ({
-              id: `m${i}`,
-              type: m.name,
-              severity: m.status === "red" ? "high" : m.status === "yellow" ? "medium" : "low",
-              detail: m.agentA?.opinion || m.debate?.conclusion || `${m.name} 與 Reference 存在差距`,
-            })))
-        }
+    try { const d = SS.get("compare_deltas"); if (d) { const parsed = JSON.parse(d); const isStale = parsed.every((x: any) => ["d1","d2","d3"].includes(x.id)); if (parsed.length > 0 && !isStale) setDeltas(parsed); else SS.set("compare_deltas","[]") } } catch {}
+
+    // Live sync: evict stale refs when reference-hub replaces a duplicate
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "refhub_refs" || e.key === "deleted_ref_ids") {
+        try {
+          const deletedIds = new Set<string>(JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"))
+          if (deletedIds.size > 0) setAllRefs(prev => prev.filter(r => !deletedIds.has(String(r.id))))
+          const raw = sessionStorage.getItem("refhub_refs")
+          if (!raw) return
+          const hubRefs = JSON.parse(raw)
+          setAllRefs(prev => prev.map(r => {
+            const hub = hubRefs.find((h: any) => String(h.id) === String(r.id))
+            if (!hub) return r
+            return { ...r, image: hub.preview || hub.file_url || hub.thumbnail_url || r.image }
+          }))
+        } catch {}
       }
-    } catch {}
+    }
+    window.addEventListener("storage", onStorage)
+    return () => window.removeEventListener("storage", onStorage)
   }, [])
 
   // Reset ref selection when artwork changes (different artwork = different ref set)
   useEffect(() => { setSelectedRef(0) }, [selectedArtwork])
 
-  useEffect(() => { SS.set("compare_chat", JSON.stringify(chatMessages)) }, [chatMessages])
+  // Auto-analyze disabled — use "重新分析" button to trigger
+  const autoAnalyzeRef = useRef<AbortController | null>(null)
+
+  // Persist on every change — including initial hydrated values
+  const [compareHydrated, setCompareHydrated] = useState(false)
+  useEffect(() => { setCompareHydrated(true) }, [])
+  useEffect(() => { if (compareHydrated) SS.set("compare_chat", JSON.stringify(chatMessages)) }, [chatMessages, compareHydrated])
+  useEffect(() => { if (compareHydrated) SS.set("compare_deltas", JSON.stringify(deltas)) }, [deltas, compareHydrated])
+  useEffect(() => { if (compareHydrated) SS.set("compare_annotations", JSON.stringify(deltaAnnotations)) }, [deltaAnnotations, compareHydrated])
   useEffect(() => { chatScrollRef.current?.scrollIntoView({ behavior: "smooth" }) }, [chatMessages, chatLoading])
 
   // ── Drag handlers ─────────────────────────────────────────────
@@ -362,9 +368,16 @@ export default function ComparePage() {
     }
   }
 
-  // ── Delta double-click dialog ─────────────────────────────────
+  // ── Delta double-click dialog — show cached debate instantly ───
   const handleDeltaDblClick = useCallback(async (delta: DeltaItem) => {
     setDeltaDialog(delta)
+    // If debate already cached (from auto-analysis), show it immediately
+    if (deltaDebateCache[delta.id]) {
+      setDeltaDialogText(deltaDebateCache[delta.id])
+      setDeltaDialogLoading(false)
+      return
+    }
+    // Otherwise fetch on demand (e.g. auto-analysis still running)
     setDeltaDialogText("")
     setDeltaDialogLoading(true)
     try {
@@ -373,45 +386,89 @@ export default function ComparePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_id: PROJECT_ID,
-          message: `請深入分析「${delta.type}」指標的差距：\n問題描述：${delta.detail}\n\n請給出：（1）具體差距分析（2）可能原因（3）2-3 個具體可操作的改進步驟。`,
+          message: `深入分析「${delta.type}」指標差距：
+問題：${delta.detail}
+請給出：（1）差距根本原因分析 （2）Agent A 觀點（技術面）（3）Agent B 觀點（創意面）（4）Debate 結論 （5）2-3 個可立即操作的改進步驟。`,
           context: buildCtx(),
           history: [],
         }),
       })
       const data = await res.json()
-      setDeltaDialogText(stripMd(data.response || data.reply || "分析完成。"))
+      const text = stripMd(data.response || data.reply || "分析完成。")
+      setDeltaDialogText(text)
+      // Cache the result
+      setDeltaDebateCache(p => ({ ...p, [delta.id]: text }))
     } catch {
       setDeltaDialogText("分析失敗，請重試。")
     }
     setDeltaDialogLoading(false)
-  }, [buildCtx])
+  }, [buildCtx, deltaDebateCache])
 
-  // ── Analyze all deltas ────────────────────────────────────────
+  // ── Re-analyze (重新分析) — clears cache and re-runs all debates ─
   const handleAnalyzeDeltas = async () => {
     setDeltaAnalyzing(true)
-    setChatMessages(p => [...p, { role: "user", content: "[開始差距分析]" }])
+    setDeltaDebateCache({})
+    setChatMessages(p => [...p, { role: "user", content: "[重新差距分析]" }])
+    const art = artworkList[selectedArtwork]
+    const ref = currentRefs[selectedRef]
+    if (!art || !ref) { setDeltaAnalyzing(false); return }
+    const ctx = buildCtx()
+    const METRICS: [string, string][] = [
+      ["光影", "high"], ["構圖", "medium"], ["色彩", "medium"],
+      ["材質", "low"], ["景深", "low"], ["曝光", "high"], ["風格一致", "medium"],
+    ]
     try {
+      // Step 1: fresh delta list
       const res = await fetch(`${API}/suggestion/chat/compare`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_id: PROJECT_ID,
-          message: "請逐一分析光影、構圖、色彩、材質、景深、曝光、風格一致 7 個指標，找出 Artwork 與 Reference 的具體差距，並給出每個指標的可操作改進建議。",
-          context: buildCtx(),
-          history: [],
+          message: `重新逐一分析以下 7 個指標，找出 Artwork「${art.name}」與 Reference「${ref.name}」的具體差距。
+回傳 JSON，格式：{"metrics":[{"name":"光影","severity":"high|medium|low","gap":"具體差距描述 15-30字"},...]}
+只回傳 JSON。`,
+          context: ctx, history: [],
         }),
       })
       const data = await res.json()
-      const reply = stripMd(data.response || data.reply || "")
-      const METRICS: [string, string][] = [
-        ["光影", "high"], ["構圖", "medium"], ["色彩", "medium"],
-        ["材質", "low"], ["景深", "low"], ["曝光", "high"], ["風格一致", "medium"],
-      ]
-      setDeltas(METRICS.map(([name, sev], i) => ({
-        id: `a${i}`, type: name, severity: sev,
-        detail: reply ? `${name}：已完成 Debate 分析（雙擊查看詳情）` : `${name} 分析完成`,
-      })))
-      setChatMessages(p => [...p, { role: "ai", content: reply || "差距分析完成，請查看各指標。" }])
+      const raw = (data.response || data.reply || "").replace(/\`\`\`json|\`\`\`/g, "").trim()
+      const match = raw.match(/\{[\s\S]*\}/)
+      let newDeltas = METRICS.map(([name, sev], i) => ({ id: `a${i}`, type: name, severity: sev, detail: `${name}：Debate 完成（雙擊查看）` }))
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[0])
+          if (Array.isArray(parsed.metrics)) {
+            newDeltas = parsed.metrics.map((m: any, i: number) => ({ id: `a${i}`, type: m.name, severity: m.severity || "medium", detail: m.gap || `${m.name} 差距` }))
+          }
+        } catch {}
+      }
+      setDeltas(newDeltas)
+      setChatMessages(p => [...p, { role: "ai", content: "重新分析完成！\n" + newDeltas.map(d => "• " + d.type + "（" + (d.severity === "high" ? "高" : d.severity === "medium" ? "中" : "低") + "）：" + d.detail).join("\n") }])
+
+      // Step 2: debate all in parallel
+      const debatePromises = newDeltas.map(delta =>
+        fetch(`${API}/suggestion/chat/compare`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project_id: PROJECT_ID,
+            message: `深入分析「${delta.type}」指標差距：
+問題：${delta.detail}
+請給出：（1）差距根本原因分析 （2）Agent A 觀點（技術面）（3）Agent B 觀點（創意面）（4）Debate 結論 （5）2-3 個可立即操作的改進步驟。`,
+            context: ctx, history: [],
+          }),
+        })
+          .then(r => r.json())
+          .then(d => ({ id: delta.id, text: (d.response || d.reply || "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1").trim() }))
+          .catch(() => ({ id: delta.id, text: "" }))
+      )
+      const results = await Promise.allSettled(debatePromises)
+      const cache: Record<string, string> = {}
+      results.forEach(r => { if (r.status === "fulfilled" && r.value.text) cache[r.value.id] = r.value.text })
+      setDeltaDebateCache(cache)
+      SS.set("compare_delta_list", JSON.stringify(newDeltas.map(d => ({
+        id: d.id, metric: d.type, gap: d.detail, severity: d.severity, suggestion: cache[d.id] || "",
+      }))))
     } catch (err) {
       setChatMessages(p => [...p, { role: "ai", content: `分析失敗：${err}` }])
     }
@@ -499,7 +556,7 @@ export default function ComparePage() {
                         Array.from(e.target.files || []).forEach(file => {
                           const reader = new FileReader()
                           reader.onload = ev => {
-                            setArtworks(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/, ""), image: ev.target?.result as string }])
+                            setArtworks(p => { const name = file.name.replace(/\.[^.]+$/, ""); const merged = [...p]; const idx = merged.findIndex(a => a.name === name); const item = { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name, image: ev.target?.result as string }; idx >= 0 ? merged[idx] = item : merged.push(item); return merged })
                           }
                           reader.readAsDataURL(file)
                         })
@@ -513,7 +570,7 @@ export default function ComparePage() {
                           onDrop={e => {
                             e.preventDefault()
                             Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                              const r = new FileReader(); r.onload = ev => setArtworks(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                              const r = new FileReader(); r.onload = ev => setArtworks(p => { const nm = file.name.replace(/\.[^.]+$/,""); const m=[...p]; const i=m.findIndex(a=>a.name===nm); const it={id:`aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,name:nm,image:ev.target?.result as string}; i>=0?m[i]=it:m.push(it); return m }); r.readAsDataURL(file)
                             })
                           }}>
                           {artworkList.length === 0 && (
@@ -525,7 +582,7 @@ export default function ComparePage() {
                               onDrop={e => {
                                 e.preventDefault(); e.currentTarget.classList.remove("border-primary","bg-primary/5")
                                 Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                                  const r = new FileReader(); r.onload = ev => setArtworks(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                                  const r = new FileReader(); r.onload = ev => setArtworks(p => { const nm = file.name.replace(/\.[^.]+$/,""); const m=[...p]; const i=m.findIndex(a=>a.name===nm); const it={id:`aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,name:nm,image:ev.target?.result as string}; i>=0?m[i]=it:m.push(it); return m }); r.readAsDataURL(file)
                                 })
                               }}
                             >
@@ -603,7 +660,7 @@ export default function ComparePage() {
                         Array.from(e.target.files || []).forEach(file => {
                           const reader = new FileReader()
                           reader.onload = ev => {
-                            setAllRefs(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/, ""), image: ev.target?.result as string }])
+                            setAllRefs(p => { const name = file.name.replace(/\.[^.]+$/, ""); const merged = [...p]; const idx = merged.findIndex(r => r.name === name); const item = { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name, image: ev.target?.result as string }; idx >= 0 ? merged[idx] = item : merged.push(item); return merged })
                           }
                           reader.readAsDataURL(file)
                         })
@@ -617,7 +674,7 @@ export default function ComparePage() {
                           onDrop={e => {
                             e.preventDefault()
                             Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                              const r = new FileReader(); r.onload = ev => setAllRefs(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                              const r = new FileReader(); r.onload = ev => setAllRefs(p => { const nm = file.name.replace(/\.[^.]+$/,""); const m=[...p]; const i=m.findIndex(a=>a.name===nm); const it={id:`aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,name:nm,image:ev.target?.result as string}; i>=0?m[i]=it:m.push(it); return m }); r.readAsDataURL(file)
                             })
                           }}>
                           {currentRefs.filter(ref => !!ref.image).length === 0 && (
@@ -629,7 +686,7 @@ export default function ComparePage() {
                               onDrop={e => {
                                 e.preventDefault(); e.currentTarget.classList.remove("border-amber-500","bg-amber-500/5")
                                 Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")).forEach(file => {
-                                  const r = new FileReader(); r.onload = ev => setAllRefs(p => [...p, { id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, name: file.name.replace(/\.[^.]+$/,""), image: ev.target?.result as string }]); r.readAsDataURL(file)
+                                  const r = new FileReader(); r.onload = ev => setAllRefs(p => { const nm = file.name.replace(/\.[^.]+$/,""); const m=[...p]; const i=m.findIndex(a=>a.name===nm); const it={id:`aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,name:nm,image:ev.target?.result as string}; i>=0?m[i]=it:m.push(it); return m }); r.readAsDataURL(file)
                                 })
                               }}
                             >
@@ -904,22 +961,31 @@ export default function ComparePage() {
                 {/* Delta list panel */}
                 <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
                   <Card className="h-full flex flex-col">
-                    <CardHeader className="pb-2 shrink-0">
+                    <CardHeader className="pb-2 shrink-0 cursor-pointer hover:bg-muted/50 transition-colors" onClick={()=>setDeltaListOpen(p=>!p)}>
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle className="text-base flex items-center gap-2">
                             <SlidersHorizontal className="w-4 h-4" />差距清單 Delta List
+
+                            {!autoAnalyzing && Object.keys(deltaDebateCache).length > 0 && (
+                              <span className="text-[10px] font-normal text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full">
+                                ✓ Debate 完成
+                              </span>
+                            )}
                           </CardTitle>
-                          <CardDescription className="text-xs">勾選差距項目會自動送入對話框追問 · 雙擊查看詳細分析</CardDescription>
+                          <CardDescription className="text-xs">按「重新分析」開始比對 · 雙擊立即查看 Debate 結果</CardDescription>
                         </div>
-                        <Button size="sm" variant="outline" className="gap-1.5 bg-transparent" onClick={handleAnalyzeDeltas} disabled={deltaAnalyzing}>
+                        <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" className="gap-1.5 bg-transparent" onClick={e=>{e.stopPropagation();handleAnalyzeDeltas()}} disabled={deltaAnalyzing}>
                           {deltaAnalyzing
                             ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />分析中</>
-                            : <><Sparkles className="w-3.5 h-3.5" />開始分析</>}
+                            : <><Sparkles className="w-3.5 h-3.5" />重新分析</>}
                         </Button>
+                        {deltaListOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                        </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="flex-1 min-h-0 p-0">
+                    {deltaListOpen && <CardContent className="flex-1 min-h-0 p-0">
                       <ScrollArea className="h-full">
                         <div className="px-6 pb-4 space-y-3">
                           {deltas.map(delta => (
@@ -950,9 +1016,30 @@ export default function ComparePage() {
                                   >
                                     {delta.severity === "high" ? "高" : delta.severity === "medium" ? "中" : "低"}
                                   </Badge>
-                                  <span className="text-[9px] text-muted-foreground">(雙擊分析)</span>
+                                  {deltaDebateCache[delta.id]
+                                    ? <span className="text-[9px] text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">✓ 雙擊查看</span>
+
+                                    : <span className="text-[9px] text-muted-foreground">(雙擊分析)</span>}
                                 </div>
-                                <p className="text-sm">{delta.detail}</p>
+                                {/* Quick conclusion from debate cache — shown inline above detail */}
+                                {deltaDebateCache[delta.id] && (() => {
+                                  // Extract first substantive paragraph as the quick summary
+                                  const lines = deltaDebateCache[delta.id].split("\n").map((l: string) => l.trim()).filter(Boolean)
+                                  const summary = lines[0] || ""
+                                  return summary ? (
+                                    <div className="mb-1.5 px-2 py-1.5 rounded-md bg-teal-500/8 border border-teal-500/20 flex items-start gap-1.5">
+                                      <Sparkles className="w-3 h-3 text-teal-500 mt-0.5 shrink-0" />
+                                      <p className="text-[11px] text-teal-800 dark:text-teal-300 leading-relaxed">{summary}</p>
+                                    </div>
+                                  ) : null
+                                })()}
+                                {autoAnalyzing && !deltaDebateCache[delta.id] && (
+                                  <div className="mb-1.5 px-2 py-1.5 rounded-md bg-muted border border-border flex items-center gap-1.5">
+                                    <Loader2 className="w-3 h-3 text-teal-500 animate-spin shrink-0" />
+                                    <p className="text-[11px] text-muted-foreground">Agents 分析中…</p>
+                                  </div>
+                                )}
+                                <p className="text-sm text-muted-foreground">{delta.detail}</p>
                                 <div className="mt-2 pt-2 border-t border-dashed space-y-2">
                                   <div className="flex items-center gap-2">
                                     <Button
@@ -1006,7 +1093,7 @@ export default function ComparePage() {
                           ))}
                         </div>
                       </ScrollArea>
-                    </CardContent>
+                    </CardContent>}
                   </Card>
                 </div>
 

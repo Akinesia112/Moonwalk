@@ -237,7 +237,10 @@ function ReferenceHubContent() {
           is_pinned: !!r.is_pinned,
           importance: r.importance || (r.is_pinned || r.priority === "Main" || r.priority === "main" ? "Main" : "Secondary"),
           priority: r.priority || (r.is_pinned ? "Main" : "Secondary"),
-          preview: r.localPreview || "",
+          // Prefer base64 preview; fall back to server URLs so other pages always get an image
+          preview: r.localPreview || r.thumbnail_url || r.file_url || "",
+          file_url: r.file_url || "",
+          thumbnail_url: r.thumbnail_url || "",
           artworkId: r.artworkId || "",
         }))
       ))
@@ -266,12 +269,17 @@ function ReferenceHubContent() {
     for (const file of files) {
       const localPreview = await fileToBase64(file)
       const newTitle = file.name.replace(/\.[^/.]+$/, "")
-      // Delete existing refs with same title from backend before uploading
+      // Delete existing refs with same title — mark old IDs as deleted so other pages update
       setRefs(prev => {
         const dupes = prev.filter(r => (r.title || "").toLowerCase() === newTitle.toLowerCase())
-        dupes.forEach(d => {
-          apiFetch(`/Modification/reference/${d.id}`, { method: "DELETE" }).catch(() => {})
-        })
+        if (dupes.length > 0) {
+          // Add old IDs to deleted_ref_ids so upload-analyze/compare/qa can evict stale refs
+          try {
+            const existing = new Set<string>(JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"))
+            dupes.forEach(d => { existing.add(d.id); apiFetch(`/Modification/reference/${d.id}`, { method: "DELETE" }).catch(() => {}) })
+            sessionStorage.setItem("deleted_ref_ids", JSON.stringify([...existing]))
+          } catch {}
+        }
         return prev.filter(r => (r.title || "").toLowerCase() !== newTitle.toLowerCase())
       })
       try {
@@ -576,14 +584,27 @@ function ReferenceHubContent() {
                         if (files.length === 0) return
                         setUploading(true)
                         for (const file of files) {
+                          const newTitle = file.name.replace(/\.[^/.]+$/, "")
                           const localPreview = await (new Promise<string>(resolve => {
                             const r = new FileReader(); r.onload = () => resolve(r.result as string); r.onerror = () => resolve(""); r.readAsDataURL(file)
                           }))
+                          // Mark old same-title refs as deleted before replacing
+                          setRefs(prev => {
+                            const dupes = prev.filter(r => (r.title || "").toLowerCase() === newTitle.toLowerCase())
+                            if (dupes.length > 0) {
+                              try {
+                                const ex = new Set<string>(JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"))
+                                dupes.forEach(d => { ex.add(d.id); apiFetch(`/Modification/reference/${d.id}`, { method: "DELETE" }).catch(() => {}) })
+                                sessionStorage.setItem("deleted_ref_ids", JSON.stringify([...ex]))
+                              } catch {}
+                            }
+                            return prev.filter(r => (r.title || "").toLowerCase() !== newTitle.toLowerCase())
+                          })
                           try {
                             const result = await apiUploadFile(file, PROJECT_ID, uploadCategory, uploadPriority, uploadNote)
-                            setRefs(prev => { const r = { id: result.id, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: uploadPriority==="main", category: uploadCategory, note: uploadNote, thumbnail_url: result.thumbnail_url||"", file_url: result.file_url||"", priority: uploadPriority, importance: uploadPriority, localPreview }; return [r, ...prev.filter(x => x.title !== r.title)] })
+                            setRefs(prev => { const r = { id: result.id, title: newTitle, confidentiality:"internal", is_pinned: uploadPriority==="main", category: uploadCategory, note: uploadNote, thumbnail_url: result.thumbnail_url||"", file_url: result.file_url||"", priority: uploadPriority, importance: uploadPriority, localPreview }; return [r, ...prev.filter(x => x.title !== r.title)] })
                           } catch {
-                            setRefs(prev => { const r = { id:`local_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, title: file.name.replace(/\.[^/.]+$/,""), confidentiality:"internal", is_pinned: false, category: uploadCategory, note: uploadNote, thumbnail_url:"", localPreview, priority: uploadPriority, importance: uploadPriority }; return [r, ...prev.filter(x => x.title !== r.title)] })
+                            setRefs(prev => { const r = { id:`local_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, title: newTitle, confidentiality:"internal", is_pinned: false, category: uploadCategory, note: uploadNote, thumbnail_url:"", localPreview, priority: uploadPriority, importance: uploadPriority }; return [r, ...prev.filter(x => x.title !== r.title)] })
                           }
                         }
                         setUploading(false)

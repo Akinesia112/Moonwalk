@@ -246,7 +246,7 @@ ${briefLines}`,
 
   // ── Required fields check ───────────────────────────────────
   const REQUIRED_FIELDS: (keyof BriefForm)[] = [
-    "project_name", "client", "director", "supervisor",
+    "project_name", "client", "director",
     "confidentiality", "selling_points", "keywords", "style", "mood"
   ]
   const missingRequired = REQUIRED_FIELDS.filter(f => !brief[f]?.trim())
@@ -255,8 +255,7 @@ ${briefLines}`,
   const handleAnalyzeSpec = async () => {
     if (missingRequired.length > 0) {
       const labels: Record<string, string> = {
-        project_name: "專案名稱", client: "客戶", director: "導演/創意總監",
-        supervisor: "Supervisor", confidentiality: "密等",
+        project_name: "專案名稱", client: "客戶", director: "導演/創意總監 & Supervisor", confidentiality: "密等",
         selling_points: "產品賣點", keywords: "情緒關鍵詞",
         style: "風格關鍵字", mood: "色調/氛圍",
       }
@@ -272,7 +271,7 @@ ${briefLines}`,
       // ── Build filled content overview ────────────────────────
       const FIELD_LABELS: Record<string, string> = {
         project_name: "專案名稱", client: "客戶",
-        director: "導演/創意總監", supervisor: "Supervisor",
+        director: "導演/創意總監 & Supervisor",
         confidentiality: "密等", selling_points: "產品賣點/重點訊息",
         keywords: "情緒關鍵詞", restrictions: "禁忌事項",
         style: "風格關鍵字", mood: "色調/氛圍",
@@ -301,7 +300,7 @@ ${briefLines}`,
           "產品賣點": "selling_points", "產品賣點/重點訊息": "selling_points",
           "情緒關鍵詞": "keywords", "風格關鍵字": "style", "色調/氛圍": "mood",
           "專案名稱": "project_name", "客戶": "client",
-          "導演/創意總監": "director", "Supervisor": "supervisor",
+          "導演/創意總監 & Supervisor": "director", "導演/創意總監": "director",
         }
         const key = Object.entries(labelToKey).find(([label]) => item.includes(label))?.[1]
         if (!key) return true  // unknown field, keep it
@@ -426,15 +425,9 @@ ${briefLines}`,
                         <Input id="client" placeholder="客戶名稱" value={brief.client} onChange={setField("client")} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="director">導演/創意總監 <span className="text-red-500">*</span></Label>
-                        <Input id="director" placeholder="導演名稱" value={brief.director} onChange={setField("director")} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="supervisor">Supervisor <span className="text-red-500">*</span></Label>
-                        <Input id="supervisor" placeholder="負責 Supervisor" value={brief.supervisor} onChange={setField("supervisor")} />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="director">導演/創意總監 & Supervisor <span className="text-red-500">*</span></Label>
+                      <Input id="director" placeholder="導演/創意總監 & Supervisor 名稱" value={brief.director} onChange={e => { setField("director")(e); setBrief(prev => ({ ...prev, supervisor: e.target.value })) }} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confidentiality">密等 Confidentiality <span className="text-red-500">*</span></Label>

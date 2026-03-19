@@ -248,51 +248,58 @@ function UploadAnalyzeContent() {
         }
       } catch {}
     }
-    // Always merge reference-hub refs that have previews and aren't already in local refs
+    // Merge reference-hub refs — source of truth is refhub_refs
+    // Match by TITLE (not id) so re-uploads (new id, same name) correctly replace stale refs
     try {
       const hubRaw = SS.get("refhub_refs")
       if (hubRaw) {
-        const hubRefs: { id: string; title: string; category: string; note: string; preview?: string; importance?: string; usage?: string; is_pinned?: boolean; artworkId?: string }[] = JSON.parse(hubRaw)
-        // Remove refs explicitly deleted in reference-hub
+        const hubRefs: any[] = JSON.parse(hubRaw)
         const deletedIds = new Set<string>()
         try { JSON.parse(SS.get("deleted_ref_ids") || "[]").forEach((id: string) => deletedIds.add(id)) } catch {}
-        if (deletedIds.size > 0) setArtistRefs(prev => prev.filter(r => !deletedIds.has(r.id)))
-        const withPreview = hubRefs.filter(r => r.preview)
-        if (withPreview.length > 0) {
-          setArtistRefs(prev => {
-            const existingIds = new Set(prev.map(r => r.id))
-            const newFromHub = withPreview
-              .filter(r => !existingIds.has(r.id))
-              .map(r => ({
-                id: r.id,
-                label: r.importance || (r.is_pinned ? "Main" : (r.category || "Secondary")),
-                title: r.title,
-                localPreview: r.preview || "",
-                category: r.category || "",
-                note: r.note || "",
-                usage: r.usage || "",
-                artworkId: r.artworkId || "",
-              }))
-            // Also update existing refs that came from hub (refresh their metadata)
-            const updated = prev.map(r => {
-              const hub = hubRefs.find(h => h.id === r.id)
-              if (!hub) return r
-              return {
-                ...r,
-                category: hub.category || r.category || "",
-                note: hub.note || r.note || "",
-                label: hub.importance || (hub.is_pinned ? "Main" : r.label),
-                usage: hub.usage || r.usage || "",
-                localPreview: hub.preview || r.localPreview,
-              }
-            })
-            return newFromHub.length > 0 ? [...updated, ...newFromHub] : updated
-          })
-        }
+
+        setArtistRefs(() => {
+          // Build final list purely from hubRefs (refhub is the source of truth)
+          // Filter out explicitly deleted ids
+          return hubRefs
+            .filter(h => !deletedIds.has(h.id) && (h.preview || h.file_url || h.thumbnail_url))
+            .map(h => ({
+              id: h.id,
+              label: h.importance || (h.is_pinned ? "Main" : (h.category || "Secondary")),
+              title: h.title,
+              localPreview: h.preview || h.file_url || h.thumbnail_url || "",
+              category: h.category || "",
+              note: h.note || "",
+              usage: h.usage || "",
+              artworkId: h.artworkId || "",
+            }))
+        })
       }
     } catch {}
     // Allow persist effects to run after this tick (restore is complete)
     setTimeout(() => { skipPersistRef.current = false }, 100)
+
+    // Live sync: when reference-hub updates/replaces a ref, evict stale entries here
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "refhub_refs" || e.key === "deleted_ref_ids") {
+        try {
+          const deletedIds = new Set<string>(JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"))
+          if (deletedIds.size > 0) {
+            setArtistRefs(prev => prev.filter(r => !deletedIds.has(r.id)))
+          }
+          // Re-merge updated refs from refhub
+          const raw = sessionStorage.getItem("refhub_refs")
+          if (!raw) return
+          const hubRefs = JSON.parse(raw)
+          setArtistRefs(prev => prev.map(r => {
+            const hub = hubRefs.find((h: any) => h.id === r.id)
+            if (!hub) return r
+            return { ...r, localPreview: hub.preview || hub.file_url || hub.thumbnail_url || r.localPreview, category: hub.category || r.category, note: hub.note || r.note }
+          }))
+        } catch {}
+      }
+    }
+    window.addEventListener("storage", onStorage)
+    return () => window.removeEventListener("storage", onStorage)
   }, [])
 
   // Persist artist ref previews as base64
@@ -339,47 +346,49 @@ function UploadAnalyzeContent() {
   // ── Multi-file artwork upload ─────────────────────────────────
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || [])
-    setArtworks(prev => {
-      const updated = [
-        ...prev.filter(a => !newFiles.some(f => f.name.toLowerCase().replace(/\.[^.]+$/,"") === (a.file?.name||"").toLowerCase().replace(/\.[^.]+$/,""))),
-        ...newFiles.map(file => ({ id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, file, preview: URL.createObjectURL(file) }))
-      ]
-      saveArtworkPreviews(updated)
-      return updated
+    Promise.all(newFiles.map(async file => ({ id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, file, preview: await fileToBase64(file) }))).then(newItems => {
+      setArtworks(prev => {
+        const filtered = prev.filter(a => !newItems.some(ni => ni.file.name.toLowerCase().replace(/\.[^.]+$/,"") === (a.file?.name||"").toLowerCase().replace(/\.[^.]+$/,"")))
+        const updated = [...filtered, ...newItems]
+        saveArtworkPreviews(updated)
+        return updated
+      })
+      setArtworkSaved(false)
     })
-    setArtworkSaved(false)
     e.target.value = ""
   }
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"))
-    setArtworks(prev => {
-      const updated = [
-        ...prev.filter(a => !dropped.some(f => f.name.toLowerCase().replace(/\.[^.]+$/,"") === (a.file?.name||"").toLowerCase().replace(/\.[^.]+$/,""))),
-        ...dropped.map(file => ({ id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, file, preview: URL.createObjectURL(file) }))
-      ]
-      saveArtworkPreviews(updated)
-      return updated
+    Promise.all(dropped.map(async file => ({ id: `aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`, file, preview: await fileToBase64(file) }))).then(newItems => {
+      setArtworks(prev => {
+        const filtered = prev.filter(a => !newItems.some(ni => ni.file.name.toLowerCase().replace(/\.[^.]+$/,"") === (a.file?.name||"").toLowerCase().replace(/\.[^.]+$/,"")))
+        const updated = [...filtered, ...newItems]
+        saveArtworkPreviews(updated)
+        return updated
+      })
+      setArtworkSaved(false)
     })
-    setArtworkSaved(false)
   }
 
   // ── Artist refs ───────────────────────────────────────────────
   const handleRefUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
-    setArtistRefs(prev => [
-      ...prev,
-      ...files.map(file => ({
-        id: `ar_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
-        label: "Secondary" as const,
-        localPreview: URL.createObjectURL(file),
-        file,
-        title: file.name.replace(/\.[^.]+$/, ""),
-      }))
-    ])
+    Promise.all(files.map(async file => ({
+      id: `ar_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
+      label: "Secondary" as const,
+      localPreview: await fileToBase64(file),
+      file,
+      title: file.name.replace(/\.[^.]+$/, ""),
+    }))).then(newRefs => {
+      setArtistRefs(prev => {
+        const filtered = prev.filter(r => !newRefs.some(nr => nr.title.toLowerCase() === r.title.toLowerCase()))
+        return [...filtered, ...newRefs]
+      })
+      setRefsSaved(false)
+    })
     e.target.value = ""
-    setRefsSaved(false)
   }
 
   // ── Context builders ──────────────────────────────────────────
@@ -859,12 +868,17 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                         e.preventDefault(); e.currentTarget.classList.remove("border-primary","bg-primary/5")
                         const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"))
                         if (files.length === 0) return
-                        setArtistRefs(prev => [...prev, ...files.map(file => ({
+                        Promise.all(files.map(async file => ({
                           id: `ar_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
-                          label: "Secondary" as const, localPreview: URL.createObjectURL(file), file,
+                          label: "Secondary" as const, localPreview: await fileToBase64(file), file,
                           title: file.name.replace(/\.[^.]+$/, ""),
-                        }))])
-                        setRefsSaved(false)
+                        }))).then(newRefs => {
+                          setArtistRefs(prev => {
+                            const filtered = prev.filter(r => !newRefs.some(nr => nr.title.toLowerCase() === r.title.toLowerCase()))
+                            return [...filtered, ...newRefs]
+                          })
+                          setRefsSaved(false)
+                        })
                       }}>
                       <ImageIcon className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
                       <p className="text-[10px] text-muted-foreground">點擊或拖曳新增 Reference</p>
@@ -876,12 +890,17 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                         e.preventDefault()
                         const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"))
                         if (files.length === 0) return
-                        setArtistRefs(prev => [...prev, ...files.map(file => ({
+                        Promise.all(files.map(async file => ({
                           id: `ar_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
-                          label: "Secondary" as const, localPreview: URL.createObjectURL(file), file,
+                          label: "Secondary" as const, localPreview: await fileToBase64(file), file,
                           title: file.name.replace(/\.[^.]+$/, ""),
-                        }))])
-                        setRefsSaved(false)
+                        }))).then(newRefs => {
+                          setArtistRefs(prev => {
+                            const filtered = prev.filter(r => !newRefs.some(nr => nr.title.toLowerCase() === r.title.toLowerCase()))
+                            return [...filtered, ...newRefs]
+                          })
+                          setRefsSaved(false)
+                        })
                       }}>
                       {artistRefs.map(ref => (
                         <RefCard
