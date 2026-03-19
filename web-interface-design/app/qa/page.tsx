@@ -132,6 +132,7 @@ export default function QAPage() {
   const [selectedRefAnnIdx, setSelectedRefAnnIdx] = useState<number|null>(null)
   const [activePanel, setActivePanel] = useState<"work"|"ref">("work")
   const refUndoStackRef = useRef<CanvasAnn[][]>([])
+  const globalUndoRef = useRef<{panel:"work"|"ref"; anns:CanvasAnn[]}[]>([])
 
   const [qaSubmitted, setQaSubmitted] = useState(false)
   const [leftPanelMode, setLeftPanelMode] = useState<"browse" | "expand">("browse")
@@ -642,10 +643,20 @@ export default function QAPage() {
     const pos = activePanel==="ref" ? getRefCanvasPos(e) : getCanvasPos(e)
     if (canvasTool==="brush") {
       drawingRef.current.push(pos); const activeRef = activePanel==="ref"; const ctx=(activeRef?refCanvasRef:canvasRef).current?.getContext("2d")
-      if (ctx&&drawingRef.current.length>1) { ctx.strokeStyle=brushColor; ctx.lineWidth=brushSize; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); const prev=drawingRef.current[drawingRef.current.length-2]; ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke() }
+      if (ctx&&drawingRef.current.length>1) {
+        const activeRef = activePanel==="ref"; const cvs=(activeRef?refCanvasRef:canvasRef).current!
+        const rect = cvs.getBoundingClientRect(); const scaleFactor = cvs.width / rect.width
+        ctx.strokeStyle=brushColor; ctx.lineWidth=brushSize*scaleFactor; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); const prev=drawingRef.current[drawingRef.current.length-2]; ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke()
+      }
     } else if (canvasTool==="eraser") {
       drawingRef.current.push(pos); const activeRef = activePanel==="ref"; const ctx=(activeRef?refCanvasRef:canvasRef).current?.getContext("2d")
-      if (ctx) { ctx.globalCompositeOperation="destination-out"; ctx.lineWidth=brushSize*3; ctx.lineCap="round"; if(drawingRef.current.length>1){const prev=drawingRef.current[drawingRef.current.length-2]; ctx.beginPath(); ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke()}; ctx.globalCompositeOperation="source-over" }
+      if (ctx) {
+        const activeRef = activePanel==="ref"; const cvs=(activeRef?refCanvasRef:canvasRef).current!
+        const rect = cvs.getBoundingClientRect(); const scaleFactor = cvs.width / rect.width
+        ctx.globalCompositeOperation="destination-out"; ctx.lineWidth=brushSize*3*scaleFactor; ctx.lineCap="round"
+        if(drawingRef.current.length>1){const prev=drawingRef.current[drawingRef.current.length-2]; ctx.beginPath(); ctx.moveTo(prev.x,prev.y); ctx.lineTo(pos.x,pos.y); ctx.stroke()}
+        ctx.globalCompositeOperation="source-over"
+      }
     } else if ((canvasTool==="circle"||canvasTool==="rect")&&shapeStartRef.current) {
       const activeRef = activePanel==="ref"; if(activeRef) redrawRefCanvas(); else redrawCanvas(); const ctx=(activeRef?refCanvasRef:canvasRef).current?.getContext("2d")
       if (ctx) { ctx.strokeStyle=brushColor; ctx.lineWidth=3; ctx.setLineDash([5,5]); if(canvasTool==="circle"){const dx=pos.x-shapeStartRef.current.x; const dy=pos.y-shapeStartRef.current.y; ctx.beginPath(); ctx.arc(shapeStartRef.current.x,shapeStartRef.current.y,Math.sqrt(dx*dx+dy*dy),0,2*Math.PI); ctx.stroke()}else{const x=Math.min(shapeStartRef.current.x,pos.x); const y=Math.min(shapeStartRef.current.y,pos.y); ctx.strokeRect(x,y,Math.abs(pos.x-shapeStartRef.current.x),Math.abs(pos.y-shapeStartRef.current.y))}; ctx.setLineDash([]) }
@@ -656,14 +667,22 @@ export default function QAPage() {
     isDrawingRef.current = false
     const isRef = activePanel === "ref"
     const pos = isRef ? getRefCanvasPos(e) : getCanvasPos(e)
-    const props = { color: brushColor, fillColor, opacity: brushOpacity, lineWidth: brushSize }
+    const activeCvs = (isRef ? refCanvasRef : canvasRef).current
+    const scaleFactor = activeCvs ? activeCvs.width / activeCvs.getBoundingClientRect().width : 1
+    const props = { color: brushColor, fillColor, opacity: brushOpacity, lineWidth: brushSize * scaleFactor }
     const push = isRef
-      ? (fn: (p: CanvasAnn[]) => CanvasAnn[]) => { refUndoStackRef.current = [...refUndoStackRef.current.slice(-20), [...refAnnotations]]; setRefAnnotations(fn) }
-      : (fn: (p: CanvasAnn[]) => CanvasAnn[]) => { undoStackRef.current = [...undoStackRef.current.slice(-20), [...canvasAnnotations]]; setCanvasAnnotations(fn) }
+      ? (fn: (p: CanvasAnn[]) => CanvasAnn[]) => {
+          globalUndoRef.current = [...globalUndoRef.current.slice(-40), {panel:"ref", anns:[...refAnnotations]}]
+          setRefAnnotations(fn)
+        }
+      : (fn: (p: CanvasAnn[]) => CanvasAnn[]) => {
+          globalUndoRef.current = [...globalUndoRef.current.slice(-40), {panel:"work", anns:[...canvasAnnotations]}]
+          setCanvasAnnotations(fn)
+        }
     if (canvasTool==="brush" && drawingRef.current.length>1)
       push(p=>[...p,{type:"brush",points:[...drawingRef.current],...props}])
     else if (canvasTool==="eraser" && drawingRef.current.length>1)
-      push(p=>[...p,{type:"eraser",points:[...drawingRef.current],color:"white",lineWidth:brushSize*2,opacity:1}])
+      push(p=>[...p,{type:"eraser",points:[...drawingRef.current],color:"white",lineWidth:brushSize*2*scaleFactor,opacity:1}])
     else if (canvasTool==="circle" && shapeStartRef.current)
       push(p=>[...p,{type:"circle",points:[{...shapeStartRef.current!},{...pos}],...props}])
     else if (canvasTool==="rect" && shapeStartRef.current)
@@ -673,8 +692,13 @@ export default function QAPage() {
   const handleTextSubmit = () => {
     if (textInputPos&&textInputValue.trim()) {
       const ann = {type:"text",text:textInputValue,x:textInputPos.x,y:textInputPos.y,color:brushColor,opacity:brushOpacity,lineWidth:brushSize,fontSize:textFontSize,font:textFont,bold:textBold,italic:textItalic} as any
-      if (activePanel === "ref") { refUndoStackRef.current = [...refUndoStackRef.current.slice(-20), [...refAnnotations]]; setRefAnnotations(p=>[...p,ann]) }
-      else { undoStackRef.current = [...undoStackRef.current.slice(-20), [...canvasAnnotations]]; setCanvasAnnotations(p=>[...p,ann]) }
+      if (activePanel === "ref") {
+        globalUndoRef.current = [...globalUndoRef.current.slice(-40), {panel:"ref", anns:[...refAnnotations]}]
+        setRefAnnotations(p=>[...p,ann])
+      } else {
+        globalUndoRef.current = [...globalUndoRef.current.slice(-40), {panel:"work", anns:[...canvasAnnotations]}]
+        setCanvasAnnotations(p=>[...p,ann])
+      }
     }
     setTextInputPos(null); setTextInputValue("")
   }
@@ -969,13 +993,20 @@ export default function QAPage() {
                           <button type="button" className={`h-6 w-6 rounded text-xs italic border transition-colors ${textItalic?'bg-primary text-primary-foreground':'hover:bg-muted'}`} onClick={()=>setTextItalic(p=>!p)}>I</button>
                         </>)}
                         <div className="w-px h-5 bg-border mx-1" />
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="復原上一步" onClick={() => {
-                          if (activePanel==="ref") { const prev=refUndoStackRef.current.pop(); if(prev!==undefined) setRefAnnotations(prev) }
-                          else { const prev=undoStackRef.current.pop(); if(prev!==undefined) setCanvasAnnotations(prev) }
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="復原上一步（跨Work/Ref）" onClick={() => {
+                          const entry = globalUndoRef.current.pop()
+                          if (!entry) return
+                          if (entry.panel === "ref") setRefAnnotations(entry.anns)
+                          else setCanvasAnnotations(entry.anns)
                         }}><Undo2 className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="全部清除" onClick={() => {
-                          if (activePanel==="ref") { refUndoStackRef.current=[...refUndoStackRef.current.slice(-20),[...refAnnotations]]; setRefAnnotations([]) }
-                          else { undoStackRef.current=[...undoStackRef.current.slice(-20),[...canvasAnnotations]]; setCanvasAnnotations([]) }
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="全部清除（Work + Ref）" onClick={() => {
+                          globalUndoRef.current = [
+                            ...globalUndoRef.current.slice(-40),
+                            {panel:"work", anns:[...canvasAnnotations]},
+                            {panel:"ref", anns:[...refAnnotations]},
+                          ]
+                          setCanvasAnnotations([])
+                          setRefAnnotations([])
                         }}><Trash2 className="w-3.5 h-3.5" /></Button>
                         <div className="w-px h-5 bg-border mx-0.5" />
                         <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-teal-600 hover:bg-teal-700 text-white" title="下載標註圖" onClick={() => {

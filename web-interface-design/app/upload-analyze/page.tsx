@@ -54,9 +54,11 @@ const CATEGORY_TO_METRIC: Record<string, string> = {
 const REF_LABEL_OPTIONS = ["Main", "Secondary", "Style", "Composition", "Color", "Lighting"]
 
 function scoreToStatus(score: number, dis: number): "green" | "yellow" | "red" {
+  // Red: strictest — both conditions must be severe
   if (dis > 0.30 && score < 0.30) return "red"
-  if (dis > 0.15 || score < 0.40) return "red"
-  if (dis > 0.08 || score < 0.55) return "yellow"
+  // Yellow: widest band — moderate issues on either axis
+  if (dis > 0.12 || score < 0.70) return "yellow"
+  // Green: score >= 0.70 AND disagreement <= 0.12
   return "green"
 }
 
@@ -129,6 +131,8 @@ function UploadAnalyzeContent() {
 
   // ── Dialog
   const [dialogMetric, setDialogMetric] = useState<MetricResult | null>(null)
+  const [debateLoading, setDebateLoading] = useState(false)
+  const [liveDebate, setLiveDebate] = useState<{ positionA: string; positionB: string; conclusion: string } | null>(null)
 
   // ── Tag metric selectors (one per dynamic tag slot)
   const [tagMetrics, setTagMetrics] = useState<string[]>(["composition", "light", "color", "style"])
@@ -467,7 +471,7 @@ function UploadAnalyzeContent() {
             status: scoreToStatus(g.score ?? 0.5, g.disagreement ?? 0),
             refBasis: g.ref_basis || "Spec + References",
             consensus: (g.disagreement ?? 0) < 0.1,
-            flag: g.flag,
+            flag: (g.disagreement ?? 0) > 0.30 && (g.score ?? 0.5) < 0.30 ? "handoff_needed" : undefined,
           })
         }
         const na: AnalysisState = {
@@ -475,18 +479,73 @@ function UploadAnalyzeContent() {
           specSummary: stripBold(data.spec_summary || data.summary || "分析完成。"),
           overallFeedback: stripBold(data.overall_feedback || ""),
           metrics,
-          flags: (data.flags || []).map((f: any) => {
-            const name = Array.isArray(f) ? f[0] : String(f)
-            return METRIC_NAMES[name] || name
-          }),
+          // Only flag metrics that meet strict handoff: dis>0.30 AND score<0.30
+          flags: metrics
+            .filter(m => m.flag === "handoff_needed")
+            .map(m => m.name),
         }
         setAnalysis(na)
         const red = metrics.filter(m => m.status === "red").length
         const yellow = metrics.filter(m => m.status === "yellow").length
         const green = metrics.filter(m => m.status === "green").length
         setChatMessages(p => [...p, { role: "ai",
-          content: `分析完成！共評估 ${metrics.length} 項指標。\n❌ 需改進：${red} 項　⚠️ 需關注：${yellow} 項　✅ 良好：${green} 項\n\n你可以點擊任一分項指標查看詳細 Debate，或勾選後讓我給出具體建議。`
+          content: `分析完成！共評估 ${metrics.length} 項指標。\n❌ 需改進：${red} 項　⚠️ 需關注：${yellow} 項　✅ 良好：${green} 項\n\n後台正對每個指標執行三方辯論（OpenAI + Gemini → Claude），完成後點擊指標可查看完整 Debate。`
         }])
+
+        // ── 後台並行對所有 metric 跑三方辯論，結果存回 analysis ──
+        ;(async () => {
+          const debateResults = await Promise.all(metrics.map(async m => {
+            if (!m.agentA.opinion && !m.agentB.opinion) return { id: m.id, debate: null }
+            try {
+              // 3-party debate via /chat/mode (evidence mode):
+              // view_1 = OpenAI challenges from a NEW technical angle not covered by agentA
+              // view_2 = Gemini challenges from a NEW creative angle not covered by agentB
+              // synthesis = Claude integrates both new angles into concrete actionable advice
+              const debatePrompt = `指標「${m.name}」 — 三方辯論任務
+
+初步評估已有以下兩個觀點：
+觀點一（${m.agentA.name}）：${m.agentA.opinion}
+觀點二（${m.agentB.name}）：${m.agentB.opinion}
+
+現在進行真正的辯論：
+- OpenAI 必須提出「觀點一忽略的技術細節」或「觀點一的邏輯漏洞」，角度是純技術執行面
+- Gemini 必須提出「觀點二忽略的視覺語言問題」或「觀點二的創意盲點」，角度是創意策略面
+- Claude 整合辯論，給出與兩個初步觀點都不同的具體改進建議`
+
+              const res2 = await fetch(`${API}/suggestion/chat/mode`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  mode: "evidence",
+                  content: debatePrompt,
+                  spec_and_refs: `${m.agentA.name} 初步意見：${m.agentA.opinion}
+${m.agentB.name} 初步意見：${m.agentB.opinion}`,
+                }),
+              })
+              const d = await res2.json()
+              return {
+                id: m.id,
+                debate: d.debate ? {
+                  positionA: d.debate.view_1 || "",
+                  positionB: d.debate.view_2 || "",
+                  conclusion: d.debate.synthesis || d.reply || d.response || "",
+                } : {
+                  positionA: "",
+                  positionB: "",
+                  conclusion: d.reply || d.response || "",
+                }
+              }
+            } catch { return { id: m.id, debate: null } }
+          }))
+          setAnalysis(prev => ({
+            ...prev,
+            metrics: prev.metrics.map(m => {
+              const r = debateResults.find(x => x.id === m.id)
+              return r?.debate ? { ...m, debate: r.debate } : m
+            })
+          }))
+        })()
+
       } else {
         throw new Error(`HTTP ${res.status}`)
       }
@@ -565,6 +624,37 @@ function UploadAnalyzeContent() {
   }, [chatInput, chatLoading, callAgent])
 
   // ── Ask agent from dialog ─────────────────────────────────────
+  const runLiveDebate = useCallback(async (m: MetricResult) => {
+    if (debateLoading) return
+    setDebateLoading(true)
+    setLiveDebate(null)
+    try {
+      // Use /chat/analysis so OpenAI+Gemini give FRESH independent perspectives,
+      // not a reformatting of the existing agentA/B opinions
+      const res = await fetch(`${API}/suggestion/chat/analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `針對「${m.name}」指標進行三方辯論分析。OpenAI 和 Gemini 請各自從技術執行面和創意策略面提出與以下初步意見完全不同的新觀點，Claude 整合後給出 2-3 個具體可執行的改進建議。`,
+          context: `初步評分意見（僅供參考，請提出不同角度）：
+${m.agentA.name}：${m.agentA.opinion}
+
+${m.agentB.name}：${m.agentB.opinion}`,
+          project_id: "proj_001",
+        }),
+      })
+      const data = await res.json()
+      setLiveDebate({
+        positionA: "",
+        positionB: "",
+        conclusion: data.reply || data.response || "無法取得辯論結果",
+      })
+    } catch {
+      setLiveDebate({ positionA: "", positionB: "", conclusion: "連線失敗，請稍後再試" })
+    }
+    setDebateLoading(false)
+  }, [debateLoading])
+
   const handleAskAgentFromDialog = useCallback(async (m: MetricResult) => {
     const sl = m.status === "red" ? "紅燈（需改進）" : m.status === "yellow" ? "黃燈（需關注）" : "綠燈（良好）"
     const debateCtx = m.debate?.conclusion ? `\n\nDebate 結論：${m.debate.conclusion}` : ""
@@ -919,12 +1009,12 @@ function UploadAnalyzeContent() {
                           <p className="text-xs leading-relaxed whitespace-pre-line">{analysis.specSummary}</p>
                           {analysis.flags.length > 0 && (
                             <div className="pt-2 border-t">
-                              <p className="text-[10px] font-medium text-orange-600 flex items-center gap-1 mb-1.5">
+                              <p className="text-[10px] font-medium text-orange-500/80 flex items-center gap-1 mb-1.5">
                                 <AlertTriangle className="w-3 h-3" />需轉交導演進一步討論
                               </p>
                               <div className="flex flex-wrap gap-1">
                                 {analysis.flags.map((f, i) => (
-                                  <Badge key={i} variant="outline" className="text-[10px] bg-orange-500/10 text-orange-700 border-orange-500/30">{f}</Badge>
+                                  <Badge key={i} variant="outline" className="text-[10px] bg-orange-500/8 text-orange-600 border-orange-500/20">{f}</Badge>
                                 ))}
                               </div>
                             </div>
@@ -1121,7 +1211,7 @@ function UploadAnalyzeContent() {
       </div>
 
       {/* ── Metric Detail Dialog ── */}
-      <Dialog open={!!dialogMetric} onOpenChange={open => { if (!open) setDialogMetric(null) }}>
+      <Dialog open={!!dialogMetric} onOpenChange={open => { if (!open) { setDialogMetric(null); setLiveDebate(null) } }}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1131,7 +1221,7 @@ function UploadAnalyzeContent() {
             <DialogDescription>
               {dialogMetric?.status === "red" ? "❌ 紅燈 — 需優先改進" : dialogMetric?.status === "yellow" ? "⚠️ 黃燈 — 需關注" : "✅ 綠燈 — 通過"}
               {dialogMetric && !dialogMetric.consensus ? "　意見分歧" : "　Agent 共識"}
-              {dialogMetric?.flag ? "　需轉交導演" : ""}
+              {dialogMetric?.flag ? "　⚡ Handoff 建議" : ""}
             </DialogDescription>
           </DialogHeader>
           {dialogMetric && (
@@ -1160,67 +1250,62 @@ function UploadAnalyzeContent() {
                 </div>
               </div>
 
-              {/* Agent Debate */}
+              {/* Agent Debate — Live 3-party */}
               <div>
-                <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-purple-600" />Agent Debate
-                </p>
-                {dialogMetric.debate && (dialogMetric.debate.positionA || dialogMetric.debate.positionB) ? (
-                  <div className="grid grid-cols-2 gap-3 mb-2">
-                    <div className="p-2.5 bg-muted rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
-                      onClick={() => {
-                        const msg = `${dialogMetric.agentA.name} 的立場：${dialogMetric.debate!.positionA}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-purple-600" />Agent Debate
+                    <span className="text-[10px] text-muted-foreground font-normal">OpenAI + Gemini → Claude 主導整合</span>
+                  </p>
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1.5 border-purple-400/50 text-purple-600 hover:bg-purple-500/10"
+                    disabled={debateLoading || !dialogMetric.agentA.opinion}
+                    onClick={() => runLiveDebate(dialogMetric)}>
+                    {debateLoading
+                      ? <><Loader2 className="w-3 h-3 animate-spin" />辯論中…</>
+                      : <><Zap className="w-3 h-3" />觸發三方辯論</>}
+                  </Button>
+                </div>
 
-請根據這個立場給出具體改進建議。`
-                        setChatMessages(p => [...p, { role: "user", content: `[${dialogMetric.name} — ${dialogMetric.agentA.name} 立場]` }])
-                        setDialogMetric(null); callAgent(msg)
-                      }}>
-                      <p className="text-[10px] text-muted-foreground mb-1">{dialogMetric.agentA.name} 立場 <span className="text-teal-500">（點擊追問）</span></p>
-                      <p className="text-xs leading-relaxed">{dialogMetric.debate.positionA}</p>
+                {/* Use liveDebate if available, else fall back to backend debate */}
+                {(() => {
+                  // liveDebate (user-triggered) overrides backend debate; both fall back to empty state
+                  const d = liveDebate || dialogMetric.debate
+                  if (!d || (!d.positionA && !d.positionB && !d.conclusion)) {
+                    return (
+                      <div className="p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg flex items-center justify-center gap-2">
+                        {debateLoading
+                          ? <><Loader2 className="w-4 h-4 animate-spin text-purple-500" /><p className="text-xs text-muted-foreground">OpenAI + Gemini 辯論中，Claude 整合中…</p></>
+                          : <><Loader2 className="w-4 h-4 animate-spin text-purple-400" /><p className="text-xs text-muted-foreground">後台辯論進行中，稍候自動顯示…</p></>
+                        }
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="space-y-2">
+                      {d.conclusion && (
+                        <div className="p-2.5 bg-teal-500/10 rounded-lg cursor-pointer hover:bg-teal-500/20 transition-colors border border-teal-500/20"
+                          onClick={() => { setChatMessages(p => [...p, { role: "user", content: `[${dialogMetric.name} — Claude 整合結論]` }]); setDialogMetric(null); setLiveDebate(null); callAgent(`「${dialogMetric.name}」Claude 整合結論：${d.conclusion}
+
+請給出 2-3 個具體可執行的改進步驟。`) }}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Bot className="w-3 h-3 text-teal-600" />
+                            <p className="text-[10px] font-semibold text-teal-700">三方辯論整合結論（OpenAI + Gemini → Claude）<span className="text-teal-500 font-normal ml-1">（點擊讓 Agent 給具體步驟）</span></p>
+                          </div>
+                          <p className="text-xs text-teal-800 leading-relaxed">{d.conclusion}</p>
+                        </div>
+                      )}
                     </div>
-                    <div className="p-2.5 bg-muted rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
-                      onClick={() => {
-                        const msg = `${dialogMetric.agentB.name} 的立場：${dialogMetric.debate!.positionB}
-
-請根據這個立場給出具體改進建議。`
-                        setChatMessages(p => [...p, { role: "user", content: `[${dialogMetric.name} — ${dialogMetric.agentB.name} 立場]` }])
-                        setDialogMetric(null); callAgent(msg)
-                      }}>
-                      <p className="text-[10px] text-muted-foreground mb-1">{dialogMetric.agentB.name} 立場 <span className="text-teal-500">（點擊追問）</span></p>
-                      <p className="text-xs leading-relaxed">{dialogMetric.debate.positionB}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic mb-2">點擊「請 Agent 給建議」可觸發即時討論。</p>
-                )}
-                {dialogMetric.debate?.conclusion && (
-                  <div className="p-2.5 bg-teal-500/10 rounded-lg cursor-pointer hover:bg-teal-500/20 transition-colors"
-                    onClick={() => {
-                      const msg = `「${dialogMetric.name}」的 Debate 結論：${dialogMetric.debate!.conclusion}
-
-請根據這個結論給出 2-3 個具體可執行的改進步驟。`
-                      setChatMessages(p => [...p, { role: "user", content: `[${dialogMetric.name} — Debate 結論]` }])
-                      setDialogMetric(null); callAgent(msg)
-                    }}>
-                    <p className="text-[10px] font-medium text-teal-700 mb-1">結論 <span className="text-teal-500 font-normal">（點擊讓 Agent 給具體步驟）</span></p>
-                    <p className="text-xs text-teal-700 leading-relaxed">{dialogMetric.debate.conclusion}</p>
-                  </div>
-                )}
-                {!dialogMetric.debate?.conclusion && (
-                  <div className="p-2.5 bg-teal-500/10 rounded-lg">
-                    <p className="text-[10px] font-medium text-teal-700 mb-1">結論</p>
-                    <p className="text-xs text-teal-700">點擊「請 Agent 給建議」取得 Claude 主導的具體結論。</p>
-                  </div>
-                )}
+                  )
+                })()}
               </div>
 
-              {/* 轉交導演 */}
+              {/* 轉交導演 — 只在極嚴重分歧才顯示 */}
               {dialogMetric.flag && (
-                <div className="p-2.5 bg-orange-500/10 rounded-lg flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0" />
+                <div className="p-2.5 bg-orange-500/8 rounded-lg flex items-center gap-2 border border-orange-500/20">
+                  <AlertTriangle className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-orange-600">請轉交導演進一步討論</p>
-                    <p className="text-xs text-orange-500">此項目已多次嘗試仍與 Spec/Reference 差距顯著，建議由導演確認創作方向。</p>
+                    <p className="text-[11px] font-medium text-orange-600">建議與導演討論</p>
+                    <p className="text-[10px] text-orange-500/80">此指標分歧程度與偏差均超過閾值，可向導演確認創作方向後再修正。</p>
                   </div>
                 </div>
               )}
