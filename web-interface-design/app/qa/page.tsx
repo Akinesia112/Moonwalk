@@ -100,7 +100,7 @@ export default function QAPage() {
   const [showMetricDetailDialog, setShowMetricDetailDialog] = useState(false)
   const [selectedMetricDetail, setSelectedMetricDetail] = useState<{id:string;name:string;status:string;agents:string[];consensus:boolean;refBasis:string;supervisorNote:string|null} | null>(null)
   const [checkedMetrics, setCheckedMetrics] = useState<string[]>([])
-  const [showMetrics, setShowMetrics] = useState(false)
+  const [showMetrics, setShowMetrics] = useState(true)
   const [analyzingFeedback, setAnalyzingFeedback] = useState(false)
   const [canvasTool, setCanvasTool] = useState("pointer")
   const [brushColor, setBrushColor] = useState("#ef4444")
@@ -1630,104 +1630,103 @@ export default function QAPage() {
                 </Card>
 
                 {/* Scrollable bottom section */}
-                <div className="flex flex-col gap-1" style={{maxHeight:"42%",overflowY:"auto",flexShrink:0}}>
-                {/* Multi-Agent Metrics */}
-                <Collapsible open={showMetrics} onOpenChange={setShowMetrics}>
-                  <Card className="shrink-0 mt-1">
-                    <CollapsibleTrigger asChild>
-                      <CardHeader className="cursor-pointer hover:bg-muted/50 py-1.5 px-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-teal-600"/><CardTitle className="text-xs">Overall AI Feedback</CardTitle></div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-red-500">{metrics.filter(m=>m.status==="red").length}R</span>
-                            <span className="text-[10px] text-amber-500">{metrics.filter(m=>m.status==="yellow").length}Y</span>
-                            <span className="text-[10px] text-green-500">{metrics.filter(m=>m.status==="green").length}G</span>
-                            {showMetrics?<ChevronUp className="w-3 h-3"/>:<ChevronDown className="w-3 h-3"/>}
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <CardContent className="pt-0 pb-2 px-3">
-                        <div className="grid grid-cols-4 gap-1">
-                          {metrics.map(m => (
-                            <div key={m.id} className={`p-1.5 rounded-lg ${getStatusBg(m.status)} ${isMetricMentioned(m.id)?"border-2":"border border-dashed"} cursor-pointer select-none`}
-                              onClick={()=>{setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
-                              onDoubleClick={e=>{e.stopPropagation();setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
-                              title="單擊/雙擊查看詳情・勾選 checkbox 送入 AI 對話"
-                            >
-                              <div className="flex items-center gap-1">
-                                <Checkbox checked={checkedMetrics.includes(m.id)} onCheckedChange={c=>handleMetricCheck(m.id,c as boolean)} className="h-3 w-3" onClick={e=>e.stopPropagation()}/>
-                                {getStatusIcon(m.status)}
-                                <span className="text-[10px] font-medium">{m.name}</span>
-                              </div>
-                              <div className="flex items-center gap-1 mt-0.5 ml-4">
-                                <Badge variant="outline" className="text-[7px] h-3 px-0.5">{m.refBasis}</Badge>
-                                {!m.consensus&&<Badge variant="outline" className="text-[7px] h-3 px-0.5 bg-amber-500/10 text-amber-600">分歧</Badge>}
-                              </div>
+                <div className="flex flex-row items-stretch gap-2 pb-1 flex-1 min-h-0">
+                  {/* Multi-Agent Metrics */}
+                  <Collapsible open={showMetrics} onOpenChange={setShowMetrics} className="flex-1 min-w-0 flex flex-col">
+                    <Card className="flex-1 flex flex-col min-h-0 mt-1">
+                      <CollapsibleTrigger asChild>
+                        <CardHeader className="cursor-pointer hover:bg-muted/50 py-1.5 px-3 shrink-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-teal-600"/><CardTitle className="text-xs">Overall AI Feedback</CardTitle></div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-red-500">{metrics.filter(m=>m.status==="red").length}R</span>
+                              <span className="text-[10px] text-amber-500">{metrics.filter(m=>m.status==="yellow").length}Y</span>
+                              <span className="text-[10px] text-green-500">{metrics.filter(m=>m.status==="green").length}G</span>
+                              {showMetrics?<ChevronUp className="w-3 h-3"/>:<ChevronDown className="w-3 h-3"/>}
                             </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>
-
-                {/* Artist Notes */}
-                <Collapsible open={showArtistNotes} onOpenChange={setShowArtistNotes}>
-                  <Card className="shrink-0 mt-1 border-indigo-500/30 bg-indigo-500/5">
-                    <CollapsibleTrigger asChild>
-                      <CardHeader className="cursor-pointer hover:bg-muted/50 py-1.5 px-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <BookOpen className="w-3.5 h-3.5 text-indigo-600"/>
-                            <CardTitle className="text-xs">Artist Creation Intentions</CardTitle>
-                            <Badge variant="outline" className="text-[8px] h-3.5 bg-indigo-500/10 text-indigo-600 border-indigo-500/30">C03</Badge>
-                            {/* Live badge showing how many notes are filled */}
-                            {reflectionNote && (
-                              <Badge variant="outline" className="text-[8px] h-3.5 bg-green-500/10 text-green-600 border-green-500/30">
-                                {reflectionNote ? 1 : 0}
-                              </Badge>
-                            )}
                           </div>
-                          {showArtistNotes ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
-                        </div>
-                      </CardHeader>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <CardContent className="pt-0 pb-2 px-3">
-                        {/* 創作反思筆記 scrolling history — from upload-analyze page (c04_notes) */}
-                        {!hydrated || notesHistory.length === 0 ? (
-                          <p className="text-[10px] text-muted-foreground py-1">尚無創作反思筆記（來自 Upload Analyze 頁面）</p>
-                        ) : (
-                          <ScrollArea className="max-h-48">
-                            <div className="space-y-1.5 pr-1">
-                              {notesHistory.map((note, i) => (
-                                <div key={i} className="p-1.5 rounded border bg-background">
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    <div className="flex items-center gap-1">
-                                      <Sparkles className="w-2.5 h-2.5 text-violet-500"/>
-                                      <span className="text-[8px] font-semibold text-violet-700">#{notesHistory.length - i}</span>
-                                    </div>
-                                    <button className="text-[8px] text-violet-500 hover:text-violet-700"
-                                      onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[創作反思 #${notesHistory.length - i}] ${note}` }]); callAgent(`Artist 的創作反思：
-${note}`) }}>
-                                      發送 AI →
-                                    </button>
-                                  </div>
-                                  <p className="text-[9px] leading-relaxed whitespace-pre-line">{note}</p>
+                        </CardHeader>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="flex-1 min-h-0 overflow-y-auto">
+                        <CardContent className="pt-0 pb-2 px-3 h-full">
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1">
+                            {metrics.map(m => (
+                              <div key={m.id} className={`p-1.5 rounded-lg ${getStatusBg(m.status)} ${isMetricMentioned(m.id)?"border-2":"border border-dashed"} cursor-pointer select-none`}
+                                onClick={()=>{setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
+                                onDoubleClick={e=>{e.stopPropagation();setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
+                                title="單擊/雙擊查看詳情・勾選 checkbox 送入 AI 對話"
+                              >
+                                <div className="flex items-center gap-1">
+                                  <Checkbox checked={checkedMetrics.includes(m.id)} onCheckedChange={c=>handleMetricCheck(m.id,c as boolean)} className="h-3 w-3" onClick={e=>e.stopPropagation()}/>
+                                  {getStatusIcon(m.status)}
+                                  <span className="text-[10px] font-medium">{m.name}</span>
                                 </div>
-                              ))}
-                            </div>
-                          </ScrollArea>
-                        )}
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>
-              </div>
+                                <div className="flex items-center gap-1 mt-0.5 ml-4">
+                                  <Badge variant="outline" className="text-[7px] h-3 px-0.5">{m.refBasis}</Badge>
+                                  {!m.consensus&&<Badge variant="outline" className="text-[7px] h-3 px-0.5 bg-amber-500/10 text-amber-600">分歧</Badge>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
 
+                  {/* Artist Notes */}
+                  <Collapsible open={showArtistNotes} onOpenChange={setShowArtistNotes} className="flex-1 min-w-0 flex flex-col">
+                    <Card className="flex-1 flex flex-col min-h-0 mt-1 border-indigo-500/30 bg-indigo-500/5">
+                      <CollapsibleTrigger asChild>
+                        <CardHeader className="cursor-pointer hover:bg-muted/50 py-1.5 px-3 shrink-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <BookOpen className="w-3.5 h-3.5 text-indigo-600"/>
+                              <CardTitle className="text-xs">Artist Creation Intentions</CardTitle>
+                              <Badge variant="outline" className="text-[8px] h-3.5 bg-indigo-500/10 text-indigo-600 border-indigo-500/30">C03</Badge>
+                              {/* Live badge showing how many notes are filled */}
+                              {reflectionNote && (
+                                <Badge variant="outline" className="text-[8px] h-3.5 bg-green-500/10 text-green-600 border-green-500/30">
+                                  {reflectionNote ? 1 : 0}
+                                </Badge>
+                              )}
+                            </div>
+                            {showArtistNotes ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
+                          </div>
+                        </CardHeader>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="flex-1 min-h-0 overflow-y-auto">
+                        <CardContent className="pt-0 pb-2 px-3 h-full">
+                          {/* 創作反思筆記 scrolling history — from upload-analyze page (c04_notes) */}
+                          {!hydrated || notesHistory.length === 0 ? (
+                            <p className="text-[10px] text-muted-foreground py-1">尚無創作反思筆記（來自 Upload Analyze 頁面）</p>
+                          ) : (
+                            <ScrollArea className="h-full pr-3">
+                              <div className="space-y-1.5 pr-1">
+                                {notesHistory.map((note, i) => (
+                                  <div key={i} className="p-1.5 rounded border bg-background">
+                                    <div className="flex items-center justify-between mb-0.5">
+                                      <div className="flex items-center gap-1">
+                                        <Sparkles className="w-2.5 h-2.5 text-violet-500"/>
+                                        <span className="text-[8px] font-semibold text-violet-700">#{notesHistory.length - i}</span>
+                                      </div>
+                                      <button className="text-[8px] text-violet-500 hover:text-violet-700"
+                                        onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[創作反思 #${notesHistory.length - i}] ${note}` }]); callAgent(`Artist 的創作反思：\n${note}`) }}>
+                                        發送 AI →
+                                      </button>
+                                    </div>
+                                    <p className="text-[9px] leading-relaxed whitespace-pre-line">{note}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </ScrollArea>
+                          )}
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
                 </div>{/* end scrollable bottom */}
+              </div>{/* */}
+
               {/* RIGHT DRAG HANDLE */}
               <div className="w-1.5 shrink-0 cursor-col-resize hover:bg-primary/30 rounded transition-colors self-stretch mx-1" onMouseDown={startHDrag("right")} />
 

@@ -9,5 +9,40 @@
     "created_at": 1773397778.0058072,
     "reset_token": null,
     "reset_expires": null
+  },
+  "d84099084@gs.ncku.edu.tw": {
+    "email": "d84099084@gs.ncku.edu.tw",
+    "username": "123",
+    "password_hash": "611ff1be579a929782a03a688a198c4eae13b16f2ccf476f52d81b24dddbc780",
+    "verified": false,
+    "verify_token": "Z5Lq_VjPieqpWOrok-2w003MH-7n96JGf8TRbUT4XtI",
+    "verify_expires": 1774542684.3007941,
+    "created_at": 1774456284.3008142,
+    "reset_token": null,
+    "reset_expires": null
+  },
+  "1234@placeholder.local": {
+    "email": "1234@placeholder.local",
+    "username": "1234",
+    "password_hash": "611ff1be579a929782a03a688a198c4eae13b16f2ccf476f52d81b24dddbc780",
+    "role": "junior_artist",
+    "verified": true,
+    "verify_token": null,
+    "verify_expires": null,
+    "created_at": 1774457166.5894668,
+    "reset_token": null,
+    "reset_expires": null
+  },
+  "12345@placeholder.local": {
+    "email": "12345@placeholder.local",
+    "username": "12345",
+    "password_hash": "611ff1be579a929782a03a688a198c4eae13b16f2ccf476f52d81b24dddbc780",
+    "role": "senior_artist",
+    "verified": true,
+    "verify_token": null,
+    "verify_expires": null,
+    "created_at": 1774457910.304791,
+    "reset_token": null,
+    "reset_expires": null
   }
 }

@@ -1,27 +1,3 @@
-"""
-routes/auth.py — Complete authentication system
-- Register with email verification
-- Login with JWT token
-- Forgot password / reset password via email
-- Change password
-- Token-based session
-
-EMAIL SETUP (choose one):
-
-Option A — Resend (easiest, free 100 emails/day):
-  1. Sign up at https://resend.com
-  2. Get API key → set RESEND_API_KEY=re_xxxx
-  3. Set EMAIL_FROM=onboarding@resend.dev (or your verified domain)
-
-Option B — Gmail SMTP:
-  1. Enable 2FA on Gmail
-  2. Generate App Password: myaccount.google.com → Security → App Passwords
-  3. Set SMTP_HOST=smtp.gmail.com SMTP_PORT=587
-     SMTP_USER=yourmail@gmail.com SMTP_PASS=your_app_password
-     EMAIL_FROM=yourmail@gmail.com
-
-Set APP_URL=http://localhost:3000 (or your deployed URL)
-"""
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -36,7 +12,6 @@ from email.mime.multipart import MIMEMultipart
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer(auto_error=False)
 
-# ── Storage path ──────────────────────────────────────────────
 DATA_DIR = Path(os.path.dirname(__file__)) / ".." / "data"
 DATA_DIR.mkdir(exist_ok=True)
 USERS_FILE  = DATA_DIR / "users.json"
@@ -51,38 +26,20 @@ def _load(path: Path) -> dict:
 def _save(path: Path, data: dict):
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
 
-# ── Email config ──────────────────────────────────────────────
-# Option A: Resend
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-# Option B: SMTP (Gmail etc)
 SMTP_HOST  = os.getenv("SMTP_HOST", "")
 SMTP_PORT  = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER  = os.getenv("SMTP_USER", "")
 SMTP_PASS  = os.getenv("SMTP_PASS", "")
-
 EMAIL_FROM = os.getenv("EMAIL_FROM", "onboarding@resend.dev")
 APP_URL    = os.getenv("APP_URL", "http://localhost:3000")
 
 def _send_email(to: str, subject: str, html: str):
-    """
-    Send email via Resend API (preferred) or SMTP.
-    Falls back to console print if neither is configured.
-    """
-    # ── Resend API ─────────────────────────────────────────
     if RESEND_API_KEY:
-        payload = json.dumps({
-            "from": EMAIL_FROM,
-            "to": [to],
-            "subject": subject,
-            "html": html,
-        }).encode()
+        payload = json.dumps({"from": EMAIL_FROM, "to": [to], "subject": subject, "html": html}).encode()
         req = urllib.request.Request(
-            "https://api.resend.com/emails",
-            data=payload,
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
+            "https://api.resend.com/emails", data=payload,
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
             method="POST",
         )
         try:
@@ -90,15 +47,9 @@ def _send_email(to: str, subject: str, html: str):
                 result = json.loads(resp.read())
                 print(f"[EMAIL SENT via Resend] id={result.get('id')} to={to}")
                 return
-        except urllib.error.HTTPError as e:
-            body = e.read().decode()
-            print(f"[RESEND ERROR] {e.code}: {body}")
-            return
         except Exception as e:
             print(f"[RESEND ERROR] {e}")
             return
-
-    # ── SMTP (Gmail etc) ────────────────────────────────────
     if SMTP_HOST and SMTP_USER:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -115,19 +66,7 @@ def _send_email(to: str, subject: str, html: str):
         except Exception as e:
             print(f"[SMTP ERROR] {e}")
             return
-
-    # ── Console fallback ────────────────────────────────────
-    print(f"\n{'='*60}")
-    print(f"[EMAIL NOT SENT — no SMTP/Resend configured]")
-    print(f"To: {to}")
-    print(f"Subject: {subject}")
-    # Print clickable links from the HTML
-    import re
-    links = re.findall(r'href="([^"]+)"', html)
-    for link in links:
-        print(f"Link: {link}")
-    print(f"{'='*60}\n")
-    print("→ To enable real emails, set RESEND_API_KEY or SMTP_HOST+SMTP_USER+SMTP_PASS")
+    print(f"[EMAIL NOT SENT] To: {to} | Subject: {subject}")
 
 def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -135,22 +74,29 @@ def _hash(pw: str) -> str:
 def _make_token(length=32) -> str:
     return secrets.token_urlsafe(length)
 
-TOKEN_TTL   = 60 * 60 * 24 * 7   # 7 days session
-VERIFY_TTL  = 60 * 60 * 24       # 24h email verify
-RESET_TTL   = 60 * 30             # 30min password reset
+TOKEN_TTL  = 60 * 60 * 24 * 7
+VERIFY_TTL = 60 * 60 * 24
+RESET_TTL  = 60 * 30
 
-# ── Pydantic models ───────────────────────────────────────────
+PLACEHOLDER_DOMAIN = "placeholder.local"
+
+def _is_placeholder_email(email: str) -> bool:
+    return email.endswith(f"@{PLACEHOLDER_DOMAIN}")
+
 class RegisterRequest(BaseModel):
-    email: str
+    email: Optional[str] = None
     password: str
     username: str
+    role: Optional[str] = "junior_artist"
 
 class LoginRequest(BaseModel):
-    email: str
+    # 支援 username 或 email 登入
+    username: Optional[str] = None
+    email: Optional[str] = None
     password: str
 
 class ForgotRequest(BaseModel):
-    email: str
+    email: Optional[str] = None
 
 class ResetRequest(BaseModel):
     token: str
@@ -163,10 +109,18 @@ class ChangePasswordRequest(BaseModel):
 class VerifyEmailRequest(BaseModel):
     token: str
 
-# ── Helpers ───────────────────────────────────────────────────
 def _get_user_by_email(email: str) -> Optional[dict]:
     users = _load(USERS_FILE)
     return users.get(email.lower())
+
+def _get_user_by_username(username: str) -> Optional[dict]:
+    """找 username（忽略大小寫）"""
+    users = _load(USERS_FILE)
+    username_lower = username.lower()
+    for u in users.values():
+        if u.get("username", "").lower() == username_lower:
+            return u
+    return None
 
 def _require_auth(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     if not credentials:
@@ -180,90 +134,85 @@ def _require_auth(credentials: HTTPAuthorizationCredentials = Depends(security))
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
-# ── Routes ────────────────────────────────────────────────────
 
 @router.post("/register")
 async def register(body: RegisterRequest):
     users = _load(USERS_FILE)
-    email = body.email.lower().strip()
 
-    if email in users:
-        raise HTTPException(status_code=409, detail="Email already registered")
+    # 用 username 當 key，email 有就用，沒有就產 placeholder
+    username = body.username.strip()
+    if len(username) < 2:
+        raise HTTPException(status_code=400, detail="Username too short")
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-    if len(body.username.strip()) < 2:
-        raise HTTPException(status_code=400, detail="Username too short")
 
-    verify_token = _make_token()
+    # 檢查 username 是否重複
+    if _get_user_by_username(username):
+        raise HTTPException(status_code=409, detail="Username already taken")
+
+    email = (body.email or f"{username}@{PLACEHOLDER_DOMAIN}").lower().strip()
+    if email in users:
+        raise HTTPException(status_code=409, detail="Email already registered")
+
+    # placeholder email → 直接 verified，不需要驗證流程
+    is_placeholder = _is_placeholder_email(email)
+    verify_token   = None if is_placeholder else _make_token()
+
     users[email] = {
         "email":          email,
-        "username":       body.username.strip(),
+        "username":       username,
         "password_hash":  _hash(body.password),
-        "verified":       False,
+        "role":           body.role if body.role in ("admin", "senior_artist", "junior_artist") else "junior_artist",
+        "verified":       is_placeholder,   # ← placeholder 直接 True
         "verify_token":   verify_token,
-        "verify_expires": time.time() + VERIFY_TTL,
+        "verify_expires": None if is_placeholder else time.time() + VERIFY_TTL,
         "created_at":     time.time(),
         "reset_token":    None,
         "reset_expires":  None,
     }
     _save(USERS_FILE, users)
 
-    # Send verification email
-    link = f"{APP_URL}/auth/verify?token={verify_token}&email={email}"
-    _send_email(
-        email,
-        "Moonwalk VFX — 驗證您的電子郵件",
-        f"""
-        <h2>歡迎加入 Moonwalk VFX</h2>
-        <p>Hi {body.username}，請點擊下方連結驗證您的電子郵件：</p>
-        <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">
-          驗證電子郵件
-        </a>
-        <p style="color:#888;font-size:12px;margin-top:16px;">連結24小時內有效。如非本人操作請忽略此信。</p>
-        <p style="color:#888;font-size:12px;">或複製此網址：{link}</p>
-        """
-    )
-    return {"message": "Registration successful. Please check your email to verify your account.", "email": email}
+    if not is_placeholder and verify_token:
+        link = f"{APP_URL}/auth/verify?token={verify_token}&email={email}"
+        _send_email(
+            email,
+            "Moonwalk VFX — 驗證您的電子郵件",
+            f"""<h2>歡迎加入 Moonwalk VFX</h2>
+            <p>Hi {username}，請點擊下方連結驗證您的電子郵件：</p>
+            <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">驗證電子郵件</a>
+            <p style="color:#888;font-size:12px;">連結24小時內有效。</p>"""
+        )
 
-
-@router.post("/verify-email")
-async def verify_email(body: VerifyEmailRequest):
-    users = _load(USERS_FILE)
-    # Find user by verify token
-    user = next((u for u in users.values() if u.get("verify_token") == body.token), None)
-    if not user:
-        raise HTTPException(status_code=400, detail="Invalid verification token")
-    if user.get("verify_expires", 0) < time.time():
-        raise HTTPException(status_code=400, detail="Verification token expired. Please register again.")
-
-    email = user["email"]
-    users[email]["verified"]       = True
-    users[email]["verify_token"]   = None
-    users[email]["verify_expires"] = None
-    _save(USERS_FILE, users)
-    return {"message": "Email verified successfully. You can now log in."}
+    return {"message": "Registration successful", "email": email, "verified": is_placeholder}
 
 
 @router.post("/login")
 async def login(body: LoginRequest):
-    email = body.email.lower().strip()
-    user  = _get_user_by_email(email)
+    # 支援 username 或 email 登入
+    user = None
+    if body.username:
+        user = _get_user_by_username(body.username)
+    if user is None and body.email:
+        user = _get_user_by_email(body.email)
+    # 也試著把 username 當 email 找（相容舊行為）
+    if user is None and body.username and "@" in body.username:
+        user = _get_user_by_email(body.username)
 
     if not user or user["password_hash"] != _hash(body.password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    if not user["verified"]:
-        raise HTTPException(status_code=403, detail="Please verify your email before logging in")
+        raise HTTPException(status_code=401, detail="帳號或密碼錯誤")
+    if not user.get("verified", False):
+        raise HTTPException(status_code=403, detail="請先驗證電子郵件後再登入")
 
-    # Create session token
-    token   = _make_token()
-    tokens  = _load(TOKENS_FILE)
-    tokens[token] = {"email": email, "expires": time.time() + TOKEN_TTL}
+    token  = _make_token()
+    tokens = _load(TOKENS_FILE)
+    tokens[token] = {"email": user["email"], "expires": time.time() + TOKEN_TTL}
     _save(TOKENS_FILE, tokens)
 
     return {
         "token":    token,
         "username": user["username"],
-        "email":    email,
+        "email":    user["email"],
+        "role":     user.get("role", "junior_artist"),
         "message":  "Login successful",
     }
 
@@ -279,36 +228,105 @@ async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
 
 @router.get("/me")
 async def me(user: dict = Depends(_require_auth)):
-    return {"email": user["email"], "username": user["username"], "verified": user["verified"]}
+    return {
+        "email":    user["email"],
+        "username": user["username"],
+        "role":     user.get("role", "junior_artist"),
+        "verified": user.get("verified", False),
+    }
+
+
+@router.get("/admin/users")
+async def list_users(user: dict = Depends(_require_auth)):
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    users = _load(USERS_FILE)
+    return [
+        {"email": u["email"], "username": u["username"], "role": u.get("role","junior_artist"),
+         "verified": u.get("verified", False), "created_at": u.get("created_at", 0)}
+        for u in users.values()
+    ]
+
+
+@router.post("/admin/users")
+async def create_user(body: RegisterRequest, user: dict = Depends(_require_auth)):
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    users = _load(USERS_FILE)
+    email = (body.email or f"{body.username.strip()}@{PLACEHOLDER_DOMAIN}").lower().strip()
+    if email in users:
+        raise HTTPException(status_code=409, detail="Email already registered")
+    if _get_user_by_username(body.username.strip()):
+        raise HTTPException(status_code=409, detail="Username already taken")
+    users[email] = {
+        "email": email, "username": body.username.strip(),
+        "password_hash": _hash(body.password), "role": "junior_artist",
+        "verified": True, "verify_token": None, "verify_expires": None,
+        "created_at": time.time(), "reset_token": None, "reset_expires": None,
+    }
+    _save(USERS_FILE, users)
+    return {"message": "User created", "email": email}
+
+
+@router.delete("/admin/users/{email}")
+async def delete_user(email: str, user: dict = Depends(_require_auth)):
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    users = _load(USERS_FILE)
+    if email not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    del users[email]
+    _save(USERS_FILE, users)
+    return {"message": "User deleted"}
+
+
+@router.patch("/admin/users/{email}/role")
+async def update_role(email: str, role: str, user: dict = Depends(_require_auth)):
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    if role not in ("admin", "senior_artist", "junior_artist"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+    users = _load(USERS_FILE)
+    if email not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    users[email]["role"] = role
+    _save(USERS_FILE, users)
+    return {"message": "Role updated"}
+
+
+@router.post("/verify-email")
+async def verify_email(body: VerifyEmailRequest):
+    users = _load(USERS_FILE)
+    user  = next((u for u in users.values() if u.get("verify_token") == body.token), None)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+    if user.get("verify_expires", 0) < time.time():
+        raise HTTPException(status_code=400, detail="Verification token expired")
+    email = user["email"]
+    users[email]["verified"]       = True
+    users[email]["verify_token"]   = None
+    users[email]["verify_expires"] = None
+    _save(USERS_FILE, users)
+    return {"message": "Email verified successfully"}
 
 
 @router.post("/forgot-password")
 async def forgot_password(body: ForgotRequest):
+    if not body.email:
+        raise HTTPException(status_code=400, detail="Email required")
     email = body.email.lower().strip()
     users = _load(USERS_FILE)
-    # Always return success to prevent email enumeration
     if email not in users:
         return {"message": "If that email is registered, a reset link has been sent."}
-
     reset_token = _make_token()
     users[email]["reset_token"]   = reset_token
     users[email]["reset_expires"] = time.time() + RESET_TTL
     _save(USERS_FILE, users)
-
     link = f"{APP_URL}/auth/reset-password?token={reset_token}"
-    _send_email(
-        email,
-        "Moonwalk VFX — 重設密碼",
-        f"""
-        <h2>重設您的密碼</h2>
-        <p>點擊下方連結重設密碼（30分鐘內有效）：</p>
-        <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">
-          重設密碼
-        </a>
-        <p style="color:#888;font-size:12px;margin-top:16px;">如非本人操作請忽略此信，您的密碼不會被更改。</p>
-        <p style="color:#888;font-size:12px;">或複製此網址：{link}</p>
-        """
-    )
+    _send_email(email, "Moonwalk VFX — 重設密碼",
+        f"""<h2>重設密碼</h2>
+        <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">重設密碼</a>
+        <p style="color:#888;font-size:12px;">30分鐘內有效。</p>""")
     return {"message": "If that email is registered, a reset link has been sent."}
 
 
@@ -316,25 +334,19 @@ async def forgot_password(body: ForgotRequest):
 async def reset_password(body: ResetRequest):
     users = _load(USERS_FILE)
     user  = next((u for u in users.values() if u.get("reset_token") == body.token), None)
-    if not user:
+    if not user or user.get("reset_expires", 0) < time.time():
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
-    if user.get("reset_expires", 0) < time.time():
-        raise HTTPException(status_code=400, detail="Reset token expired. Please request a new one.")
     if len(body.new_password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-
     email = user["email"]
     users[email]["password_hash"] = _hash(body.new_password)
     users[email]["reset_token"]   = None
     users[email]["reset_expires"] = None
     _save(USERS_FILE, users)
-
-    # Invalidate all existing sessions for this user
     tokens = _load(TOKENS_FILE)
     tokens = {k: v for k, v in tokens.items() if v["email"] != email}
     _save(TOKENS_FILE, tokens)
-
-    return {"message": "Password reset successful. Please log in with your new password."}
+    return {"message": "Password reset successful"}
 
 
 @router.post("/change-password")
@@ -343,44 +355,12 @@ async def change_password(body: ChangePasswordRequest, user: dict = Depends(_req
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     if len(body.new_password) < 6:
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
-
     users = _load(USERS_FILE)
     users[user["email"]]["password_hash"] = _hash(body.new_password)
     _save(USERS_FILE, users)
     return {"message": "Password changed successfully"}
 
 
-@router.post("/resend-verification")
-async def resend_verification(body: ForgotRequest):
-    email = body.email.lower().strip()
-    users = _load(USERS_FILE)
-    if email not in users:
-        return {"message": "If that email is registered and unverified, a new link has been sent."}
-    user = users[email]
-    if user["verified"]:
-        return {"message": "Email already verified."}
-
-    verify_token = _make_token()
-    users[email]["verify_token"]   = verify_token
-    users[email]["verify_expires"] = time.time() + VERIFY_TTL
-    _save(USERS_FILE, users)
-
-    link = f"{APP_URL}/auth/verify?token={verify_token}&email={email}"
-    _send_email(
-        email,
-        "Moonwalk VFX — 重新驗證電子郵件",
-        f"""
-        <h2>驗證您的電子郵件</h2>
-        <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">
-          驗證電子郵件
-        </a>
-        <p style="color:#888;font-size:12px;">或複製：{link}</p>
-        """
-    )
-    return {"message": "If that email is registered and unverified, a new link has been sent."}
-
-
-# Legacy endpoints (backward compat)
 @router.get("/config")
 async def get_auth_config():
     return {"auth_required": True}

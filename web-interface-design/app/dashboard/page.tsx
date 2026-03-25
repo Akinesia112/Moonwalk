@@ -29,6 +29,67 @@ async function apiFetch(path: string, body: object) {
   return data
 }
 
+/* ---------------------------------------------------------
+   Auth — Types & Role config
+--------------------------------------------------------- */
+type Role = "admin" | "senior_artist" | "junior_artist"
+
+interface AuthUser {
+  username: string
+  email:    string
+  role:     Role
+  token:    string
+}
+
+interface UserRecord {
+  email:       string
+  username:    string
+  role:        Role
+  verified:    boolean
+  created_at:  number
+}
+
+export const ROLE_PAGES: Record<Role, string[]> = {
+  admin:         ["/", "/kickoff", "/reference-hub", "/upload-analyze", "/compare", "/qa", "/governance"],
+  senior_artist: ["/", "/kickoff", "/reference-hub", "/qa", "/governance"],
+  junior_artist: ["/", "/upload-analyze", "/compare", "/qa"],
+}
+
+export function canAccess(role: Role | null, path: string): boolean {
+  if (!role) return path === "/"
+  return ROLE_PAGES[role].includes(path)
+}
+
+/* Authenticated fetch helper */
+async function authFetch(path: string, options: RequestInit = {}, token?: string) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+
+  let res: Response
+  try {
+    res = await fetch(`${API}${path}`, { ...options, headers })
+  } catch (err: any) {
+    // 網路層失敗（後端沒跑、CORS preflight 被擋、DNS 解析失敗等）
+    const msg = err?.message ?? String(err)
+    if (msg.toLowerCase().includes("fetch")) {
+      throw new Error(`無法連線到後端 (${API})，請確認後端服務已啟動`)
+    }
+    throw new Error(msg)
+  }
+
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const detail = data.detail
+    if (Array.isArray(detail)) throw new Error(detail.map((d: any) => d.msg ?? JSON.stringify(d)).join("；"))
+    if (typeof detail === "string") throw new Error(detail)
+    if (detail) throw new Error(JSON.stringify(detail))
+    throw new Error(data.message ?? data.error ?? `HTTP ${res.status}`)
+  }
+  return data
+}
+
 /* ─────────────────────────────────────────────────────────
    Agent Chat Types
 ───────────────────────────────────────────────────────── */
@@ -135,23 +196,32 @@ function AgentChatPanel() {
       }))
       const chatHistory = msgHistory.slice(0, -1)
 
-      // 帶上所有可能的欄位名，backend 取它認識的，422 時 catch 會顯示 detail
-      const res = await fetch(`${API}/suggestion/chat/compare`, {
+      // 把圖片附件轉成 all_refs_context 格式，讓後端 Claude Vision 能看到圖
+      const imageRefs = userMsg.attachments
+        ?.filter(a => a.type === "image" && a.preview)
+        .map(a => ({
+          id: a.id,
+          title: a.name,
+          category: "Uploaded",
+          note: "",
+          is_pinned: false,
+          priority: "secondary",
+          preview: a.preview,   // base64 data URL — _build_ref_image_blocks 會解析
+        })) ?? []
+
+      // 有圖用 /chat/reference（Claude Vision），純文字用 /chat/compare（3-AI debate）
+      const endpoint = imageRefs.length > 0
+        ? `${API}/suggestion/chat/reference`
+        : `${API}/suggestion/chat/compare`
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_message:  content,
-          message:       content,
-          query:         content,
-          prompt:        content,
-          chat_history:  chatHistory,
-          history:       chatHistory,
-          messages:      chatHistory,
-          artwork_name:  "",
-          ref_name:      "",
-          ref_desc:      "",
-          spec:          "",
-          context:       "",
+          message:           content || "(附件)",
+          history:           chatHistory,
+          all_refs_context:  imageRefs,
+          context:           "",
         }),
       })
 
@@ -197,8 +267,9 @@ function AgentChatPanel() {
     }
   }, [input, attachments, messages])
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  // ✅ 修正：加上 isComposing 檢查，避免 IME 選字時觸發送出
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       send()
     }
@@ -461,314 +532,401 @@ function AgentChatPanel() {
 }
 
 /* ─────────────────────────────────────────────────────────
-   Auth types
-───────────────────────────────────────────────────────── */
-type AuthView = "login" | "register" | "forgot" | "change-password"
-
-/* ─────────────────────────────────────────────────────────
    Dashboard Page
 ───────────────────────────────────────────────────────── */
-export default function DashboardPage() {
-  const router = useRouter()
 
-  // ── Auth state ──────────────────────────────────────────
-  const [authToken,    setAuthToken]    = useState<string | null>(null)
-  const [authUsername, setAuthUsername] = useState("")
-  const [authEmail,    setAuthEmail]    = useState("")
-  const [authOpen,     setAuthOpen]     = useState(false)
-  const [authView,     setAuthView]     = useState<AuthView>("login")
+const ROLE_LABEL: Record<Role, string> = {
+  admin:         "Admin",
+  senior_artist: "Senior Artist",
+  junior_artist: "Junior Artist",
+}
 
-  const [loginEmail,  setLoginEmail]  = useState("")
-  const [loginPw,     setLoginPw]     = useState("")
-  const [regName,     setRegName]     = useState("")
-  const [regEmail,    setRegEmail]    = useState("")
-  const [regPw,       setRegPw]       = useState("")
-  const [regPw2,      setRegPw2]      = useState("")
-  const [forgotEmail, setForgotEmail] = useState("")
-  const [oldPw,       setOldPw]       = useState("")
-  const [newPw,       setNewPw]       = useState("")
-  const [newPw2,      setNewPw2]      = useState("")
-  const [showPw,      setShowPw]      = useState(false)
+const ROLE_COLOR: Record<Role, string> = {
+  admin:         "bg-purple-500/15 text-purple-700 border-purple-300",
+  senior_artist: "bg-teal-500/15 text-teal-700 border-teal-300",
+  junior_artist: "bg-sky-500/15 text-sky-700 border-sky-300",
+}
 
-  const [loading, setLoading] = useState(false)
-  const [err, setErr] = useState("")
-  const [ok,  setOk]  = useState("")
+// ✅ Auth modal 頁籤類型
+type AuthTab = "login" | "register"
 
-  useEffect(() => {
-    const t = sessionStorage.getItem("auth_token")
-    const u = sessionStorage.getItem("auth_username") || ""
-    const e = sessionStorage.getItem("auth_email") || ""
-    if (t) { setAuthToken(t); setAuthUsername(u); setAuthEmail(e) }
-  }, [])
+/* ─────────────────────────────────────────────────────────
+   AuthModal — 獨立 top-level component，避免每次 keystroke
+   重新 mount 導致 input 失去 focus
+───────────────────────────────────────────────────────── */
+interface AuthModalProps {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  authTab: AuthTab
+  setAuthTab: (t: AuthTab) => void
+  // login
+  loginEmail: string
+  setLoginEmail: (v: string) => void
+  loginPw: string
+  setLoginPw: (v: string) => void
+  showPw: boolean
+  setShowPw: (v: boolean) => void
+  loginErr: string
+  authLoading: boolean
+  handleLogin: () => void
+  // register
+  regUsername: string
+  setRegUsername: (v: string) => void
+  regPw: string
+  setRegPw: (v: string) => void
+  regPwConfirm: string
+  setRegPwConfirm: (v: string) => void
+  showRegPw: boolean
+  setShowRegPw: (v: boolean) => void
+  regRole: Role
+  setRegRole: (v: Role) => void
+  regErr: string
+  regOk: string
+  handleRegister: () => void
+}
 
-  const clear = () => { setErr(""); setOk("") }
-  const openAuth = (view: AuthView) => { clear(); setAuthView(view); setAuthOpen(true) }
-
-  const handleLogin = async () => {
-    clear()
-    if (!loginEmail || !loginPw) { setErr("請填寫電子郵件與密碼"); return }
-    setLoading(true)
-    try {
-      const res = await apiFetch("/auth/login", { email: loginEmail, password: loginPw })
-      sessionStorage.setItem("auth_token", res.token)
-      sessionStorage.setItem("auth_username", res.username)
-      sessionStorage.setItem("auth_email", res.email)
-      setAuthToken(res.token); setAuthUsername(res.username); setAuthEmail(res.email)
-      setLoginEmail(""); setLoginPw("")
-      setOk("登入成功！"); setTimeout(() => setAuthOpen(false), 800)
-    } catch (e: any) { setErr(e.message) }
-    finally { setLoading(false) }
-  }
-
-  const handleRegister = async () => {
-    clear()
-    if (!regName || !regEmail || !regPw) { setErr("請填寫所有必填欄位"); return }
-    if (regPw !== regPw2) { setErr("兩次密碼不一致"); return }
-    if (regPw.length < 6) { setErr("密碼至少 6 個字元"); return }
-    setLoading(true)
-    try {
-      await apiFetch("/auth/register", { username: regName, email: regEmail, password: regPw })
-      setOk("註冊成功！請檢查電子郵件並點擊驗證連結後登入。")
-      setRegName(""); setRegEmail(""); setRegPw(""); setRegPw2("")
-    } catch (e: any) { setErr(e.message) }
-    finally { setLoading(false) }
-  }
-
-  const handleForgot = async () => {
-    clear()
-    if (!forgotEmail) { setErr("請輸入電子郵件"); return }
-    setLoading(true)
-    try {
-      await apiFetch("/auth/forgot-password", { email: forgotEmail })
-      setOk("重設連結已發送，請檢查您的收件匣（包含垃圾郵件）。")
-      setForgotEmail("")
-    } catch (e: any) { setErr(e.message) }
-    finally { setLoading(false) }
-  }
-
-  const handleChangePw = async () => {
-    clear()
-    if (!oldPw || !newPw || !newPw2) { setErr("請填寫所有欄位"); return }
-    if (newPw !== newPw2) { setErr("兩次新密碼不一致"); return }
-    if (newPw.length < 6) { setErr("新密碼至少 6 個字元"); return }
-    setLoading(true)
-    try {
-      await fetch(`${API}/auth/change-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ old_password: oldPw, new_password: newPw }),
-      }).then(r => { if (!r.ok) return r.json().then(d => { throw new Error(d.detail) }); return r.json() })
-      setOk("密碼已成功更新！"); setOldPw(""); setNewPw(""); setNewPw2("")
-    } catch (e: any) { setErr(e.message) }
-    finally { setLoading(false) }
-  }
-
-  const handleLogout = async () => {
-    if (authToken) {
-      try {
-        await fetch(`${API}/auth/logout`, { method: "POST", headers: { Authorization: `Bearer ${authToken}` } })
-      } catch {}
+function AuthModal({
+  open, onOpenChange, authTab, setAuthTab,
+  loginEmail, setLoginEmail, loginPw, setLoginPw, showPw, setShowPw, loginErr, authLoading, handleLogin,
+  regUsername, setRegUsername, regPw, setRegPw,
+  regPwConfirm, setRegPwConfirm, showRegPw, setShowRegPw, regRole, setRegRole, regErr, regOk, handleRegister,
+}: AuthModalProps) {
+  const makeInputKeyDown = (onEnter: () => void) =>
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !e.nativeEvent.isComposing) onEnter()
     }
-    sessionStorage.removeItem("auth_token")
-    sessionStorage.removeItem("auth_username")
-    sessionStorage.removeItem("auth_email")
-    setAuthToken(null); setAuthUsername(""); setAuthEmail("")
-  }
 
-  const initials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase()
-
-  // ── Auth Modal ──────────────────────────────────────────
-  const AuthModal = () => (
-    <Dialog open={authOpen} onOpenChange={v => { setAuthOpen(v); if (!v) clear() }}>
-      <DialogContent className="sm:max-w-[440px]">
+  return (
+    <Dialog open={open} onOpenChange={v => {
+      onOpenChange(v)
+    }}>
+      <DialogContent className="sm:max-w-[380px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-teal-600 flex items-center justify-center">
               <span className="text-white text-xs font-bold">VFX</span>
             </div>
-            {authView === "login"           && "登入帳號"}
-            {authView === "register"        && "建立新帳號"}
-            {authView === "forgot"          && "重設密碼"}
-            {authView === "change-password" && "修改密碼"}
+            {authTab === "login" ? "登入帳號" : "建立帳號"}
           </DialogTitle>
           <DialogDescription>
-            {authView === "login"           && "輸入您的電子郵件與密碼"}
-            {authView === "register"        && "填寫以下資料建立帳號，系統會寄送驗證信"}
-            {authView === "forgot"          && "輸入註冊時的電子郵件，系統會寄送重設連結"}
-            {authView === "change-password" && "輸入目前密碼與新密碼"}
+            {authTab === "login" ? "輸入您的帳號與密碼" : "填寫資訊以建立新帳號"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
-          {err && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{err}</AlertDescription>
-            </Alert>
-          )}
-          {ok && (
-            <Alert className="border-green-500/50 bg-green-500/10">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-700">{ok}</AlertDescription>
-            </Alert>
-          )}
-
-          {authView === "login" && (
-            <>
-              <div className="space-y-1.5">
-                <Label>電子郵件</Label>
-                <Input type="email" placeholder="you@example.com" value={loginEmail}
-                  onChange={e => setLoginEmail(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <Label>密碼</Label>
-                  <button className="text-xs text-teal-600 hover:underline"
-                    onClick={() => { clear(); setAuthView("forgot") }}>忘記密碼？</button>
-                </div>
-                <div className="relative">
-                  <Input type={showPw ? "text" : "password"} placeholder="輸入密碼" value={loginPw}
-                    onChange={e => setLoginPw(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter") handleLogin() }} />
-                  <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    onClick={() => setShowPw(v => !v)}>
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={handleLogin} disabled={loading}>
-                {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />登入中...</> : "登入"}
-              </Button>
-              <p className="text-center text-sm text-muted-foreground">
-                還沒有帳號？{" "}
-                <button className="text-teal-600 hover:underline" onClick={() => { clear(); setAuthView("register") }}>
-                  立即註冊
-                </button>
-              </p>
-            </>
-          )}
-
-          {authView === "register" && (
-            <>
-              <div className="space-y-1.5">
-                <Label>使用者名稱 <span className="text-red-500">*</span></Label>
-                <Input placeholder="您的名字" value={regName} onChange={e => setRegName(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>電子郵件 <span className="text-red-500">*</span></Label>
-                <Input type="email" placeholder="you@example.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>密碼 <span className="text-red-500">*</span></Label>
-                  <div className="relative">
-                    <Input type={showPw ? "text" : "password"} placeholder="≥ 6 字元" value={regPw} onChange={e => setRegPw(e.target.value)} />
-                    <button className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      onClick={() => setShowPw(v => !v)}>
-                      {showPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>確認密碼 <span className="text-red-500">*</span></Label>
-                  <Input type="password" placeholder="再次輸入" value={regPw2} onChange={e => setRegPw2(e.target.value)} />
-                </div>
-              </div>
-              <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={handleRegister} disabled={loading}>
-                {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />建立中...</> : "建立帳號"}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">註冊後需驗證電子郵件才能登入</p>
-              <p className="text-center text-sm text-muted-foreground">
-                已有帳號？{" "}
-                <button className="text-teal-600 hover:underline" onClick={() => { clear(); setAuthView("login") }}>登入</button>
-              </p>
-            </>
-          )}
-
-          {authView === "forgot" && (
-            <>
-              <div className="space-y-1.5">
-                <Label>電子郵件</Label>
-                <Input type="email" placeholder="輸入您的電子郵件" value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") handleForgot() }} />
-              </div>
-              <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={handleForgot} disabled={loading}>
-                {loading
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />發送中...</>
-                  : <><Mail className="w-4 h-4 mr-2" />發送重設連結</>
-                }
-              </Button>
-              <button className="w-full text-sm text-center text-teal-600 hover:underline"
-                onClick={() => { clear(); setAuthView("login") }}>
-                ← 返回登入
-              </button>
-            </>
-          )}
-
-          {authView === "change-password" && (
-            <>
-              <div className="space-y-1.5">
-                <Label>目前密碼</Label>
-                <Input type="password" placeholder="輸入目前密碼" value={oldPw} onChange={e => setOldPw(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>新密碼</Label>
-                <div className="relative">
-                  <Input type={showPw ? "text" : "password"} placeholder="至少 6 個字元" value={newPw} onChange={e => setNewPw(e.target.value)} />
-                  <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    onClick={() => setShowPw(v => !v)}>
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>確認新密碼</Label>
-                <Input type="password" placeholder="再次輸入新密碼" value={newPw2} onChange={e => setNewPw2(e.target.value)} />
-              </div>
-              <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={handleChangePw} disabled={loading}>
-                {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />更新中...</> : "更新密碼"}
-              </Button>
-            </>
-          )}
+        {/* Tab switcher */}
+        <div className="flex rounded-lg bg-muted p-1 gap-1">
+          {(["login", "register"] as AuthTab[]).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setAuthTab(tab)}
+              className="flex-1 py-1.5 rounded-md text-sm font-medium transition-colors"
+              style={{
+                background: authTab === tab ? "hsl(var(--background))" : "transparent",
+                color: authTab === tab ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
+                border: "none", cursor: "pointer",
+                boxShadow: authTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
+            >
+              {tab === "login" ? "登入" : "註冊"}
+            </button>
+          ))}
         </div>
+
+        {/* Login Form */}
+        {authTab === "login" && (
+          <div className="space-y-4 pt-1">
+            {loginErr && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{loginErr}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-1.5">
+              <Label>使用者名稱</Label>
+              <Input
+                placeholder="輸入帳號"
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
+                onKeyDown={makeInputKeyDown(handleLogin)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>密碼</Label>
+              <div className="relative">
+                <Input
+                  type={showPw ? "text" : "password"}
+                  placeholder="輸入密碼"
+                  value={loginPw}
+                  onChange={e => setLoginPw(e.target.value)}
+                  onKeyDown={makeInputKeyDown(handleLogin)}
+                />
+                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  onClick={() => setShowPw(!showPw)}>
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={handleLogin} disabled={authLoading}>
+              {authLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />登入中...</> : "登入"}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              還沒有帳號？
+              <button className="text-teal-600 hover:underline ml-1" onClick={() => setAuthTab("register")}>
+                建立帳號
+              </button>
+            </p>
+          </div>
+        )}
+
+        {/* Register Form */}
+        {authTab === "register" && (
+          <div className="space-y-3 pt-1">
+            {regErr && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{regErr}</AlertDescription>
+              </Alert>
+            )}
+            {regOk && (
+              <Alert className="border-teal-300 bg-teal-50 text-teal-700">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>{regOk}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-1.5">
+              <Label>使用者名稱</Label>
+              <Input
+                placeholder="英文、數字、底線皆可"
+                value={regUsername}
+                onChange={e => setRegUsername(e.target.value)}
+                onKeyDown={makeInputKeyDown(handleRegister)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>密碼</Label>
+              <div className="relative">
+                <Input
+                  type={showRegPw ? "text" : "password"}
+                  placeholder="至少 6 個字元，可含特殊符號"
+                  value={regPw}
+                  onChange={e => setRegPw(e.target.value)}
+                  onKeyDown={makeInputKeyDown(handleRegister)}
+                />
+                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  onClick={() => setShowRegPw(!showRegPw)}>
+                  {showRegPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>確認密碼</Label>
+              <Input
+                type={showRegPw ? "text" : "password"}
+                placeholder="再次輸入密碼"
+                value={regPwConfirm}
+                onChange={e => setRegPwConfirm(e.target.value)}
+                onKeyDown={makeInputKeyDown(handleRegister)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>身份</Label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {([
+                  ["junior_artist", "Junior Artist", "bg-sky-500/15 text-sky-700 border-sky-300"],
+                  ["senior_artist", "Senior Artist", "bg-teal-500/15 text-teal-700 border-teal-300"],
+                  ["admin",         "Admin",         "bg-purple-500/15 text-purple-700 border-purple-300"],
+                ] as [Role, string, string][]).map(([val, label, cls]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setRegRole(val)}
+                    className={`py-1.5 rounded-md text-xs font-medium border transition-all ${cls}`}
+                    style={{
+                      opacity: regRole === val ? 1 : 0.4,
+                      transform: regRole === val ? "scale(1.03)" : "scale(1)",
+                      fontWeight: regRole === val ? 600 : 400,
+                      cursor: "pointer",
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+            </div>
+            <Button className="w-full bg-teal-600 hover:bg-teal-700 mt-1" onClick={handleRegister} disabled={authLoading}>
+              {authLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />建立中...</> : "建立帳號"}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              已有帳號？
+              <button className="text-teal-600 hover:underline ml-1" onClick={() => setAuthTab("login")}>
+                直接登入
+              </button>
+            </p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
+}
 
-  // ── Top bar user section ──────────────────────────────
-  const UserSection = () => (
-    <div className="flex items-center gap-2">
-      {authToken ? (
-        <>
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium">{authUsername}</p>
-            <p className="text-xs text-muted-foreground">{authEmail}</p>
-          </div>
-          <Avatar className="w-8 h-8 cursor-pointer" onClick={() => openAuth("change-password")}>
-            <AvatarFallback className="bg-teal-500/20 text-teal-700 text-xs">
-              {initials(authUsername || "U")}
-            </AvatarFallback>
-          </Avatar>
-          <Button variant="ghost" size="icon" title="修改密碼" onClick={() => openAuth("change-password")}>
-            <KeyRound className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" title="登出" onClick={handleLogout}>
-            <LogOut className="w-4 h-4" />
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button variant="ghost" size="sm" onClick={() => openAuth("login")}>登入</Button>
-          <Button size="sm" className="bg-teal-600 hover:bg-teal-700" onClick={() => openAuth("register")}>註冊</Button>
-        </>
-      )}
-    </div>
-  )
+export default function DashboardPage() {
+  const router = useRouter()
+
+  // ── Auth state ────────────────────────────────────────────
+  const [authUser,    setAuthUser]    = useState<AuthUser | null>(null)
+  const [users,       setUsers]       = useState<UserRecord[]>([])
+  const [authOpen,    setAuthOpen]    = useState(false)
+  const [authLoading, setAuthLoading] = useState(false)
+  // ✅ 新增：登入/註冊切換頁籤
+  const [authTab,     setAuthTab]     = useState<AuthTab>("login")
+
+  // Login form
+  const [loginEmail, setLoginEmail] = useState("")
+  const [loginPw,    setLoginPw]    = useState("")
+  const [showPw,     setShowPw]     = useState(false)
+  const [loginErr,   setLoginErr]   = useState("")
+
+  // ✅ 新增：Register form
+  const [regUsername, setRegUsername] = useState("")
+  const [regPw,       setRegPw]       = useState("")
+  const [regPwConfirm,setRegPwConfirm]= useState("")
+  const [showRegPw,   setShowRegPw]   = useState(false)
+  const [regRole,     setRegRole]     = useState<Role>("junior_artist")
+  const [regErr,      setRegErr]      = useState("")
+  const [regOk,       setRegOk]       = useState("")
+
+  // Admin: add-user form
+  const [newEmail,  setNewEmail]  = useState("")
+  const [newName,   setNewName]   = useState("")
+  const [newPw,     setNewPw]     = useState("")
+  const [newRole,   setNewRole]   = useState<Role>("junior_artist")
+  const [addErr,    setAddErr]    = useState("")
+  const [addOk,     setAddOk]     = useState("")
+
+  // Restore session on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem("auth_user")
+    if (!saved) return
+    try {
+      const u: AuthUser = JSON.parse(saved)
+      authFetch("/auth/me", { method: "GET" }, u.token)
+        .then(me => setAuthUser({ ...u, username: me.username, role: me.role }))
+        .catch(() => sessionStorage.removeItem("auth_user"))
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    if (authUser?.role === "admin") fetchUsers()
+  }, [authUser])
+
+  const fetchUsers = async () => {
+    if (!authUser?.token) return
+    try {
+      const data: UserRecord[] = await authFetch("/auth/admin/users", { method: "GET" }, authUser.token)
+      setUsers(data)
+    } catch {}
+  }
+
+  const handleLogin = async () => {
+    setLoginErr("")
+    if (!loginEmail.trim() || !loginPw) { setLoginErr("請填寫帳號與密碼"); return }
+    setAuthLoading(true)
+    try {
+      const data = await authFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ username: loginEmail.trim(), password: loginPw }),
+      })
+      const u: AuthUser = { username: data.username, email: data.email, role: data.role, token: data.token }
+      sessionStorage.setItem("auth_user", JSON.stringify(u))
+      setAuthUser(u)
+      setLoginEmail(""); setLoginPw("")
+      setAuthOpen(false)
+    } catch (e: any) { setLoginErr(e.message) }
+    finally { setAuthLoading(false) }
+  }
+
+  // ✅ 新增：handleRegister
+  const handleRegister = async () => {
+    setRegErr(""); setRegOk("")
+    if (!regUsername.trim() || !regPw) {
+      setRegErr("請填寫所有欄位"); return
+    }
+    if (regPw !== regPwConfirm) {
+      setRegErr("兩次密碼不一致"); return
+    }
+    if (regPw.length < 6) {
+      setRegErr("密碼至少需要 6 個字元"); return
+    }
+    setAuthLoading(true)
+    try {
+      await authFetch("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          username: regUsername.trim(),
+          password: regPw,
+          role: regRole,
+          email: `${regUsername.trim()}@placeholder.local`,
+        }),
+      })
+      setRegOk("註冊成功！請登入")
+      setTimeout(() => {
+        setRegOk("")
+        setAuthTab("login")
+        setLoginEmail(regUsername.trim())
+        setRegUsername(""); setRegPw(""); setRegPwConfirm(""); setRegRole("junior_artist")
+      }, 1500)
+    } catch (e: any) { setRegErr(e.message) }
+    finally { setAuthLoading(false) }
+  }
+
+  const handleLogout = async () => {
+    if (authUser?.token) {
+      try { await authFetch("/auth/logout", { method: "POST" }, authUser.token) } catch {}
+    }
+    sessionStorage.removeItem("auth_user")
+    setAuthUser(null); setUsers([])
+  }
+
+  const handleAddUser = async () => {
+    setAddErr(""); setAddOk("")
+    if (!newEmail.trim() || !newName.trim() || !newPw.trim()) { setAddErr("請填寫所有欄位"); return }
+    try {
+      await authFetch("/auth/admin/users", {
+        method: "POST",
+        body: JSON.stringify({ email: newEmail.trim(), username: newName.trim(), password: newPw.trim(), role: newRole }),
+      }, authUser!.token)
+      setNewEmail(""); setNewName(""); setNewPw(""); setNewRole("junior_artist")
+      setAddOk(`已新增 ${newEmail.trim()}`)
+      setTimeout(() => setAddOk(""), 2500)
+      fetchUsers()
+    } catch (e: any) { setAddErr(e.message) }
+  }
+
+  const handleDeleteUser = async (email: string) => {
+    try {
+      await authFetch(`/auth/admin/users/${encodeURIComponent(email)}`, { method: "DELETE" }, authUser!.token)
+      fetchUsers()
+    } catch (e: any) { setAddErr(e.message) }
+  }
+
+  const initials = (name: string) => name.slice(0, 2).toUpperCase()
 
   return (
     <div className="min-h-screen bg-background">
-      <AuthModal />
+      {/* ✅ 頂層 AuthModal，不在 render 函式內定義，避免每次 keystroke 重新 mount */}
+      <AuthModal
+        open={authOpen}
+        onOpenChange={v => { setAuthOpen(v); setLoginErr(""); setRegErr(""); setRegOk("") }}
+        authTab={authTab} setAuthTab={setAuthTab}
+        loginEmail={loginEmail} setLoginEmail={setLoginEmail}
+        loginPw={loginPw} setLoginPw={setLoginPw}
+        showPw={showPw} setShowPw={setShowPw}
+        loginErr={loginErr} authLoading={authLoading} handleLogin={handleLogin}
+        regUsername={regUsername} setRegUsername={setRegUsername}
+        regPw={regPw} setRegPw={setRegPw}
+        regPwConfirm={regPwConfirm} setRegPwConfirm={setRegPwConfirm}
+        showRegPw={showRegPw} setShowRegPw={setShowRegPw}
+        regRole={regRole} setRegRole={setRegRole}
+        regErr={regErr} regOk={regOk} handleRegister={handleRegister}
+      />
 
       {/* Top Navigation */}
       <div className="border-b border-border">
@@ -790,7 +948,36 @@ export default function DashboardPage() {
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </Button>
             <div className="w-px h-6 bg-border" />
-            <UserSection />
+            {/* ✅ UserSection 內聯，不作為子 component 以避免 remount */}
+            <div className="flex items-center gap-2">
+              {authUser ? (
+                <>
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium">{authUser.username}</p>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${ROLE_COLOR[authUser.role]}`}>
+                      {ROLE_LABEL[authUser.role]}
+                    </span>
+                  </div>
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-teal-500/20 text-teal-700 text-xs">
+                      {initials(authUser.username)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button variant="ghost" size="icon" title="登出" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => { setAuthTab("register"); setAuthOpen(true) }}>
+                    註冊
+                  </Button>
+                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>
+                    登入
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -809,12 +996,12 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">
-                  {authToken ? `Welcome back, ${authUsername}.` : "Welcome to MoonWalk VFX."}
+                  {authUser ? `Welcome back, ${authUser.username}.` : "Welcome to MoonWalk VFX."}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {authToken
-                    ? `目前登入：${authEmail}`
-                    : <span>請 <button className="text-teal-600 hover:underline" onClick={() => openAuth("login")}>登入</button> 或 <button className="text-teal-600 hover:underline" onClick={() => openAuth("register")}>註冊</button> 以儲存您的工作</span>
+                  {authUser
+                    ? <span>目前身分：<span className={`font-medium px-1.5 py-0.5 rounded border text-xs ${ROLE_COLOR[authUser.role]}`}>{ROLE_LABEL[authUser.role]}</span></span>
+                    : <span>請 <button className="text-teal-600 hover:underline" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>登入</button> 以開始使用</span>
                   }
                 </p>
               </div>
@@ -822,9 +1009,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-6">
             {[
-              { label: "Active Shots",     value: "142", sub: "Shots in Progress",  color: "text-teal-600",   icon: <ListVideo className="w-4 h-4 text-muted-foreground" />,   bar: true },
               { label: "Pending Reviews",  value: "38",  sub: "Awaiting Feedback",  color: "text-amber-600",  icon: <Clock className="w-4 h-4 text-muted-foreground" /> },
               { label: "AI Analysis Queue",value: "15",  sub: "Assets Processing",  color: "text-cyan-600",   icon: <Settings className="w-4 h-4 text-muted-foreground animate-spin" style={{ animationDuration: "3s" }} /> },
               { label: "Recent Feedback",  value: "24",  sub: "New Comments Today", color: "text-purple-600", icon: <MessageSquare className="w-4 h-4 text-muted-foreground" /> },
@@ -837,65 +1023,122 @@ export default function DashboardPage() {
                 <CardContent>
                   <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
                   <p className="text-xs text-muted-foreground mt-1">{s.sub}</p>
-                  {s.bar && <div className="mt-2 h-1 bg-muted rounded-full overflow-hidden"><div className="h-full w-3/4 bg-teal-500 rounded-full" /></div>}
                 </CardContent>
               </Card>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* ── Agent Chat Panel (replaces Recent Activity Timeline) ── */}
+            {/* Agent Chat Panel */}
             <Card className="lg:col-span-2 overflow-hidden" style={{ minHeight: 520, display: "flex", flexDirection: "column" }}>
               <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                 <AgentChatPanel />
               </div>
             </Card>
 
-            {/* Quick Actions + Auth */}
+            {/* Account Panel */}
             <div className="space-y-4">
-              <Card>
-                <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                  <Button className="w-full justify-start" asChild>
-                    <Link href="/upload-analyze"><Upload className="w-4 h-4 mr-2" />Upload & Analyze</Link>
-                  </Button>
-                  <Button className="w-full justify-start bg-transparent" variant="outline" asChild>
-                    <Link href="/compare"><GitCompare className="w-4 h-4 mr-2" />Compare Versions</Link>
-                  </Button>
-                  <Button className="w-full justify-start bg-transparent" variant="outline" asChild>
-                    <Link href="/qa"><PenTool className="w-4 h-4 mr-2" />Supervisor Review</Link>
-                  </Button>
-                  <Button className="w-full justify-start bg-transparent" variant="outline" asChild>
-                    <Link href="/qa"><Sparkles className="w-4 h-4 mr-2" />Quality Check</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-
               <Card className="border-teal-500/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <User className="w-4 h-4 text-teal-600" />
-                    {authToken ? "帳號管理" : "登入 / 註冊"}
+                    {authUser ? "帳號資訊" : "登入 / 註冊"}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {authToken ? (
+                <CardContent className="space-y-3">
+                  {authUser ? (
                     <>
+                      {/* User info */}
                       <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                         <Avatar className="w-10 h-10">
                           <AvatarFallback className="bg-teal-500/20 text-teal-700">
-                            {initials(authUsername || "U")}
+                            {initials(authUser.username)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{authUsername}</p>
-                          <p className="text-xs text-muted-foreground truncate">{authEmail}</p>
+                          <p className="text-sm font-medium truncate">{authUser.username}</p>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${ROLE_COLOR[authUser.role]}`}>
+                            {ROLE_LABEL[authUser.role]}
+                          </span>
                         </div>
                       </div>
-                      <Button variant="outline" className="w-full justify-start bg-transparent text-sm"
-                        onClick={() => openAuth("change-password")}>
-                        <KeyRound className="w-4 h-4 mr-2" />修改密碼
-                      </Button>
+
+                      {/* Accessible pages */}
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1.5 font-medium">可存取頁面</p>
+                        <div className="flex flex-col gap-1">
+                          {(() => {
+                            const PAGE_LABELS: Record<string, string> = {
+                              "/kickoff":       "C01 · Kickoff",
+                              "/reference-hub": "C02 · Reference Hub",
+                              "/upload-analyze":"C03 · Upload & Analyze",
+                              "/compare":       "C04 · Compare Versions",
+                              "/qa":            "C05/C06 · QA Review",
+                              "/governance":    "C07 · Governance",
+                            }
+                            return ROLE_PAGES[authUser.role].filter(p => p !== "/").map(path => (
+                              <Link key={path} href={path}
+                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-accent transition-colors text-foreground">
+                                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" />
+                                {PAGE_LABELS[path] ?? path}
+                              </Link>
+                            ))
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Admin: user management */}
+                      {authUser.role === "admin" && (
+                        <div className="border-t pt-3 space-y-2.5">
+                          <p className="text-xs font-medium text-muted-foreground">帳號管理</p>
+
+                          <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
+                            {users.map(u => (
+                              <div key={u.email} className="rounded-md bg-muted/40 text-xs overflow-hidden">
+                                <div className="flex items-center gap-2 px-2 py-1.5">
+                                  <span className={`px-1.5 py-0.5 rounded border font-medium text-[10px] flex-shrink-0 ${ROLE_COLOR[u.role]}`}>
+                                    {ROLE_LABEL[u.role].split(" ")[0]}
+                                  </span>
+                                  <span className="flex-1 font-medium truncate">{u.username}</span>
+                                  <span className="text-muted-foreground truncate max-w-[80px] text-[10px]">{u.email}</span>
+                                  {u.email !== authUser?.email && (
+                                    <button
+                                      onClick={() => handleDeleteUser(u.email)}
+                                      className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                                      title="刪除帳號"
+                                    >✕</button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="space-y-1.5 border rounded-md p-2.5 bg-muted/20">
+                            <p className="text-[11px] font-medium text-muted-foreground mb-1.5">新增帳號</p>
+                            {addErr && <p className="text-[11px] text-red-600">{addErr}</p>}
+                            {addOk  && <p className="text-[11px] text-teal-600">{addOk}</p>}
+                            <Input className="h-7 text-xs" type="email" placeholder="Email" value={newEmail}
+                              onChange={e => setNewEmail(e.target.value)} />
+                            <Input className="h-7 text-xs" placeholder="顯示名稱" value={newName}
+                              onChange={e => setNewName(e.target.value)} />
+                            <Input className="h-7 text-xs" type="password" placeholder="密碼" value={newPw}
+                              onChange={e => setNewPw(e.target.value)} />
+                            <select
+                              className="w-full h-7 text-xs rounded-md border border-input bg-background px-2"
+                              value={newRole}
+                              onChange={e => setNewRole(e.target.value as Role)}
+                            >
+                              <option value="junior_artist">Junior Artist</option>
+                              <option value="senior_artist">Senior Artist</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                            <Button className="w-full h-7 text-xs bg-teal-600 hover:bg-teal-700" onClick={handleAddUser}>
+                              新增
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
                       <Button variant="outline" className="w-full justify-start bg-transparent text-sm text-red-600 border-red-200 hover:bg-red-50"
                         onClick={handleLogout}>
                         <LogOut className="w-4 h-4 mr-2" />登出
@@ -903,17 +1146,21 @@ export default function DashboardPage() {
                     </>
                   ) : (
                     <>
-                      <p className="text-xs text-muted-foreground mb-3">登入後可儲存您的專案進度與設定</p>
-                      <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={() => openAuth("login")}>
-                        登入
-                      </Button>
-                      <Button variant="outline" className="w-full bg-transparent" onClick={() => openAuth("register")}>
-                        建立新帳號
-                      </Button>
-                      <button className="w-full text-xs text-center text-teal-600 hover:underline pt-1"
-                        onClick={() => openAuth("forgot")}>
-                        忘記密碼？
-                      </button>
+                      <p className="text-xs text-muted-foreground">登入後可根據權限存取對應頁面</p>
+                      <div className="space-y-1.5 text-xs text-muted-foreground border rounded-md p-2.5 bg-muted/30">
+                        <p className="font-medium text-foreground mb-1">權限說明</p>
+                        <p><span className="font-medium text-purple-700">Admin</span> — 所有頁面</p>
+                        <p><span className="font-medium text-teal-700">Senior Artist</span> — C01, C02, C06, C07</p>
+                        <p><span className="font-medium text-sky-700">Junior Artist</span> — C03, C04, C05</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => { setAuthTab("register"); setAuthOpen(true) }}>
+                          註冊
+                        </Button>
+                        <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>
+                          登入
+                        </Button>
+                      </div>
                     </>
                   )}
                 </CardContent>
