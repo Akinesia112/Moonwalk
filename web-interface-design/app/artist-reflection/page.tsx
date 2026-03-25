@@ -248,8 +248,17 @@ ${specAndRefs}
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_id: PROJECT_ID,
-          message: `${systemCtx}\n\n用戶說：${userMsg}`,
+          message: systemCtx + "\n\n用戶說：" + userMsg,
           history,
+          all_refs_context: refs.map(r => ({
+            id: r.id,
+            title: r.title,
+            category: r.category || "",
+            note: r.note || "",
+            is_pinned: r.is_pinned,
+            priority: r.importance || (r.is_pinned ? "Main" : "Secondary"),
+            preview: r.localPreview || r.thumbnail_url || r.file_url || "",
+          })),
         }),
       })
       const data = await res.json()
@@ -393,79 +402,6 @@ ${specAndRefs}
 
             {/* 3-column body */}
             <div className="flex gap-4 flex-1 min-h-0">
-
-              {/* ── Col 1: Mind Map + Notes ───────────────────── */}
-              <div className="shrink-0 flex flex-col gap-3 min-h-0 overflow-y-auto" style={{ width: col1Width }}>
-
-                {/* Mind Map */}
-                <Card className="border-indigo-500/30 shrink-0">
-                  <CardHeader className="pb-2 pt-3 px-3">
-                    <CardTitle className="flex items-center gap-2 text-xs">
-                      <GripVertical className="w-3.5 h-3.5 text-indigo-600" />
-                      Feedback 心智圖 / 工作流
-                    </CardTitle>
-                    <CardDescription className="text-[10px]">排序工作優先順序</CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-3 pb-3 space-y-1.5">
-                    {mindMapNodes.map((node, idx) => (
-                      <div key={node.id} className="flex items-center gap-1.5 p-2 rounded-lg border bg-card hover:border-indigo-500/50 transition-colors">
-                        <div className="flex flex-col gap-0.5">
-                          <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={() => moveNode(idx, "up")} disabled={idx === 0}><ArrowUp className="w-2.5 h-2.5" /></Button>
-                          <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={() => moveNode(idx, "down")} disabled={idx === mindMapNodes.length - 1}><ArrowDown className="w-2.5 h-2.5" /></Button>
-                        </div>
-                        <Badge variant="outline" className="text-[9px] h-4 w-5 justify-center shrink-0">{node.priority}</Badge>
-                        {editingNodeId === node.id ? (
-                          <Input autoFocus value={node.text}
-                            onChange={e => setMindMapNodes(prev => prev.map(n => n.id === node.id ? { ...n, text: e.target.value } : n))}
-                            onBlur={() => setEditingNodeId(null)}
-                            onKeyDown={e => { if (e.key === "Enter") setEditingNodeId(null) }}
-                            className="text-[11px] h-5 flex-1" />
-                        ) : (
-                          <span className="text-[11px] flex-1 cursor-text hover:text-indigo-600 transition-colors" onClick={() => setEditingNodeId(node.id)}>{node.text}</span>
-                        )}
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 shrink-0 text-muted-foreground hover:text-red-500"
-                          onClick={() => setMindMapNodes(prev => prev.filter(n => n.id !== node.id).map((n, i) => ({ ...n, priority: i + 1 })))}>
-                          <Trash2 className="w-2.5 h-2.5" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" className="w-full text-[11px] bg-transparent h-7" onClick={() => setMindMapNodes(prev => [...prev, { id: `n${Date.now()}`, text: "新增項目...", priority: prev.length + 1, done: false }])}>
-                      + 新增工作項
-                    </Button>
-                    <Button variant="ghost" size="sm" className="w-full text-[11px] h-7" disabled={agentLoading}
-                      onClick={() => injectToChat(`請分析目前工作流排序是否合理：\n${mindMapNodes.map((n, i) => `${i + 1}. ${n.text}`).join("\n")}\n\n請針對每項給出具體建議。`)}>
-                      <MessageSquare className="w-3 h-3 mr-1" />Agent 分析排序
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Reflection Notes */}
-                <Card className="border-indigo-500/30 flex-1 flex flex-col min-h-0">
-                  <CardHeader className="pb-2 pt-3 px-3 shrink-0">
-                    <CardTitle className="flex items-center gap-2 text-xs">
-                      <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                      我的理解筆記
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-3 pb-3 flex flex-col gap-2 flex-1 min-h-0">
-                    <Textarea value={reflectionNotes} onChange={e => setReflectionNotes(e.target.value)}
-                      placeholder={"寫下理解...\n- 我覺得導演想要的是...\n- 「被背叛後的憤怒」我打算用...來表現"}
-                      className="text-xs flex-1 resize-none min-h-[120px]" />
-                    <div className="flex gap-1.5 shrink-0">
-                      <Button variant="outline" size="sm" className="flex-1 text-[11px] gap-1 bg-transparent h-7" disabled={!reflectionNotes.trim()}>
-                        <BookOpen className="w-3 h-3" />Save
-                      </Button>
-                      <Button size="sm" className="flex-1 text-[11px] gap-1 h-7" disabled={!reflectionNotes.trim() || agentLoading}
-                        onClick={() => reflectionNotes.trim() && injectToChat(`[我的理解筆記]\n${reflectionNotes}\n\n請針對我的理解進行分析，找出邏輯一致性問題或需要補充的地方。`)}>
-                        <Send className="w-3 h-3" />Submit to Agent
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* ── Drag handle 1 ──────────────────────────────── */}
-              <div className="w-1 shrink-0 cursor-col-resize hover:bg-indigo-400/50 rounded transition-colors self-stretch" onMouseDown={startDrag(1)} />
 
               {/* ── Col 2: Spec + Refs ─────────────────────────── */}
               <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0">

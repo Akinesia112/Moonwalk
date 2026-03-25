@@ -46,6 +46,11 @@ def create_app(config_class=Config) -> FastAPI:
     )
     app.state.config = config_class
 
+    # Serve uploaded files at /uploads/*
+    uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+
     # CORS — allow frontend dev server
     allowed_origins = os.getenv(
         "ALLOWED_ORIGINS",
@@ -71,12 +76,6 @@ def create_app(config_class=Config) -> FastAPI:
     app.include_router(feedback_router)
     app.include_router(suggestion_router)
     app.include_router(canvas_router)
-
-    # Serve uploaded files
-    from fastapi.staticfiles import StaticFiles
-    upload_dir = os.path.join(os.path.dirname(__file__), "uploads")
-    os.makedirs(upload_dir, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=upload_dir), name="uploads")
 
     return app
 

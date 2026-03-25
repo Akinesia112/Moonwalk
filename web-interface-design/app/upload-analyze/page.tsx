@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import {
   Upload, Sparkles, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, ChevronUp,
   Plus, AlertCircle, Bot, Users, Send, BookOpen, Loader2, X, ImageIcon, Pin,
-  FileText, Zap, Save,
+  FileText, Zap, Save, Check,
 } from "lucide-react"
 import { TopBar } from "@/components/top-bar"
 import { PipelineSidebar } from "@/components/pipeline-sidebar"
@@ -93,6 +93,7 @@ function UploadAnalyzeContent() {
 
   // ── Multi-artwork upload
   const [artworks, setArtworks] = useState<UploadedArtwork[]>([])
+  const [selectedArtworkId, setSelectedArtworkId] = useState<string | null>(null)  // which artwork to analyze
   const [artworkSaved, setArtworkSaved] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -112,6 +113,7 @@ function UploadAnalyzeContent() {
   const [notesSaved, setNotesSaved] = useState(false)
 
   // ── Analysis
+  const [analysisStatus, setAnalysisStatus] = useState("")  // live progress text
   const [analysis, setAnalysis] = useState<AnalysisState>({
     loading: false, done: false, specSummary: "", overallFeedback: "", metrics: [], flags: []
   })
@@ -125,7 +127,7 @@ function UploadAnalyzeContent() {
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
   // ── Panels
-  const [leftW, setLeftW] = useState(700)
+  const [leftW, setLeftW] = useState(400)
   const [rightW, setRightW] = useState(700)
   const dragging = useRef<{ col: "left" | "right"; startX: number; startW: number } | null>(null)
 
@@ -321,8 +323,36 @@ function UploadAnalyzeContent() {
       const cacheMap: Record<string, any> = {}
       cached.forEach((c: any) => { cacheMap[c.id] = c })
       refs.forEach(r => {
+        const saved = previews.find(p => p.id === r.id)
+        const b64 = saved?.preview || ""
         if (cacheMap[r.id]) {
-          cacheMap[r.id] = { ...cacheMap[r.id], category: r.category || "", note: r.note || "", importance: r.label, usage: r.usage || "" }
+          // Update existing entry
+          cacheMap[r.id] = {
+            ...cacheMap[r.id],
+            category: r.category || "",
+            note: r.note || "",
+            importance: r.label,
+            usage: r.usage || "",
+            artworkId: r.artworkId || "",
+            ...(b64 ? { preview: b64 } : {}),
+          }
+        } else if (b64) {
+          // Add new ref that only exists in upload-analyze (not in refhub yet)
+          cacheMap[r.id] = {
+            id: r.id,
+            title: r.title,
+            category: r.category || "",
+            note: r.note || "",
+            importance: r.label,
+            usage: r.usage || "",
+            artworkId: r.artworkId || "",
+            preview: b64,
+            file_url: "",
+            thumbnail_url: "",
+            is_pinned: r.label === "Main",
+            uploaded_by: "Artist",
+            created_at: new Date().toISOString(),
+          }
         }
       })
       SS.set("refhub_refs", JSON.stringify(Object.values(cacheMap)))
@@ -335,6 +365,12 @@ function UploadAnalyzeContent() {
     if (skipPersistRef.current) return
     saveArtworkPreviews(artworks)
   }, [artworks, hydrated, saveArtworkPreviews])
+
+  // Auto-select first artwork if none selected
+  useEffect(() => {
+    if (artworks.length > 0 && !selectedArtworkId) setSelectedArtworkId(artworks[0].id)
+    if (artworks.length === 0) setSelectedArtworkId(null)
+  }, [artworks])
 
   useEffect(() => {
     if (!hydrated) return
@@ -446,119 +482,131 @@ function UploadAnalyzeContent() {
   const handleAnalyze = useCallback(async () => {
     setAnalysis(p => ({ ...p, loading: true, done: false }))
     setChatMessages(p => [...p, { role: "user", content: "[開始分析]" }])
+
+    // ── Progressive thinking messages ──────────────────────────
+    const thinkingSteps = [
+      "正在上傳圖片至分析系統...",
+      "OpenAI 正在從技術面評估光影、構圖、色彩...",
+      "Gemini 正在從創意策略面分析視覺語言...",
+      "Claude 正在整合三方觀點，進行 Debate...",
+      "計算各項指標分數與分歧度...",
+      "生成 Spec 忠實度與整體評估...",
+      "準備輸出完整分析報告...",
+    ]
+    let stepIdx = 0
+    const thinkingMsgId = `thinking_${Date.now()}`
+    setChatMessages(p => [...p, { role: "ai", content: thinkingSteps[0], id: thinkingMsgId } as any])
+    const thinkingInterval = setInterval(() => {
+      stepIdx = Math.min(stepIdx + 1, thinkingSteps.length - 1)
+      const step = thinkingSteps[stepIdx]
+      setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { ...m, content: step } : m))
+      setAnalysisStatus(step)
+    }, 3500)
+    setAnalysisStatus(thinkingSteps[0])
+
     try {
-      // Upload first artwork if exists
+      // Upload selected artwork
       let artworkUrl = ""
-      if (artworks.length > 0) {
-        const fd = new FormData(); fd.append("file", artworks[0].file); fd.append("project_id", PROJECT_ID)
-        try {
-          const up = await fetch(`${API}/search/upload`, { method: "POST", body: fd })
-          const ud = await up.json(); artworkUrl = ud.file_url || ud.url || ""
-        } catch {}
+      let artworkB64 = ""
+      const artworkToAnalyze = artworks.find(a => a.id === selectedArtworkId) || artworks[0]
+      if (artworkToAnalyze) {
+        // If we have a real File with data, upload it
+        if (artworkToAnalyze.file && artworkToAnalyze.file.size > 0) {
+          const fd = new FormData(); fd.append("file", artworkToAnalyze.file); fd.append("project_id", PROJECT_ID)
+          try {
+            const up = await fetch(`${API}/search/upload`, { method: "POST", body: fd })
+            const ud = await up.json(); artworkUrl = ud.file_url || ud.url || ""
+          } catch {}
+        }
+        // Always pass base64 preview directly (works even without upload)
+        if (artworkToAnalyze.preview?.startsWith("data:")) {
+          artworkB64 = artworkToAnalyze.preview
+        }
       }
       const ctx = getFullContext()
-      const res = await fetch(`${API}/combination/analyze`, {
+
+      // ── Streaming: each metric appears as soon as its debate is done ──
+      const streamRes = await fetch(`${API}/combination/analyze/stream`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_id: PROJECT_ID, artwork_url: artworkUrl, analyze_scope: analyzeScope, ...ctx }),
+        body: JSON.stringify({ project_id: PROJECT_ID, artwork_url: artworkUrl, artwork_b64: artworkB64, analyze_scope: analyzeScope, ...ctx }),
       })
-      if (res.ok) {
-        const data = await res.json()
-        const metrics: MetricResult[] = []
-        for (const [id, g] of Object.entries(data.by_group || {}) as any[]) {
-          const aKey = Object.keys(g.per_agent || {}).find((k: string) => k.endsWith("_A")) || `${id}_A`
-          const bKey = Object.keys(g.per_agent || {}).find((k: string) => k.endsWith("_B")) || `${id}_B`
-          metrics.push({
-            id, name: METRIC_NAMES[id] || id,
-            score: g.score ?? 0.5, disagreement: g.disagreement ?? 0,
-            agentA: { name: aKey, score: g.per_agent?.[aKey] ?? 0.5, opinion: stripBold(g.opinion_A || "") },
-            agentB: { name: bKey, score: g.per_agent?.[bKey] ?? 0.5, opinion: stripBold(g.opinion_B || "") },
-            debate: g.debate ? {
-              positionA: stripBold(g.debate.positionA || ""),
-              positionB: stripBold(g.debate.positionB || ""),
-              conclusion: stripBold(g.debate.conclusion || ""),
-            } : undefined,
-            status: scoreToStatus(g.score ?? 0.5, g.disagreement ?? 0),
-            refBasis: g.ref_basis || "Spec + References",
-            consensus: (g.disagreement ?? 0) < 0.1,
-            flag: (g.disagreement ?? 0) > 0.30 && (g.score ?? 0.5) < 0.30 ? "handoff_needed" : undefined,
-          })
-        }
-        const na: AnalysisState = {
-          loading: false, done: true,
-          specSummary: stripBold(data.spec_summary || data.summary || "分析完成。"),
-          overallFeedback: stripBold(data.overall_feedback || ""),
-          metrics,
-          // Only flag metrics that meet strict handoff: dis>0.30 AND score<0.30
-          flags: metrics
-            .filter(m => m.flag === "handoff_needed")
-            .map(m => m.name),
-        }
-        setAnalysis(na)
-        const red = metrics.filter(m => m.status === "red").length
-        const yellow = metrics.filter(m => m.status === "yellow").length
-        const green = metrics.filter(m => m.status === "green").length
-        setChatMessages(p => [...p, { role: "ai",
-          content: `分析完成！共評估 ${metrics.length} 項指標。\n❌ 需改進：${red} 項　⚠️ 需關注：${yellow} 項　✅ 良好：${green} 項\n\n後台正對每個指標執行三方辯論（OpenAI + Gemini → Claude），完成後點擊指標可查看完整 Debate。`
-        }])
+      if (!streamRes.ok || !streamRes.body) {
+        clearInterval(thinkingInterval)
+        throw new Error("HTTP " + streamRes.status)
+      }
 
-        // ── 後台並行對所有 metric 跑三方辯論，結果存回 analysis ──
-        ;(async () => {
-          const debateResults = await Promise.all(metrics.map(async m => {
-            if (!m.agentA.opinion && !m.agentB.opinion) return { id: m.id, debate: null }
-            try {
-              // 3-party debate via /chat/mode (evidence mode):
-              // view_1 = OpenAI challenges from a NEW technical angle not covered by agentA
-              // view_2 = Gemini challenges from a NEW creative angle not covered by agentB
-              // synthesis = Claude integrates both new angles into concrete actionable advice
-              const debatePrompt = `指標「${m.name}」 — 三方辯論任務
+      const reader = streamRes.body.getReader()
+      const decoder = new TextDecoder()
+      const streamMetrics: MetricResult[] = []
+      let buf = ""
 
-初步評估已有以下兩個觀點：
-觀點一（${m.agentA.name}）：${m.agentA.opinion}
-觀點二（${m.agentB.name}）：${m.agentB.opinion}
+      setAnalysis(p => ({ ...p, loading: true, done: false, metrics: [] }))
 
-現在進行真正的辯論：
-- OpenAI 必須提出「觀點一忽略的技術細節」或「觀點一的邏輯漏洞」，角度是純技術執行面
-- Gemini 必須提出「觀點二忽略的視覺語言問題」或「觀點二的創意盲點」，角度是創意策略面
-- Claude 整合辯論，給出與兩個初步觀點都不同的具體改進建議`
-
-              const res2 = await fetch(`${API}/suggestion/chat/mode`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  mode: "evidence",
-                  content: debatePrompt,
-                  spec_and_refs: `${m.agentA.name} 初步意見：${m.agentA.opinion}
-${m.agentB.name} 初步意見：${m.agentB.opinion}`,
-                }),
-              })
-              const d = await res2.json()
-              return {
-                id: m.id,
-                debate: d.debate ? {
-                  positionA: d.debate.view_1 || "",
-                  positionB: d.debate.view_2 || "",
-                  conclusion: d.debate.synthesis || d.reply || d.response || "",
-                } : {
-                  positionA: "",
-                  positionB: "",
-                  conclusion: d.reply || d.response || "",
-                }
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const chunks = buf.split("\n\n")
+        buf = chunks.pop() || ""
+        for (const chunk of chunks) {
+          if (!chunk.startsWith("data: ")) continue
+          try {
+            const evt = JSON.parse(chunk.slice(6))
+            if (evt.type === "status") {
+              setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { ...m, content: evt.message } : m))
+              setAnalysisStatus(evt.message)
+            } else if (evt.type === "metric") {
+              const g = evt.data
+              const aKey = Object.keys(g.per_agent || {}).find((k: string) => k.endsWith("_A")) || (evt.id + "_A")
+              const bKey = Object.keys(g.per_agent || {}).find((k: string) => k.endsWith("_B")) || (evt.id + "_B")
+              const newMetric: MetricResult = {
+                id: evt.id, name: METRIC_NAMES[evt.id] || evt.id,
+                score: g.score ?? 0.5, disagreement: g.disagreement ?? 0,
+                agentA: { name: aKey, score: g.per_agent?.[aKey] ?? 0.5, opinion: stripBold(g.opinion_A || "") },
+                agentB: { name: bKey, score: g.per_agent?.[bKey] ?? 0.5, opinion: stripBold(g.opinion_B || "") },
+                debate: g.debate ? {
+                  positionA: stripBold(g.debate.positionA || ""),
+                  positionB: stripBold(g.debate.positionB || ""),
+                  conclusion: stripBold(g.debate.conclusion || ""),
+                } : undefined,
+                status: scoreToStatus(g.score ?? 0.5, g.disagreement ?? 0),
+                refBasis: g.ref_basis || "Spec + References",
+                consensus: (g.disagreement ?? 0) < 0.1,
+                flag: (g.disagreement ?? 0) > 0.30 && (g.score ?? 0.5) < 0.30 ? "handoff_needed" : undefined,
               }
-            } catch { return { id: m.id, debate: null } }
-          }))
-          setAnalysis(prev => ({
-            ...prev,
-            metrics: prev.metrics.map(m => {
-              const r = debateResults.find(x => x.id === m.id)
-              return r?.debate ? { ...m, debate: r.debate } : m
-            })
-          }))
-        })()
-
-      } else {
-        throw new Error(`HTTP ${res.status}`)
+              const idx = streamMetrics.findIndex(m => m.id === evt.id)
+              if (idx >= 0) streamMetrics[idx] = newMetric; else streamMetrics.push(newMetric)
+              setAnalysis(p => ({ ...p, loading: true, done: false, metrics: [...streamMetrics] }))
+              const progressText = (METRIC_NAMES[evt.id] || evt.id) + " 分析完成（" + evt.done + "/" + evt.total + "）..."
+              setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { ...m, content: progressText } : m))
+              setAnalysisStatus(progressText)
+            } else if (evt.type === "spec") {
+              // spec_summary ready — show immediately, keep loading for metrics
+              setAnalysis(p => ({ ...p, specSummary: stripBold(evt.spec_summary || "") }))
+            } else if (evt.type === "done") {
+              clearInterval(thinkingInterval)
+              const finalMetrics = [...streamMetrics]
+              const na: AnalysisState = {
+                loading: false, done: true,
+                specSummary: stripBold(evt.spec_summary || "分析完成。"),
+                overallFeedback: "",
+                metrics: finalMetrics,
+                flags: finalMetrics.filter(m => m.flag === "handoff_needed").map(m => m.name),
+              }
+              setAnalysis(na)
+              const red = finalMetrics.filter(m => m.status === "red").length
+              const yellow = finalMetrics.filter(m => m.status === "yellow").length
+              const green = finalMetrics.filter(m => m.status === "green").length
+              const summary = "分析完成！共評估 " + finalMetrics.length + " 項指標。\n❌ 需改進：" + red + " 項　⚠️ 需關注：" + yellow + " 項　✅ 良好：" + green + " 項"
+              setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { role: "ai", content: summary } : m))
+              setAnalysisStatus("")
+            }
+          } catch {}
+        }
       }
     } catch (e) {
+      clearInterval(thinkingInterval)
+      setChatMessages(p => p.filter((m: any) => m.id !== thinkingMsgId))
       const mock: MetricResult[] = Object.entries(METRIC_NAMES).map(([id, name]) => {
         const s = 0.35 + Math.random() * 0.45; const d = Math.random() * 0.18
         return {
@@ -600,6 +648,13 @@ ${m.agentB.name} 初步意見：${m.agentB.opinion}`,
   const handleSubmitNotes = useCallback(() => {
     if (!reflectionNotes.trim()) return
     setNotesSaved(true)
+    // Persist to history list for QA page
+    try {
+      const hist: string[] = JSON.parse(SS.get("c04_notes_history") || "[]")
+      if (reflectionNotes.trim() && !hist.includes(reflectionNotes)) {
+        SS.set("c04_notes_history", JSON.stringify([reflectionNotes, ...hist.slice(0, 19)]))
+      }
+    } catch {}
     setChatMessages(p => [...p, { role: "user", content: `[創作反思筆記]\n${reflectionNotes}` }])
     callAgent(`以下是 Artist 的創作反思筆記，請仔細閱讀並給出具體、有建設性的回饋：\n\n${reflectionNotes}`)
   }, [reflectionNotes, callAgent])
@@ -739,102 +794,45 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                     <div className="grid grid-cols-3 gap-1.5"
                       onDrop={e => { e.preventDefault(); const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/")||f.type.startsWith("video/")); if(files.length>0){setArtworks(prev=>{const updated=[...prev.filter(a=>!files.some(f=>f.name.toLowerCase().replace(/\.[^.]+$/,'') === (a.file?.name||'').toLowerCase().replace(/\.[^.]+$/,''))), ...files.map(file=>({id:`aw_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,file,preview:URL.createObjectURL(file)}))]; saveArtworkPreviews(updated); return updated}); setArtworkSaved(false)} }}
                       onDragOver={e => e.preventDefault()}>
-                      {artworks.map(aw => (
+                      {artworks.map(aw => {
+                        const isSelected = aw.id === selectedArtworkId
+                        return (
                         <div
                           key={aw.id}
-                          className="relative aspect-square rounded overflow-hidden border bg-muted cursor-pointer group"
-                          title="雙擊匯入對話框討論"
-                          onDoubleClick={() => {
+                          className={`relative aspect-square rounded overflow-hidden border-2 bg-muted cursor-pointer group transition-all ${isSelected ? "border-teal-500 ring-2 ring-teal-400/50" : "border-border hover:border-teal-400/50"}`}
+                          title="點擊選定分析 · 雙擊討論"
+                          onClick={() => setSelectedArtworkId(aw.id)}
+                          onDoubleClick={e => {
+                            e.stopPropagation()
                             const name = aw.file?.name || aw.id
-                            setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${name}` }])
-                            callAgent(`請觀察這張 Artwork「${name}」，從光影、構圖、色彩等面向給出具體分析與改進建議。`)
+                            setChatMessages(p => [...p, { role: "user", content: "[討論 Artwork] " + name }])
+                            callAgent("請觀察這張 Artwork「" + name + "」，從光影、構圖、色彩等面向給出具體分析與改進建議。")
                           }}
                         >
                           <img src={aw.preview} alt={aw.file?.name || aw.id} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                            <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">雙擊討論</span>
+                          {/* Selected indicator */}
+                          {isSelected && (
+                            <div className="absolute top-0.5 left-0.5 bg-teal-500 rounded-full w-4 h-4 flex items-center justify-center">
+                              <Check className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          )}
+                          {/* Filename tooltip */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p className="text-[8px] text-white truncate">{aw.file?.name || aw.id}</p>
                           </div>
                           <button className="absolute top-0.5 right-0.5 w-4 h-4 bg-background/80 rounded flex items-center justify-center"
-                            onClick={e => { e.stopPropagation(); setArtworks(p => p.filter(a => a.id !== aw.id)); setArtworkSaved(false) }}>
+                            onClick={e => { e.stopPropagation(); setArtworks(p => p.filter(a => a.id !== aw.id)); if (isSelected) setSelectedArtworkId(null); setArtworkSaved(false) }}>
                             <X className="w-2.5 h-2.5" />
                           </button>
                         </div>
-                      ))}
+                        )
+                      })}
                       <div className="aspect-square rounded border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
                         onClick={() => fileInputRef.current?.click()}>
                         <Plus className="w-4 h-4 text-muted-foreground" />
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-
-              {/* Version + Remark */}
-              <Card>
-                <CardHeader className="pb-1.5 pt-2.5 px-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" />版本與備註</CardTitle>
-                    <Button size="sm" variant={infoSaved ? "default" : "outline"}
-                      className={`h-6 text-[10px] px-2 gap-1 ${infoSaved ? "bg-green-600 hover:bg-green-700" : "bg-transparent"}`}
-                      onClick={() => setInfoSaved(true)}>
-                      <Save className="w-3 h-3" />{infoSaved ? "已儲存" : "Save"}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-3 pb-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-[10px] w-10 shrink-0">版本</Label>
-                    <Input value={version} onChange={e => { setVersion(e.target.value); setInfoSaved(false) }} className="h-7 text-xs" placeholder="v01" />
-                  </div>
-                  <Textarea value={remark} onChange={e => { setRemark(e.target.value); setInfoSaved(false) }}
-                    placeholder="備註：草稿、光影方向待確認…" rows={2} className="text-xs" />
-                  {/* Dynamic tags with metric selectors */}
-                  <div className="space-y-1.5">
-                    {[
-                      { prefix: "", suffix: "草稿階段", fixed: true },
-                      { prefix: "只看", suffix: "", fixed: false },
-                      { prefix: "", suffix: "待確認", fixed: false },
-                      { prefix: "", suffix: "定稿", fixed: false },
-                    ].map((tmpl, ti) => {
-                      const tagKey = `dynamic_tag_metric_${ti}`
-                      const selMetric = tagMetrics[ti] || Object.keys(METRIC_NAMES)[ti] || "light"
-                      const metricLabel = METRIC_NAMES[selMetric] || selMetric
-                      const tagLabel = tmpl.fixed
-                        ? tmpl.suffix
-                        : `${tmpl.prefix}${tmpl.prefix ? metricLabel : metricLabel}${tmpl.suffix}`
-                      const isActive = tags.includes(tagLabel)
-                      return (
-                        <div key={ti} className="flex items-center gap-1.5">
-                          <Badge
-                            variant={isActive ? "default" : "outline"}
-                            className="text-[10px] cursor-pointer shrink-0 whitespace-nowrap"
-                            onClick={() => { setTags(p => isActive ? p.filter(t=>t!==tagLabel) : [...p, tagLabel]); setInfoSaved(false) }}>
-                            {tagLabel}
-                          </Badge>
-                          {!tmpl.fixed && (
-                            <Select value={selMetric} onValueChange={v => {
-                              setTagMetrics(p => { const n=[...p]; n[ti]=v; return n })
-                              setTags(p => {
-                                const old = `${tmpl.prefix}${METRIC_NAMES[selMetric]||selMetric}${tmpl.suffix}`
-                                const nw  = `${tmpl.prefix}${METRIC_NAMES[v]||v}${tmpl.suffix}`
-                                return p.includes(old) ? p.map(t => t===old ? nw : t) : p
-                              })
-                              setInfoSaved(false)
-                            }}>
-                              <SelectTrigger className="h-5 text-[9px] px-1.5 w-24">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(METRIC_NAMES).map(([id, name]) => (
-                                  <SelectItem key={id} value={id} className="text-xs">{name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
                 </CardContent>
               </Card>
 
@@ -1018,8 +1016,9 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                   <CardContent className="px-3 pb-3">
                     {!analysis.done && !analysis.loading && <p className="text-xs text-muted-foreground">點擊「開始分析」後顯示結果。</p>}
                     {analysis.loading && (
-                      <div className="flex items-center gap-2 text-xs text-teal-600">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />Agents 正在生成總體回饋…
+                      <div className="flex items-center gap-2 text-xs text-teal-600 py-1">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                        <span>{analysisStatus || "Agents 正在生成總體回饋..."}</span>
                       </div>
                     )}
                     {analysis.done && (
@@ -1066,13 +1065,20 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 </CardHeader>
                 {aiOpen && (
                   <CardContent className="px-3 pb-3 flex-1 min-h-0 flex flex-col">
-                    {!analysis.done && !analysis.loading && <p className="text-xs text-muted-foreground">分析完成後顯示。</p>}
-                    {analysis.loading && (
+                    {!analysis.done && !analysis.loading && analysis.metrics.length === 0 && <p className="text-xs text-muted-foreground">分析完成後顯示。</p>}
+                    {analysis.loading && analysis.metrics.length === 0 && (
                       <div className="flex items-center gap-2 text-xs text-teal-600 py-4">
-                        <Loader2 className="w-4 h-4 animate-spin" />AI Agents 並行評估中，請稍候…
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                        <span>{analysisStatus || "AI Agents 並行評估中，請稍候..."}</span>
                       </div>
                     )}
-                    {analysis.done && (
+                    {analysis.loading && analysis.metrics.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-teal-600 pb-1.5">
+                        <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+                        <span>{analysisStatus || "評估中..."}</span>
+                      </div>
+                    )}
+                    {(analysis.done || analysis.metrics.length > 0) && (
                       <ScrollArea className="flex-1 min-h-0">
                         <div className="space-y-1.5 pr-1">
                           {analysis.metrics.map(m => (
@@ -1093,12 +1099,14 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                                   <ChevronRight className="w-3 h-3 text-muted-foreground" />
                                 </div>
                               </div>
-                              {(m.agentA.opinion || m.agentB.opinion) && (
-                                <div className="mt-1.5 ml-6 space-y-0.5">
-                                  {m.agentA.opinion && <p className="text-[9px] text-muted-foreground line-clamp-1">{m.agentA.name}：{m.agentA.opinion}</p>}
-                                  {m.agentB.opinion && <p className="text-[9px] text-muted-foreground line-clamp-1">{m.agentB.name}：{m.agentB.opinion}</p>}
-                                </div>
-                              )}
+                              <div className="mt-1.5 ml-6 space-y-0.5">
+                                {m.agentA.opinion
+                                  ? <p className="text-[9px] text-muted-foreground line-clamp-1">{m.agentA.name}：{m.agentA.opinion}</p>
+                                  : m.debate?.conclusion
+                                    ? <p className="text-[9px] text-muted-foreground line-clamp-2">{m.debate.conclusion}</p>
+                                    : null}
+                                {m.agentB.opinion && <p className="text-[9px] text-muted-foreground line-clamp-1">{m.agentB.name}：{m.agentB.opinion}</p>}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1162,6 +1170,11 @@ ${m.agentB.name}：${m.agentB.opinion}`,
               </Card>
 
               <div className="flex gap-3 shrink-0">
+                {artworks.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    分析圖：<span className="text-teal-600 font-medium">{artworks.find(a => a.id === selectedArtworkId)?.file?.name || "（未選擇）"}</span>
+                  </p>
+                )}
                 <Button size="lg" onClick={handleAnalyze} disabled={analysis.loading} className="flex-1 gap-2 py-5">
                   {analysis.loading
                     ? <><Loader2 className="w-4 h-4 animate-spin" />分析中…</>
@@ -1257,12 +1270,12 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                     { ag: dialogMetric.agentA, label: "A" },
                     { ag: dialogMetric.agentB, label: "B" },
                   ].map(({ ag }) => (
-                    <Card key={ag.name} className={`p-3 transition-colors ${ag.opinion ? "cursor-pointer hover:bg-muted/60" : ""}`}
+                    <Card key={ag.name} className={`p-3 transition-colors ${ag.opinion ? "cursor-pointer hover:bg-muted/60" : "opacity-50"}`}
                       onClick={() => ag.opinion && handleAgentOpinionClick(dialogMetric.name, ag.name, ag.opinion, dialogMetric.debate)}>
                       <p className="text-[10px] text-muted-foreground mb-1.5 font-medium">{ag.name}</p>
                       {ag.opinion
                         ? <p className="text-xs leading-relaxed">{ag.opinion}</p>
-                        : <p className="text-xs text-muted-foreground italic">點擊「請 Agent 給建議」取得詳細意見。</p>
+                        : <p className="text-xs text-muted-foreground italic">— 詳見 Claude 整合結論 —</p>
                       }
                     </Card>
                   ))}
@@ -1308,9 +1321,9 @@ ${m.agentB.name}：${m.agentB.opinion}`,
 請給出 2-3 個具體可執行的改進步驟。`) }}>
                           <div className="flex items-center gap-1.5 mb-1">
                             <Bot className="w-3 h-3 text-teal-600" />
-                            <p className="text-[10px] font-semibold text-teal-700">三方辯論整合結論（OpenAI + Gemini → Claude）<span className="text-teal-500 font-normal ml-1">（點擊讓 Agent 給具體步驟）</span></p>
+                            <p className="text-[10px] font-semibold text-teal-700">Claude 視覺分析與建議<span className="text-teal-500 font-normal ml-1">（點擊讓 Agent 進一步說明）</span></p>
                           </div>
-                          <p className="text-xs text-teal-800 leading-relaxed">{d.conclusion}</p>
+                          <p className="text-xs text-teal-800 leading-relaxed whitespace-pre-wrap">{d.conclusion}</p>
                         </div>
                       )}
                     </div>

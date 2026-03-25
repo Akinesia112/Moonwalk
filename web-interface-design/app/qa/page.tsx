@@ -166,24 +166,63 @@ export default function QAPage() {
         })
       }
     } catch {}
-    // Fallback to c04_ref_previews if refhub_refs empty
-    if (labeledRefs.length === 0) {
-      try {
-        const ar = SS.get("c04_ref_previews")
-        if (ar) {
+    // Always overlay base64 previews from c04_ref_previews
+    // (refhub_refs may only have /uploads/ server paths which canvas can't load)
+    try {
+      const ar = SS.get("c04_ref_previews")
+      if (ar) {
+        const previewMap: Record<string, string> = {}
+        JSON.parse(ar).forEach((r: any) => {
+          const b64 = r.preview || ""
+          if (b64.startsWith("data:")) previewMap[(r.title || r.id).toLowerCase()] = b64
+        })
+        // Overlay: replace non-base64 images with base64 from c04_ref_previews
+        labeledRefs = labeledRefs.map(r => {
+          const b64 = previewMap[r.name.toLowerCase()] || previewMap[r.id.toLowerCase()]
+          return b64 ? { ...r, image: b64 } : r
+        })
+        // Also add any refs only in c04_ref_previews (not yet in refhub / not yet synced)
+        // Always do this, not just when labeledRefs is empty
+        {
+          const existingIds = new Set(labeledRefs.map(r => r.id))
+          const existingNames = new Set(labeledRefs.map(r => r.name.toLowerCase()))
           const seen = new Set<string>()
           JSON.parse(ar).forEach((r: any) => {
             if (deletedIds.has(r.id)) return
-            const img = r.preview || r.file_url || r.thumbnail_url || ""
-            if (!img) return
+            const img = r.preview || ""
+            if (!img.startsWith("data:")) return  // only add if we have base64
             const key = (r.title || r.id).toLowerCase()
             if (seen.has(key)) return
             seen.add(key)
+            // Skip if already loaded (by id or name)
+            if (existingIds.has(r.id) || existingNames.has(key)) return
             labeledRefs.push({ id: r.id, name: r.title || r.id, image: img, label: r.importance || r.label || "Secondary", category: r.category || "", importance: r.importance || r.label || "Secondary", note: r.note || "", usage: r.usage || "", artworkId: r.artworkId || "" })
           })
         }
-      } catch {}
-    }
+      }
+    } catch {}
+
+    // Merge compare_report_for_qa ref images (base64) into labeledRefs
+    // so QA canvas shows the image even if refhub only has /uploads/ URL
+    try {
+      const cmpRaw = SS.get("compare_report_for_qa")
+      if (cmpRaw) {
+        const cmp = JSON.parse(cmpRaw)
+        const cmpRefs: any[] = [
+          ...(Array.isArray(cmp.allRefs) ? cmp.allRefs : []),
+          ...(cmp.reference ? [cmp.reference] : []),
+        ]
+        cmpRefs.forEach(cr => {
+          if (!cr?.id || !cr?.image) return
+          const idx = labeledRefs.findIndex(r => r.id === cr.id)
+          if (idx >= 0 && !labeledRefs[idx].image?.startsWith("data:")) {
+            labeledRefs[idx] = { ...labeledRefs[idx], image: cr.image }
+          } else if (idx < 0 && cr.image?.startsWith("data:")) {
+            labeledRefs.push({ id: cr.id, name: cr.name || cr.id, image: cr.image, label: "Secondary", category: "", importance: "Secondary", note: "", usage: "", artworkId: "" })
+          }
+        })
+      }
+    } catch {}
 
     try {
       const aw = SS.get("c04_artwork_previews")
@@ -224,18 +263,29 @@ export default function QAPage() {
           const allSorted = [...labeledRefs].sort((a, b) =>
             (a.importance === "Main" || a.label === "Main" ? -1 : b.importance === "Main" || b.label === "Main" ? 1 : 0))
 
+          // All artwork ids that exist in current session
+          const allArtworkIds = new Set(parsed.map(p => p.id))
+
           const artworkItems = parsed.map(p => {
-            // Refs bound to this artwork specifically
+            // Refs explicitly bound to this artwork
             const boundToThis = allSorted.filter(r => (r as any).artworkId === p.id)
 
-            // Refs with no artworkId — unbound/shared, show for all artworks
+            // Refs with no artworkId — shared across all artworks
             const unbound = allSorted.filter(r => !(r as any).artworkId)
 
-            // Refs bound to OTHER artworks are intentionally excluded
-            // to prevent cross-artwork ref contamination
-            const refsForThis = [...boundToThis, ...unbound]
+            // Refs bound to an artworkId that no longer exists (stale bind after re-upload)
+            // — treat these as unbound so they still show up
+            const staleBinding = allSorted.filter(r => {
+              const aid = (r as any).artworkId
+              return aid && !allArtworkIds.has(aid)
+            })
 
-            return { id: p.id, name: p.name || p.id, image: p.preview, refs: [...refsForThis] }
+            const refsForThis = [...boundToThis, ...unbound, ...staleBinding]
+            // Deduplicate by id
+            const seen = new Set<string>()
+            const deduped = refsForThis.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true })
+
+            return { id: p.id, name: p.name || p.id, image: p.preview, refs: deduped }
           })
 
           setArtworks(artworkItems)
@@ -265,7 +315,21 @@ export default function QAPage() {
   useEffect(() => {
     setHydrated(true)
     try { setArtistNote(SS.get("reflection_notes") || "") } catch {}   // artist-reflection 理解筆記
-    try { setReflectionNote(SS.get("c04_notes") || "") } catch {}       // upload-analyze 創作反思筆記
+    try {
+      const note = SS.get("c04_notes") || ""
+      setReflectionNote(note)
+      // Seed and load notes history
+      try {
+        const hist: string[] = JSON.parse(SS.get("c04_notes_history") || "[]")
+        if (note.trim() && !hist.includes(note)) {
+          const updated = [note, ...hist.slice(0, 19)]
+          SS.set("c04_notes_history", JSON.stringify(updated))
+          setNotesHistory(updated)
+        } else {
+          setNotesHistory(note.trim() && !hist.includes(note) ? [note, ...hist] : hist.length > 0 ? hist : note ? [note] : [])
+        }
+      } catch {}
+    } catch {}       // upload-analyze 創作反思筆記
     try { const b = JSON.parse(SS.get("kickoff_brief") || "{}"); setSupervisorSpec(b.supervisor_spec || "") } catch {}
     // Restore text annotations / labels / specs / chat
     try { const v = SS.get("qa_annotations"); if (v) setAnnotations(JSON.parse(v)) } catch {}
@@ -322,7 +386,26 @@ export default function QAPage() {
     // Live sync: pick up changes made in other tabs/pages without full reload
     const onStorage = (e: StorageEvent) => {
       if (e.key === "reflection_notes") setArtistNote(e.newValue || "")
-      if (e.key === "c04_notes")        setReflectionNote(e.newValue || "")
+      if (e.key === "c04_notes") {
+        const newNote = e.newValue || ""
+        setReflectionNote(newNote)
+        if (newNote.trim()) {
+          try {
+            const hist: string[] = JSON.parse(sessionStorage.getItem("c04_notes_history") || "[]")
+            if (!hist.includes(newNote)) {
+              const updated = [newNote, ...hist.slice(0, 19)]
+              sessionStorage.setItem("c04_notes_history", JSON.stringify(updated))
+              setNotesHistory(updated)
+            }
+          } catch {}
+        }
+      }
+      if (e.key === "c04_notes_history") {
+        try {
+          const hist: string[] = JSON.parse(e.newValue || "[]")
+          setNotesHistory(hist)
+        } catch {}
+      }
       // Evict stale refs when reference-hub replaces a duplicate upload
       if (e.key === "refhub_refs" || e.key === "deleted_ref_ids") {
         try {
@@ -412,6 +495,7 @@ export default function QAPage() {
   const [artistNote, setArtistNote] = useState("")
   const [reflectionNote, setReflectionNote] = useState("")
   const [supervisorSpec, setSupervisorSpec] = useState("")
+  const [notesHistory, setNotesHistory] = useState<string[]>([])
 
   // ── Brief/Specs ───────────────────────────────────────────────
   const BRIEF_LABELS: Record<string, string> = {
@@ -436,6 +520,38 @@ export default function QAPage() {
 
   const currentArt = artworks[selectedArtwork]
   const currentRef = currentArt?.refs[selectedRef]
+  // Resolve best available ref image (base64 > server URL)
+  const resolvedRefImage = React.useMemo(() => {
+    if (!currentRef) return ""
+    const img = currentRef.image || ""
+    if (img.startsWith("data:")) return img
+    // Try c04_ref_previews for base64
+    try {
+      const ar = SS.get("c04_ref_previews")
+      if (ar) {
+        const previews: any[] = JSON.parse(ar)
+        const match = previews.find(p =>
+          p.id === currentRef.id ||
+          (p.title || "").toLowerCase() === currentRef.name.toLowerCase()
+        )
+        if (match?.preview?.startsWith("data:")) return match.preview
+      }
+    } catch {}
+    // Try refhub_refs
+    try {
+      const hr = SS.get("refhub_refs")
+      if (hr) {
+        const refs: any[] = JSON.parse(hr)
+        const match = refs.find(r =>
+          r.id === currentRef.id ||
+          (r.title || "").toLowerCase() === currentRef.name.toLowerCase()
+        )
+        const b64 = match?.preview || ""
+        if (b64.startsWith("data:")) return b64
+      }
+    } catch {}
+    return img  // fallback to whatever URL we have
+  }, [currentRef?.id, currentRef?.name, currentRef?.image])
 
   // ── Metrics — dynamic from c04_analysis, fallback to static ────
   type MetricItem = { id:string; name:string; status:string; agents:string[]; consensus:boolean; refBasis:string; supervisorNote:string|null }
@@ -1118,7 +1234,7 @@ export default function QAPage() {
               {/* CENTER: Canvas + Metrics */}
               <div className="flex-1 min-w-0 flex flex-col" style={{ height: COL_HEIGHT }}>
                 {/* Canvas Card */}
-                <Card className="flex flex-col flex-1 min-h-0 border-teal-500/30 overflow-hidden">
+                <Card className="flex flex-col border-teal-500/30 overflow-hidden" style={{flex:"1 1 0",minHeight:0}}>
                   <CardHeader className="pb-1 shrink-0 py-2">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1267,34 +1383,11 @@ export default function QAPage() {
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setRefZoom(p=>Math.min(300,p+25))}><ZoomIn className="w-3 h-3" /></Button>
                         <div className="w-px h-5 bg-border mx-1" />
                         <Button variant={showSpecs?"default":"outline"} size="sm" className={`h-6 text-[10px] gap-0.5 ${!showSpecs?'bg-transparent':''}`} onClick={() => setShowSpecs(!showSpecs)}><FileCheck className="w-3 h-3" />Specs</Button>
-                        <Button variant={showRefsRow?"default":"outline"} size="sm" className={`h-6 text-[10px] gap-0.5 ${!showRefsRow?'bg-transparent':''}`} onClick={() => setShowRefsRow(!showRefsRow)}><ImageIcon className="w-3 h-3" />Refs</Button>
-                        <Button variant={showFeedbackPanel?"default":"outline"} size="sm" className={`h-6 text-[10px] gap-0.5 whitespace-nowrap ${!showFeedbackPanel?'bg-transparent':''}`} onClick={() => setShowFeedbackPanel(!showFeedbackPanel)}><MessageSquare className="w-3 h-3" />回饋清單</Button>
+
                       </div>
                     </div>
 
-                    {/* Refs Row */}
-                    {showRefsRow && currentArt?.refs && (
-                      <div className="shrink-0 border-b bg-muted/20 px-3 py-1.5">
-                        <ScrollArea className="w-full">
-                          <div className="flex items-center gap-2 pb-2">
-                            <span className="text-[10px] text-muted-foreground shrink-0">References:</span>
-                            {currentArt.refs.filter(r=>r.image).map((ref,rIdx) => (
-                              <div key={ref.id} className={`shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedRef===rIdx?'border-amber-500 ring-1 ring-amber-500/30':'border-border hover:border-amber-500/50'}`} onClick={() => setSelectedRef(rIdx)} onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[討論 Reference] ${ref.name}${ref.note ? `
-備注：${ref.note}` : ""}` }]); callAgent(`請分析 Reference「${ref.name}」的視覺特徵與對當前 Artwork 的參考價值。${ref.note ? `備注：${ref.note}` : ""}`) }}>
-                                <div className="w-20 h-14 bg-muted overflow-hidden relative">
-                                  <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />
-                                  {ref.category && <span className={`absolute top-0.5 left-0.5 text-[7px] font-semibold px-1 py-0 rounded-full shadow-sm leading-tight ${CATEGORY_COLOR[ref.category] ?? "bg-white/80 text-gray-800"}`}>{ref.category}</span>}
-                                  {ref.importance && <span className={`absolute top-0.5 right-0.5 text-[7px] font-semibold px-1 py-0 rounded-full shadow-sm border leading-tight ${IMPORTANCE_COLOR[ref.importance] ?? "bg-white/80 text-gray-700 border-gray-300"}`}>{ref.importance}</span>}
-                                  {ref.note && <button className="absolute bottom-0.5 left-0.5 flex items-center gap-0.5 bg-black/60 hover:bg-black/80 text-white text-[7px] px-1 py-0 rounded-full leading-tight" onClick={e => { e.stopPropagation(); setNoteDialogRef({ name: ref.name, note: ref.note!, preview: ref.image, category: ref.category, importance: ref.importance }) }}><FileText className="w-1.5 h-1.5" />備注</button>}
-                                </div>
-                                <div className="px-1.5 py-0.5 bg-card"><p className="text-[9px] font-medium truncate">{ref.name}</p></div>
-                              </div>
-                            ))}
-                          </div>
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      </div>
-                    )}
+                    
 
                     {/* Canvas 3-panel */}
                     <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -1395,10 +1488,10 @@ export default function QAPage() {
                           {/* Reference: img + canvas overlay, same as artwork */}
                           <div className="flex-1 relative overflow-hidden" onWheel={handleWheel(setRefZoom)}>
                             <div className="absolute inset-0 flex items-center justify-center">
-                              {currentRef?.image ? (
+                              {resolvedRefImage ? (
                                 <div ref={refCanvasContainerRef} className="relative" style={{transform:`scale(${refZoom/100})`,transformOrigin:"center center"}} onMouseEnter={() => setActivePanel("ref")} onMouseLeave={() => setActivePanel("work")}>
                                   <img
-                                    src={currentRef.image} alt="Reference" crossOrigin="anonymous"
+                                    src={resolvedRefImage} alt="Reference" crossOrigin="anonymous"
                                     style={{display:"block", maxWidth:"100%", maxHeight:"100%"}}
                                     onLoad={e => { const img=e.currentTarget; const canvas=refCanvasRef.current; if(canvas){canvas.width=img.naturalWidth;canvas.height=img.naturalHeight}; redrawRefCanvas() }}
                                   />
@@ -1455,133 +1548,89 @@ export default function QAPage() {
                             <Badge className="absolute top-2 right-2 bg-amber-500 text-[10px] h-5">Ref</Badge>
                             <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap">Ctrl/⌘ + 滾輪縮放</p>
                           </div>
-                        </div>
+                        </div>{/* end flex-1 flex min-h-0 Work+Ref */}
+                      </div>{/* end canvas-center */}
 
+                      {/* Right sidebar: 註解 + Labels + Specs */}
+                      <div className="w-44 border-l flex flex-col shrink-0 bg-card overflow-hidden">
+                        <div className="flex items-center gap-1.5 px-2 py-1 border-b shrink-0">
+                          <Tag className="w-3 h-3 text-teal-600"/>
+                          <span className="text-[10px] font-semibold">註解 · Labels · Specs</span>
+                          {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
+                        </div>
+                        <ScrollArea className="flex-1 min-h-0">
+                          <div className="divide-y">
+                            {/* 新增註解 */}
+                            <div className="px-2 py-1.5">
+                              <h4 className="text-[10px] font-semibold mb-1">新增註解</h4>
+                              {suggestedAnnotations.length > 0 && (
+                                <div className="flex flex-wrap gap-0.5 mb-1">
+                                  {suggestedAnnotations.map((s, i) => (
+                                    <button key={i} type="button"
+                                      className="text-[8px] px-1 py-0.5 rounded border border-teal-500/40 text-teal-700 bg-teal-500/5 hover:bg-teal-500/15 transition-colors text-left w-full"
+                                      onClick={() => { setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:s,time:"剛剛",ai:true}]); setSuggestedAnnotations(p=>p.filter((_,j)=>j!==i)) }}
+                                    >{s}</button>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex gap-1 mb-1">
+                                <Input placeholder="輸入導演註解..." value={newAnnotationText} onChange={e=>setNewAnnotationText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/>
+                                <Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={() => {if(newAnnotationText.trim()){setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:newAnnotationText,time:"剛剛"}]);setNewAnnotationText("")}}}><Plus className="w-2.5 h-2.5"/></Button>
+                              </div>
+                              <div className="space-y-0.5">{annotations.map(ann=><div key={ann.id} className="flex items-start gap-1 min-w-0"><Tag className="w-2 h-2 text-teal-600 mt-0.5 shrink-0"/><span className="text-[8px] break-words leading-tight">{ann.text}</span></div>)}</div>
+                            </div>
+                            {/* Labels */}
+                            <div className="px-2 py-1.5">
+                              <div className="flex items-center gap-1 mb-1"><Tag className="w-2.5 h-2.5"/><h4 className="text-[10px] font-semibold">Labels</h4></div>
+                              {suggestedLabels.length > 0 && (
+                                <div className="flex flex-wrap gap-0.5 mb-1">
+                                  {suggestedLabels.map((s, i) => (
+                                    <button key={i} type="button"
+                                      className="text-[8px] px-1 py-0.5 rounded border border-amber-500/40 text-amber-700 bg-amber-500/5 hover:bg-amber-500/15 transition-colors"
+                                      onClick={() => { setLabels(p => p.includes(s) ? p : [...p, s]); setSuggestedLabels(p => p.filter((_,j) => j !== i)) }}
+                                    >{s}</button>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex flex-wrap gap-0.5 mb-1">{labels.map((label,i)=><Badge key={i} variant="outline" className="text-[8px] gap-0.5 h-3.5">{label}<button type="button" onClick={()=>setLabels(p=>p.filter((_,j)=>j!==i))} className="ml-0.5 hover:text-red-500"><X className="w-1.5 h-1.5"/></button></Badge>)}</div>
+                              <div className="flex gap-1"><Input placeholder="新增 Label..." value={newLabel} onChange={e=>setNewLabel(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newLabel.trim()){setLabels(p=>[...p,newLabel]);setNewLabel("")}}}><Plus className="w-2 h-2"/></Button></div>
+                            </div>
+                            {/* Specs */}
+                            <div className="px-2 py-1.5">
+                              <div className="flex items-center gap-1 mb-1"><FileCheck className="w-2.5 h-2.5"/><h4 className="text-[10px] font-semibold">Specs</h4></div>
+                              {suggestedSpecs.length > 0 && (
+                                <div className="flex flex-wrap gap-0.5 mb-1">
+                                  {suggestedSpecs.map((s, i) => (
+                                    <button key={i} type="button"
+                                      className="text-[8px] px-1 py-0.5 rounded border border-violet-500/40 text-violet-700 bg-violet-500/5 hover:bg-violet-500/15 transition-colors text-left w-full"
+                                      onClick={() => { setInlineSpecs(p=>[...p,s]); setSuggestedSpecs(p=>p.filter((_,j)=>j!==i)) }}
+                                    >{s}</button>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="space-y-0.5 mb-1">{inlineSpecs.map((spec,i)=><div key={i} className="flex items-start justify-between gap-1"><div className="flex items-start gap-1 min-w-0"><CheckCircle2 className="w-2 h-2 text-teal-500 mt-0.5 shrink-0"/><span className="text-[8px] break-words">{spec}</span></div><button type="button" onClick={()=>setInlineSpecs(p=>p.filter((_,j)=>j!==i))} className="text-muted-foreground hover:text-red-500 shrink-0"><X className="w-2 h-2"/></button></div>)}</div>
+                              <div className="flex gap-1"><Input placeholder="新增 Spec..." value={newSpecText} onChange={e=>setNewSpecText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newSpecText.trim()){setInlineSpecs(p=>[...p,newSpecText]);setNewSpecText("")}}}><Plus className="w-2 h-2"/></Button></div>
+                            </div>
+                            {/* Submit */}
+                            <div className="px-2 py-1.5 bg-teal-500/5">
+                              <Button size="sm" className="w-full h-7 text-[10px] gap-1" onClick={() => {
+                                const summary = [`[Canvas Review Submit]`,`文字註解 (${annotations.length}): ${annotations.map(a=>a.text).join("; ")}`,`Labels: ${labels.join(", ")}`,`Specs: ${inlineSpecs.join("; ")}`,`畫筆標記: ${canvasAnnotations.filter(a=>a.type==="brush").length} 筆`,`圈選/框選: ${canvasAnnotations.filter(a=>a.type==="circle"||a.type==="rect").length} 個`].filter(Boolean).join("\n")
+                                setChatMessages(p=>[...p,{role:"user",content:summary}])
+                                callAgent(summary)
+                              }}><Send className="w-3 h-3"/>Submit to Agent</Button>
+                            </div>
+                          </div>
+                        </ScrollArea>
                       </div>
 
-                      {/* Feedback Panel */}
-                      {showFeedbackPanel && (
-                        <div className="w-56 border-l flex flex-col shrink-0 bg-card overflow-hidden">
-                          <div className="flex items-center justify-between px-2 py-1 border-b shrink-0">
-                            <div className="flex items-center gap-1"><MessageSquare className="w-3 h-3 text-teal-600" /><span className="text-[10px] font-semibold">回饋清單</span><Badge variant="secondary" className="text-[8px] h-3.5">{feedbackItems.filter(f=>!f.addressed).length} 待處理</Badge></div>
-                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setShowFeedbackPanel(false)}><X className="w-3 h-3" /></Button>
-                          </div>
-                          <div className="flex items-center gap-1 px-2 py-1 border-b bg-muted/20 shrink-0">
-                            <Bot className="w-3 h-3 text-teal-600" /><span className="text-[9px] font-semibold">AI 分析結果</span>
-                            <Badge variant="destructive" className="text-[7px] h-3 px-0.5">{feedbackItems.filter(f=>f.priority==="P0").length} High</Badge>
-                            <Badge className="text-[7px] h-3 px-0.5 bg-amber-500">{feedbackItems.filter(f=>f.priority==="P1").length} Med</Badge>
-                            <Badge variant="secondary" className="text-[7px] h-3 px-0.5">{feedbackItems.filter(f=>f.priority==="P2").length} Low</Badge>
-                          </div>
-                          <ScrollArea className="flex-1 min-h-0">
-                            <div className="p-1.5 space-y-1.5">
-                              {sortedFeedback.map(item => {
-                                const priorityColors = {P0:"border-red-500/30 bg-red-500/5",P1:"border-amber-500/30 bg-amber-500/5",P2:"border-green-500/30 bg-green-500/5"}
-                                const priorityIcon = item.priority==="P0"?<AlertCircle className="w-2.5 h-2.5 text-red-500"/>:item.priority==="P1"?<AlertTriangle className="w-2.5 h-2.5 text-amber-500"/>:<CheckCircle2 className="w-2.5 h-2.5 text-green-500"/>
-                                return (
-                                  <div key={item.id} className={`p-1.5 rounded border ${priorityColors[item.priority as keyof typeof priorityColors]||"border-border"} ${item.addressed?'opacity-40':''}`}>
-                                    <div className="flex items-start gap-1 mb-0.5">
-                                      {priorityIcon}
-                                      <Badge variant="outline" className="text-[7px] h-3 px-0.5 shrink-0">{item.priority}</Badge>
-                                      {item.source==="AI"&&<Badge variant="outline" className="text-[7px] h-3 px-0.5 bg-teal-500/10 text-teal-600 border-teal-500/30 gap-0.5"><Bot className="w-2 h-2"/>AI</Badge>}
-                                      <div className="flex-1"/>
-                                      <Button variant="ghost" size="sm" className="h-3.5 w-3.5 p-0 text-green-600" onClick={() => toggleAddressed(item.id)}><CheckCircle2 className="w-2.5 h-2.5"/></Button>
-                                      <Button variant="ghost" size="sm" className="h-3.5 w-3.5 p-0 text-red-500" onClick={() => setFeedbackItems(p=>p.filter(f=>f.id!==item.id))}><X className="w-2.5 h-2.5"/></Button>
-                                    </div>
-                                    <p className="text-[9px] leading-relaxed">{item.text}</p>
-                                    {item.aiDraft&&<div className="p-1 mt-1 rounded bg-teal-500/10 border border-teal-500/20"><div className="flex items-center gap-0.5 mb-0.5"><Sparkles className="w-2 h-2 text-teal-600"/><span className="text-[7px] font-semibold text-teal-700">AI 潤稿版本</span></div><p className="text-[8px] text-teal-800 leading-relaxed">{item.aiDraft}</p></div>}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </ScrollArea>
-                          <div className="p-1.5 border-t shrink-0">
-                            <div className="flex gap-1">
-                              <Input placeholder="新增回饋..." value={newFeedbackText} onChange={e=>setNewFeedbackText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-6 flex-1"/>
-                              <Button size="sm" className="h-6 w-6 p-0 shrink-0" onClick={() => {if(newFeedbackText.trim()){setFeedbackItems(p=>[...p,{id:`dir-${Date.now()}`,text:newFeedbackText,source:"Supervisor",priority:newFeedbackPriority,supplement:"",addressed:false}]);setNewFeedbackText("")}}}><Plus className="w-3 h-3"/></Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      </div>{/* end canvas 3-panel */}
 
-                    {/* Bottom: Annotations + Labels + Specs */}
-                    <div className="border-t shrink-0 overflow-hidden" style={{maxHeight:'220px'}}>
-                      <ScrollArea className="h-full">
-                        <div className="divide-y">
-                          <div className="px-3 py-1">
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <h4 className="text-[10px] font-semibold">新增註解</h4>
-                              {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
-                            </div>
-                            {suggestedAnnotations.length > 0 && (
-                              <div className="flex flex-wrap gap-0.5 mb-1">
-                                {suggestedAnnotations.map((s, i) => (
-                                  <button key={i} type="button"
-                                    className="text-[8px] px-1.5 py-0.5 rounded-full border border-teal-500/40 text-teal-700 bg-teal-500/5 hover:bg-teal-500/15 transition-colors text-left"
-                                    onClick={() => { setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:s,time:"剛剛",ai:true}]); setSuggestedAnnotations(p=>p.filter((_,j)=>j!==i)) }}
-                                  >{s}</button>
-                                ))}
-                              </div>
-                            )}
-                            <div className="flex gap-1 mb-0.5">
-                              <Input placeholder="輸入導演註解..." value={newAnnotationText} onChange={e=>setNewAnnotationText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-5"/>
-                              <Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={() => {if(newAnnotationText.trim()){setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:newAnnotationText,time:"剛剛"}]);setNewAnnotationText("")}}}><Plus className="w-2.5 h-2.5"/></Button>
-                            </div>
-                            {annotations.length>0&&<div className="space-y-0">{annotations.map(ann=><div key={ann.id} className="flex items-center justify-between"><div className="flex items-center gap-1"><Tag className="w-2 h-2 text-teal-600"/>{(ann as any).ai&&<Bot className="w-2 h-2 text-teal-500"/>}<span className="text-[8px]">{ann.text}</span></div><span className="text-[7px] text-muted-foreground">{ann.time}</span></div>)}</div>}
-                          </div>
-                          <div className="px-3 py-1">
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <Tag className="w-2.5 h-2.5"/>
-                              <h4 className="text-[10px] font-semibold">Labels</h4>
-                              {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
-                            </div>
-                            {suggestedLabels.length > 0 && (
-                              <div className="flex flex-wrap gap-0.5 mb-1">
-                                {suggestedLabels.map((s, i) => (
-                                  <button key={i} type="button"
-                                    className="text-[8px] px-1.5 py-0.5 rounded-full border border-amber-500/40 text-amber-700 bg-amber-500/5 hover:bg-amber-500/15 transition-colors"
-                                    onClick={() => { setLabels(p => p.includes(s) ? p : [...p, s]); setSuggestedLabels(p => p.filter((_,j) => j !== i)) }}
-                                  >{s}</button>
-                                ))}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1 flex-wrap mb-0.5">{labels.map((label,i)=><Badge key={i} variant="outline" className="text-[8px] gap-0.5 h-3.5">{label}<button type="button" onClick={()=>setLabels(p=>p.filter((_,j)=>j!==i))} className="ml-0.5 hover:text-red-500"><X className="w-1.5 h-1.5"/></button></Badge>)}</div>
-                            <div className="flex gap-1"><Input placeholder="新增 Label..." value={newLabel} onChange={e=>setNewLabel(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newLabel.trim()){setLabels(p=>[...p,newLabel]);setNewLabel("")}}}><Plus className="w-2 h-2"/></Button></div>
-                          </div>
-                          <div className="px-3 py-1">
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <FileCheck className="w-2.5 h-2.5"/>
-                              <h4 className="text-[10px] font-semibold">Specs</h4>
-                              {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
-                            </div>
-                            {suggestedSpecs.length > 0 && (
-                              <div className="flex flex-wrap gap-0.5 mb-1">
-                                {suggestedSpecs.map((s, i) => (
-                                  <button key={i} type="button"
-                                    className="text-[8px] px-1.5 py-0.5 rounded-full border border-violet-500/40 text-violet-700 bg-violet-500/5 hover:bg-violet-500/15 transition-colors text-left"
-                                    onClick={() => { setInlineSpecs(p=>[...p,s]); setSuggestedSpecs(p=>p.filter((_,j)=>j!==i)) }}
-                                  >{s}</button>
-                                ))}
-                              </div>
-                            )}
-                            {inlineSpecs.length>0&&<div className="space-y-0 mb-0.5">{inlineSpecs.map((spec,i)=><div key={i} className="flex items-center justify-between"><div className="flex items-center gap-1"><CheckCircle2 className="w-2 h-2 text-teal-500"/><span className="text-[8px]">{spec}</span></div><button type="button" onClick={()=>setInlineSpecs(p=>p.filter((_,j)=>j!==i))} className="text-muted-foreground hover:text-red-500"><X className="w-2 h-2"/></button></div>)}</div>}
-                            <div className="flex gap-1"><Input placeholder="新增 Spec..." value={newSpecText} onChange={e=>setNewSpecText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[10px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newSpecText.trim()){setInlineSpecs(p=>[...p,newSpecText]);setNewSpecText("")}}}><Plus className="w-2 h-2"/></Button></div>
-                          </div>
-                          <div className="px-3 py-1.5 border-t bg-teal-500/5">
-                            <Button size="sm" className="w-full h-7 text-xs gap-1" onClick={() => {
-                              const summary = [`[Canvas Review Submit]`,`文字註解 (${annotations.length}): ${annotations.map(a=>a.text).join("; ")}`,`Labels: ${labels.join(", ")}`,`Specs: ${inlineSpecs.join("; ")}`,`畫筆標記: ${canvasAnnotations.filter(a=>a.type==="brush").length} 筆`,`圈選/框選: ${canvasAnnotations.filter(a=>a.type==="circle"||a.type==="rect").length} 個`].filter(Boolean).join("\n")
-                              setChatMessages(p=>[...p,{role:"user",content:summary}])
-                              callAgent(summary)
-                            }}><Send className="w-3 h-3"/>Submit All to Agent</Button>
-                          </div>
-                        </div>
-                      </ScrollArea>
-                    </div>
+
                   </CardContent>
                 </Card>
 
                 {/* Scrollable bottom section */}
-                <div className="shrink-0 flex flex-col gap-1">
+                <div className="flex flex-col gap-1" style={{maxHeight:"42%",overflowY:"auto",flexShrink:0}}>
                 {/* Multi-Agent Metrics */}
                 <Collapsible open={showMetrics} onOpenChange={setShowMetrics}>
                   <Card className="shrink-0 mt-1">
@@ -1635,9 +1684,9 @@ export default function QAPage() {
                             <CardTitle className="text-xs">Artist Creation Intentions</CardTitle>
                             <Badge variant="outline" className="text-[8px] h-3.5 bg-indigo-500/10 text-indigo-600 border-indigo-500/30">C03</Badge>
                             {/* Live badge showing how many notes are filled */}
-                            {[artistNote, reflectionNote].filter(Boolean).length > 0 && (
+                            {reflectionNote && (
                               <Badge variant="outline" className="text-[8px] h-3.5 bg-green-500/10 text-green-600 border-green-500/30">
-                                {[artistNote, reflectionNote].filter(Boolean).length}/2
+                                {reflectionNote ? 1 : 0}
                               </Badge>
                             )}
                           </div>
@@ -1646,61 +1695,31 @@ export default function QAPage() {
                       </CardHeader>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <CardContent className="pt-0 pb-2 px-3 space-y-2">
-
-                        {/* 理解筆記 — from artist-reflection page */}
-                        <div>
-                          <div className="flex items-center gap-1 mb-1">
-                            <User className="w-2.5 h-2.5 text-indigo-500"/>
-                            <span className="text-[9px] font-semibold text-indigo-700">理解筆記</span>
-                            <span className="text-[8px] text-muted-foreground">· Artist Reflection</span>
-                            {artistNote && (
-                              <button
-                                className="ml-auto text-[8px] text-indigo-500 hover:text-indigo-700 transition-colors"
-                                onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[理解筆記] ${artistNote}` }]); callAgent(`Artist 的理解筆記如下，請結合當前作品給出具體 VFX 改進建議：\n${artistNote}`) }}
-                              >
-                                發送給 AI →
-                              </button>
-                            )}
-                          </div>
-                          <div className={`p-1.5 rounded border text-[9px] leading-relaxed whitespace-pre-line min-h-[32px] ${artistNote ? "bg-background" : "bg-muted/30 text-muted-foreground italic"}`}>
-                            {artistNote || "尚無理解筆記（來自 Artist Reflection 頁面）"}
-                          </div>
-                        </div>
-
-                        {/* 反思筆記 — from upload-analyze page */}
-                        <div>
-                          <div className="flex items-center gap-1 mb-1">
-                            <Sparkles className="w-2.5 h-2.5 text-violet-500"/>
-                            <span className="text-[9px] font-semibold text-violet-700">創作反思筆記</span>
-                            <span className="text-[8px] text-muted-foreground">· Upload Analyze</span>
-                            {reflectionNote && (
-                              <button
-                                className="ml-auto text-[8px] text-violet-500 hover:text-violet-700 transition-colors"
-                                onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[創作反思] ${reflectionNote}` }]); callAgent(`Artist 的創作反思如下，請結合當前作品與 Reference 給出具體改進建議：\n${reflectionNote}`) }}
-                              >
-                                發送給 AI →
-                              </button>
-                            )}
-                          </div>
-                          <div className={`p-1.5 rounded border text-[9px] leading-relaxed whitespace-pre-line min-h-[32px] ${reflectionNote ? "bg-background" : "bg-muted/30 text-muted-foreground italic"}`}>
-                            {reflectionNote || "尚無創作反思筆記（來自 Upload Analyze 頁面）"}
-                          </div>
-                        </div>
-
-                        {/* Supervisor Spec */}
-                        {supervisorSpec && (
-                          <div>
-                            <div className="flex items-center gap-1 mb-1">
-                              <FileCheck className="w-2.5 h-2.5 text-indigo-600"/>
-                              <span className="text-[9px] font-semibold text-indigo-700">Supervisor Spec</span>
+                      <CardContent className="pt-0 pb-2 px-3">
+                        {/* 創作反思筆記 scrolling history — from upload-analyze page (c04_notes) */}
+                        {!hydrated || notesHistory.length === 0 ? (
+                          <p className="text-[10px] text-muted-foreground py-1">尚無創作反思筆記（來自 Upload Analyze 頁面）</p>
+                        ) : (
+                          <ScrollArea className="max-h-48">
+                            <div className="space-y-1.5 pr-1">
+                              {notesHistory.map((note, i) => (
+                                <div key={i} className="p-1.5 rounded border bg-background">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <div className="flex items-center gap-1">
+                                      <Sparkles className="w-2.5 h-2.5 text-violet-500"/>
+                                      <span className="text-[8px] font-semibold text-violet-700">#{notesHistory.length - i}</span>
+                                    </div>
+                                    <button className="text-[8px] text-violet-500 hover:text-violet-700"
+                                      onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[創作反思 #${notesHistory.length - i}] ${note}` }]); callAgent(`Artist 的創作反思：
+${note}`) }}>
+                                      發送 AI →
+                                    </button>
+                                  </div>
+                                  <p className="text-[9px] leading-relaxed whitespace-pre-line">{note}</p>
+                                </div>
+                              ))}
                             </div>
-                            <div className="p-1.5 rounded bg-background border text-[9px] leading-relaxed">{supervisorSpec}</div>
-                          </div>
-                        )}
-
-                        {!artistNote && !reflectionNote && !supervisorSpec && (
-                          <p className="text-[10px] text-muted-foreground py-1">尚無任何 Artist 筆記或 Spec</p>
+                          </ScrollArea>
                         )}
                       </CardContent>
                     </CollapsibleContent>

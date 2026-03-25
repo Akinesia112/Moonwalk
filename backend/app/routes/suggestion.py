@@ -80,14 +80,47 @@ async def _call_claude(system: str, msgs: list, max_tokens: int = 800) -> str:
         # Fallback to OpenAI
         try:
             client_oai = get_openai()
+            # Strip image blocks for OpenAI fallback (only pass text)
+            text_msgs = []
+            for m in msgs:
+                if isinstance(m.get("content"), list):
+                    text_parts = " ".join(p["text"] for p in m["content"] if p.get("type") == "text")
+                    text_msgs.append({"role": m["role"], "content": text_parts})
+                else:
+                    text_msgs.append(m)
             resp = await client_oai.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[{"role": "system", "content": system}] + msgs,
+                messages=[{"role": "system", "content": system}] + text_msgs,
                 temperature=0.7, max_tokens=max_tokens,
             )
             return resp.choices[0].message.content.strip()
         except Exception as e2:
             return f"AI 回應失敗：{e2}"
+
+
+def _build_ref_image_blocks(refs: list) -> list:
+    """Convert all_refs_context previews (base64) into Claude vision content blocks."""
+    blocks = []
+    for r in refs or []:
+        preview = r.get("preview", "")
+        if not preview or not preview.startswith("data:image"):
+            continue
+        try:
+            header, b64data = preview.split(",", 1)
+            # Extract media type: data:image/jpeg;base64 → image/jpeg
+            media_type = header.split(":")[1].split(";")[0]
+            if media_type not in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+                media_type = "image/jpeg"
+            title = r.get("title", "untitled")
+            cat = r.get("category", "")
+            note = r.get("note", "")
+            label = "Main" if r.get("is_pinned") or r.get("priority") == "Main" else "Secondary"
+            note_part = (" | note: " + note) if note else ""
+            blocks.append({"type": "text", "text": "[圖片：" + title + " | " + cat + " | " + label + note_part + "]"})
+            blocks.append({"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64data}})
+        except Exception:
+            continue
+    return blocks
 
 
 # ── Core debate engine ────────────────────────────────────────────
@@ -232,23 +265,80 @@ async def chat_brief(req: BriefChatRequest):
 
 @router.post("/chat/reference")
 async def chat_reference(req: BriefChatRequest):
-    reply = await debate_and_synthesize(
-        context=_context_str(req),
-        user_message=req.message,
-        history=_history_msgs(req),
-        page_focus=FOCUS["reference"],
-    )
+    """Reference analysis with Claude vision — Claude sees the actual images."""
+    image_blocks = _build_ref_image_blocks(req.all_refs_context or [])
+
+    if image_blocks:
+        # Build text metadata list for context
+        ref_meta = []
+        for i, r in enumerate(req.all_refs_context or []):
+            title = r.get("title", "untitled")
+            cat = r.get("category", "")
+            note = r.get("note", "").strip()
+            label = "Main" if r.get("is_pinned") or r.get("priority") == "Main" else "Secondary"
+            clicked = " ← 用戶正在詢問此圖" if r.get("id") == req.clicked_ref_id else ""
+            ref_meta.append(f"[{i+1}] {title} | {cat} | {label}{f' | note: {note}' if note else ''}{clicked}")
+        meta_text = "Reference 清單：\n" + "\n".join(ref_meta)
+
+        # Extra context (brief etc)
+        extra = _context_str(req)
+
+        sys_vision = (
+            "你是資深 VFX 顧問，你能直接看到所有 reference 圖片。"
+            "請根據圖片的實際視覺內容（光影方向、色調、構圖、材質等）給出具體分析。"
+            "絕對不要說「我無法看到圖片」，你已經看到圖片了，直接描述你看到的內容。"
+            "輸出純文字，不使用 ** 或 --- markdown，用繁體中文。"
+        )
+
+        # Build multimodal user message: images + text question
+        user_content = image_blocks + [
+            {"type": "text", "text": meta_text + "\n\n" + extra + "\n\n用戶問題：" + req.message}
+        ]
+
+        # Use Claude vision directly (no debate, images can't go through OpenAI/Gemini here)
+        reply = await _call_claude(sys_vision, [{"role": "user", "content": user_content}], max_tokens=1000)
+    else:
+        # No images — fall back to text debate
+        reply = await debate_and_synthesize(
+            context=_context_str(req),
+            user_message=req.message,
+            history=_history_msgs(req),
+            page_focus=FOCUS["reference"],
+        )
     return {"response": reply, "reply": reply}
 
 
 @router.post("/chat/reflection")
 async def chat_reflection(req: BriefChatRequest):
-    reply = await debate_and_synthesize(
-        context=_context_str(req),
-        user_message=req.message,
-        history=_history_msgs(req),
-        page_focus=FOCUS["reflection"],
-    )
+    """Artist reflection — uses Claude vision when ref images are available."""
+    image_blocks = _build_ref_image_blocks(req.all_refs_context or [])
+    if image_blocks:
+        ref_meta = []
+        for i, r in enumerate(req.all_refs_context or []):
+            title = r.get("title", "untitled")
+            cat = r.get("category", "")
+            note = r.get("note", "").strip()
+            label = "Main" if r.get("is_pinned") or r.get("priority") == "Main" else "Secondary"
+            ref_meta.append(f"[{i+1}] {title} | {cat} | {label}" + (f" | note: {note}" if note else ""))
+        meta_text = "Reference 清單：\n" + "\n".join(ref_meta)
+        extra = _context_str(req)
+        sys_vision = (
+            "你是 Creative Exploration Agent，協助 VFX Artist 深化創意思考。"
+            "你能直接看到所有 reference 圖片，請根據圖片的實際視覺內容給出具體分析。"
+            "絕對不要說「我無法看到圖片」，直接描述你看到的內容並給出建議。"
+            "輸出純文字，不使用 ** 或 --- markdown，用繁體中文。"
+        )
+        user_content = image_blocks + [
+            {"type": "text", "text": meta_text + "\n\n" + extra + "\n\n用戶說：" + req.message}
+        ]
+        reply = await _call_claude(sys_vision, _history_msgs(req) + [{"role": "user", "content": user_content}], max_tokens=1000)
+    else:
+        reply = await debate_and_synthesize(
+            context=_context_str(req),
+            user_message=req.message,
+            history=_history_msgs(req),
+            page_focus=FOCUS["reflection"],
+        )
     return {"response": reply, "reply": reply}
 
 

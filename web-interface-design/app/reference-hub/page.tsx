@@ -412,6 +412,7 @@ function ReferenceHubContent() {
           all_refs_context: refs.map(r => ({
             id: r.id, title: r.title, category: r.category,
             note: r.note, is_pinned: r.is_pinned, priority: r.priority || (r.is_pinned ? "Main" : "Secondary"),
+            preview: r.localPreview || r.thumbnail_url || "",
           })),
           history: chatMessages.slice(-4).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         }),
@@ -465,6 +466,7 @@ function ReferenceHubContent() {
           all_refs_context: refs.map(r => ({
             id: r.id, title: r.title, category: r.category,
             note: r.note, is_pinned: r.is_pinned, priority: r.priority,
+            preview: r.localPreview || r.thumbnail_url || "",
           })),
           history: newHistory.slice(-8).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         }),

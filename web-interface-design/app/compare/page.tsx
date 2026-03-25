@@ -42,6 +42,34 @@ type DeltaItem = { id: string; type: string; severity: string; detail: string }
 type ArtItem = { id: string; name: string; image: string; category?: string; importance?: string; usage?: string; note?: string; artworkId?: string }
 type ChatMsg = { role: string; content: string }
 
+const COMPARE_METRICS: { id: string; name: string }[] = [
+  { id: "light", name: "光影" },
+  { id: "composition", name: "構圖" },
+  { id: "sketch", name: "草稿/線條" },
+  { id: "color", name: "色彩" },
+  { id: "style", name: "風格一致" },
+  { id: "percept", name: "感知品質" },
+  { id: "faithfulness", name: "Spec 忠實度" },
+  { id: "control", name: "可控性" },
+  { id: "robustness", name: "穩定性" },
+  { id: "efficiency", name: "效率" },
+  { id: "stability", name: "一致性" },
+]
+
+type MetricResult = {
+  id: string; name: string; score: number; disagreement: number
+  agentA: { name: string; score: number; opinion: string }
+  agentB: { name: string; score: number; opinion: string }
+  debate?: { positionA: string; positionB: string; conclusion: string }
+  status: "red" | "yellow" | "green"
+}
+
+function scoreToStatus(score: number, dis: number): "red" | "yellow" | "green" {
+  if (score < 0.45 || dis > 0.30) return "red"
+  if (score < 0.65) return "yellow"
+  return "green"
+}
+
 export default function ComparePage() {
   const [compareMode, setCompareMode] = useState("split")
   const [sliderValue, setSliderValue] = useState([50])
@@ -63,6 +91,10 @@ export default function ComparePage() {
   const [deltaAnalyzing, setDeltaAnalyzing] = useState(false)
   const [autoAnalyzing, setAutoAnalyzing] = useState(false)
   const [deltaListOpen, setDeltaListOpen] = useState(true)
+  const [metrics, setMetrics] = useState<MetricResult[]>([])
+  const [metricsLoading, setMetricsLoading] = useState(false)
+  const [metricsStatus, setMetricsStatus] = useState("")
+  const [expandedMetric, setExpandedMetric] = useState<string | null>(null)
   // Pre-computed debate results keyed by delta.id — shown instantly on double-click
   const [deltaDebateCache, setDeltaDebateCache] = useState<Record<string, string>>({})
   const [leftPanelMode, setLeftPanelMode] = useState<"expand" | "browse">("expand")
@@ -76,7 +108,7 @@ export default function ComparePage() {
   const leftVDragRef = useRef<{ startY: number; startH: number } | null>(null)
 
   // Horizontal resize (left/right panels)
-  const [leftW, setLeftW] = useState(500)
+  const [leftW, setLeftW] = useState(300)
   const [rightW, setRightW] = useState(700)
   const hDragRef = useRef<{ side: "left" | "right"; startX: number; startW: number } | null>(null)
 
@@ -218,7 +250,8 @@ export default function ComparePage() {
       }
     } catch {}
     try { const b = SS.get("kickoff_brief"); if (b) setBrief(JSON.parse(b)) } catch {}
-    try { const c = SS.get("compare_chat"); if (c) setChatMessages(JSON.parse(c)) } catch {}
+    try { const cv = SS.get("compare_chat"); if (cv) setChatMessages(JSON.parse(cv)) } catch {}
+    try { const mv = SS.get("compare_metrics"); if (mv) { const parsed = JSON.parse(mv); if (Array.isArray(parsed) && parsed.length > 0) setMetrics(parsed) } } catch {}
     try { const a = SS.get("compare_annotations"); if (a) setDeltaAnnotations(JSON.parse(a)) } catch {}
     try { const d = SS.get("compare_deltas"); if (d) { const parsed = JSON.parse(d); const isStale = parsed.every((x: any) => ["d1","d2","d3"].includes(x.id)); if (parsed.length > 0 && !isStale) setDeltas(parsed); else SS.set("compare_deltas","[]") } } catch {}
 
@@ -246,13 +279,19 @@ export default function ComparePage() {
   // Reset ref selection when artwork changes (different artwork = different ref set)
   useEffect(() => { setSelectedRef(0) }, [selectedArtwork])
 
+
+
   // Auto-analyze disabled — use "重新分析" button to trigger
   const autoAnalyzeRef = useRef<AbortController | null>(null)
 
   // Persist on every change — including initial hydrated values
   const [compareHydrated, setCompareHydrated] = useState(false)
+
+  // Auto-analyze disabled — user clicks 開始分析 / 重新分析 to trigger
+  const hasAutoAnalyzed = useRef(false)
   useEffect(() => { setCompareHydrated(true) }, [])
   useEffect(() => { if (compareHydrated) SS.set("compare_chat", JSON.stringify(chatMessages)) }, [chatMessages, compareHydrated])
+  useEffect(() => { if (compareHydrated && metrics.length > 0) SS.set("compare_metrics", JSON.stringify(metrics)) }, [metrics, compareHydrated])
   useEffect(() => { if (compareHydrated) SS.set("compare_deltas", JSON.stringify(deltas)) }, [deltas, compareHydrated])
   useEffect(() => { if (compareHydrated) SS.set("compare_annotations", JSON.stringify(deltaAnnotations)) }, [deltaAnnotations, compareHydrated])
   useEffect(() => { chatScrollRef.current?.scrollIntoView({ behavior: "smooth" }) }, [chatMessages, chatLoading])
@@ -404,75 +443,138 @@ export default function ComparePage() {
     setDeltaDialogLoading(false)
   }, [buildCtx, deltaDebateCache])
 
-  // ── Re-analyze (重新分析) — clears cache and re-runs all debates ─
+  // ── Re-analyze — streaming, same logic as upload-analyze ─────
   const handleAnalyzeDeltas = async () => {
     setDeltaAnalyzing(true)
-    setDeltaDebateCache({})
-    setChatMessages(p => [...p, { role: "user", content: "[重新差距分析]" }])
+    setMetricsLoading(true)
+    setMetrics([])
+    setMetricsStatus("準備分析...")
+
+    const thinkingSteps = [
+      "正在載入圖片與 Reference...",
+      "OpenAI 正在從技術面評估差異...",
+      "Gemini 正在從創意策略面分析...",
+      "Claude 正在直接比對兩張圖...",
+      "計算各項指標分數...",
+      "生成具體修正建議...",
+      "整理分析結果...",
+    ]
+    let stepIdx = 0
+    const thinkingMsgId = `thinking_${Date.now()}`
+    setChatMessages(p => [...p, { role: "user", content: "[重新差距分析]" }, { role: "ai", content: thinkingSteps[0], id: thinkingMsgId } as any])
+    const thinkingInterval = setInterval(() => {
+      stepIdx = Math.min(stepIdx + 1, thinkingSteps.length - 1)
+      const step = thinkingSteps[stepIdx]
+      setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { ...m, content: step } : m))
+      setMetricsStatus(step)
+    }, 3000)
+
     const art = artworkList[selectedArtwork]
     const ref = currentRefs[selectedRef]
-    if (!art || !ref) { setDeltaAnalyzing(false); return }
+    if (!art || !ref) {
+      clearInterval(thinkingInterval)
+      setDeltaAnalyzing(false); setMetricsLoading(false); return
+    }
+
+    // Get artwork base64
+    const artworkB64 = art.image?.startsWith("data:") ? art.image : ""
     const ctx = buildCtx()
-    const METRICS: [string, string][] = [
-      ["光影", "high"], ["構圖", "medium"], ["色彩", "medium"],
-      ["材質", "low"], ["景深", "low"], ["曝光", "high"], ["風格一致", "medium"],
-    ]
+
+    // Pre-render empty metric cards immediately — don't wait for backend
+    setMetrics(COMPARE_METRICS.map(m => ({
+      id: m.id, name: m.name, score: 0.5, disagreement: 0.05,
+      agentA: { name: m.id + "_A", score: 0.5, opinion: "" },
+      agentB: { name: m.id + "_B", score: 0.5, opinion: "" },
+      debate: { positionA: "", positionB: "", conclusion: "" },
+      status: "yellow" as const,
+    })))
+
     try {
-      // Step 1: fresh delta list
-      const res = await fetch(`${API}/suggestion/chat/compare`, {
+      const streamRes = await fetch(`${API}/combination/analyze/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_id: PROJECT_ID,
-          message: `重新逐一分析以下 7 個指標，找出 Artwork「${art.name}」與 Reference「${ref.name}」的具體差距。
-回傳 JSON，格式：{"metrics":[{"name":"光影","severity":"high|medium|low","gap":"具體差距描述 15-30字"},...]}
-只回傳 JSON。`,
-          context: ctx, history: [],
+          artwork_b64: artworkB64,
+          ref_b64: ref.image?.startsWith("data:") ? ref.image : "",
+          brief_context: ctx.brief_context || "",
+          hub_refs: ctx.hub_refs || "",
+          refs_context: `[對照Reference：${ref.name}${ref.note ? " | " + ref.note : ""}]`,
+          reflection_notes: "",
+          analyze_scope: ["all"],
         }),
       })
-      const data = await res.json()
-      const raw = (data.response || data.reply || "").replace(/\`\`\`json|\`\`\`/g, "").trim()
-      const match = raw.match(/\{[\s\S]*\}/)
-      let newDeltas = METRICS.map(([name, sev], i) => ({ id: `a${i}`, type: name, severity: sev, detail: `${name}：Debate 完成（雙擊查看）` }))
-      if (match) {
-        try {
-          const parsed = JSON.parse(match[0])
-          if (Array.isArray(parsed.metrics)) {
-            newDeltas = parsed.metrics.map((m: any, i: number) => ({ id: `a${i}`, type: m.name, severity: m.severity || "medium", detail: m.gap || `${m.name} 差距` }))
-          }
-        } catch {}
-      }
-      setDeltas(newDeltas)
-      setChatMessages(p => [...p, { role: "ai", content: "重新分析完成！\n" + newDeltas.map(d => "• " + d.type + "（" + (d.severity === "high" ? "高" : d.severity === "medium" ? "中" : "低") + "）：" + d.detail).join("\n") }])
+      if (!streamRes.ok || !streamRes.body) throw new Error("HTTP " + streamRes.status)
 
-      // Step 2: debate all in parallel
-      const debatePromises = newDeltas.map(delta =>
-        fetch(`${API}/suggestion/chat/compare`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            project_id: PROJECT_ID,
-            message: `深入分析「${delta.type}」指標差距：
-問題：${delta.detail}
-請給出：（1）差距根本原因分析 （2）Agent A 觀點（技術面）（3）Agent B 觀點（創意面）（4）Debate 結論 （5）2-3 個可立即操作的改進步驟。`,
-            context: ctx, history: [],
-          }),
-        })
-          .then(r => r.json())
-          .then(d => ({ id: delta.id, text: (d.response || d.reply || "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1").trim() }))
-          .catch(() => ({ id: delta.id, text: "" }))
-      )
-      const results = await Promise.allSettled(debatePromises)
-      const cache: Record<string, string> = {}
-      results.forEach(r => { if (r.status === "fulfilled" && r.value.text) cache[r.value.id] = r.value.text })
-      setDeltaDebateCache(cache)
-      SS.set("compare_delta_list", JSON.stringify(newDeltas.map(d => ({
-        id: d.id, metric: d.type, gap: d.detail, severity: d.severity, suggestion: cache[d.id] || "",
-      }))))
+      const reader = streamRes.body.getReader()
+      const decoder = new TextDecoder()
+      const streamMetrics: MetricResult[] = []
+      let buf = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split("\n\n")
+        buf = lines.pop() || ""
+        for (const line of lines) {
+          const chunk = line.trim()
+          if (!chunk.startsWith("data: ")) continue
+          try {
+            const evt = JSON.parse(chunk.slice(6))
+            if (evt.type === "status") {
+              setMetricsStatus(evt.message)
+              setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { ...m, content: evt.message } : m))
+            } else if (evt.type === "spec") {
+              setChatMessages(p => [...p, { role: "ai", content: `總體分析：\n${stripMd(evt.spec_summary || "")}` }])
+            } else if (evt.type === "metric") {
+              const g = evt.data
+              const aKey = Object.keys(g.per_agent || {}).find((k: string) => k.endsWith("_A")) || (evt.id + "_A")
+              const bKey = Object.keys(g.per_agent || {}).find((k: string) => k.endsWith("_B")) || (evt.id + "_B")
+              const m: MetricResult = {
+                id: evt.id,
+                name: COMPARE_METRICS.find(x => x.id === evt.id)?.name || evt.id,
+                score: g.score ?? 0.5,
+                disagreement: g.disagreement ?? 0,
+                agentA: { name: aKey, score: g.per_agent?.[aKey] ?? 0.5, opinion: g.opinion_A || "" },
+                agentB: { name: bKey, score: g.per_agent?.[bKey] ?? 0.5, opinion: g.opinion_B || "" },
+                debate: g.debate,
+                status: scoreToStatus(g.score ?? 0.5, g.disagreement ?? 0),
+              }
+              const idx = streamMetrics.findIndex(x => x.id === evt.id)
+              if (idx >= 0) streamMetrics[idx] = m; else streamMetrics.push(m)
+              setMetrics([...streamMetrics])
+
+              // Also update legacy deltas for chat/checkbox compatibility
+              const sev = m.status === "red" ? "high" : m.status === "yellow" ? "medium" : "low"
+              const detail = m.debate?.conclusion || m.agentA.opinion || m.name + " 分析完成"
+              setDeltas(prev => {
+                const updated = [...prev]
+                const di = updated.findIndex(d => d.type === m.name)
+                if (di >= 0) updated[di] = { ...updated[di], severity: sev, detail }
+                else updated.push({ id: evt.id, type: m.name, severity: sev, detail })
+                return updated
+              })
+            } else if (evt.type === "done") {
+              clearInterval(thinkingInterval)
+              setMetricsLoading(false)
+              setMetricsStatus("")
+              const red = streamMetrics.filter(m => m.status === "red").length
+              const yellow = streamMetrics.filter(m => m.status === "yellow").length
+              const green = streamMetrics.filter(m => m.status === "green").length
+              setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId
+                ? { role: "ai", content: `分析完成！❌ 需改進：${red} 項　⚠️ 需關注：${yellow} 項　✅ 良好：${green} 項` }
+                : m))
+            }
+          } catch {}
+        }
+      }
     } catch (err) {
+      clearInterval(thinkingInterval)
       setChatMessages(p => [...p, { role: "ai", content: `分析失敗：${err}` }])
     }
     setDeltaAnalyzing(false)
+    setMetricsLoading(false)
   }
 
   // ── Save annotation ───────────────────────────────────────────
@@ -973,13 +1075,24 @@ export default function ComparePage() {
                               </span>
                             )}
                           </CardTitle>
-                          <CardDescription className="text-xs">按「重新分析」開始比對 · 雙擊立即查看 Debate 結果</CardDescription>
+                          <div className="flex items-center gap-2 mt-1">
+                            {metrics.filter(m=>m.status==="red").length > 0 && <span className="text-[10px] text-red-500 flex items-center gap-0.5"><AlertCircle className="w-2.5 h-2.5"/>{metrics.filter(m=>m.status==="red").length}</span>}
+                            {metrics.filter(m=>m.status==="yellow").length > 0 && <span className="text-[10px] text-amber-500 flex items-center gap-0.5"><AlertCircle className="w-2.5 h-2.5"/>{metrics.filter(m=>m.status==="yellow").length}</span>}
+                            {metrics.filter(m=>m.status==="green").length > 0 && <span className="text-[10px] text-green-500 flex items-center gap-0.5"><CheckCircle2 className="w-2.5 h-2.5"/>{metrics.filter(m=>m.status==="green").length}</span>}
+                            {metrics.length === 0 && <CardDescription className="text-xs">選擇作品與 Reference 後按「開始分析」</CardDescription>}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline" className="gap-1.5 bg-transparent" onClick={e=>{e.stopPropagation();handleAnalyzeDeltas()}} disabled={deltaAnalyzing}>
+                        <Button size="sm"
+                          variant={metrics.length === 0 ? "default" : "outline"}
+                          className={`gap-1.5 ${metrics.length === 0 ? "" : "bg-transparent"}`}
+                          onClick={e=>{e.stopPropagation();handleAnalyzeDeltas()}}
+                          disabled={deltaAnalyzing || artworkList.length === 0 || currentRefs.length === 0}>
                           {deltaAnalyzing
                             ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />分析中</>
-                            : <><Sparkles className="w-3.5 h-3.5" />重新分析</>}
+                            : metrics.length === 0
+                              ? <><Sparkles className="w-3.5 h-3.5" />開始分析</>
+                              : <><Sparkles className="w-3.5 h-3.5" />重新分析</>}
                         </Button>
                         {deltaListOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </div>
@@ -987,110 +1100,98 @@ export default function ComparePage() {
                     </CardHeader>
                     {deltaListOpen && <CardContent className="flex-1 min-h-0 p-0">
                       <ScrollArea className="h-full">
-                        <div className="px-6 pb-4 space-y-3">
-                          {deltas.map(delta => (
-                            <div
-                              key={delta.id}
-                              className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50"
-                            >
-                              <Checkbox
-                                id={`delta-${delta.id}`}
-                                checked={checkedDeltas.includes(delta.id)}
-                                onCheckedChange={c => handleDeltaCheck(delta.id, c as boolean)}
-                                className="mt-1"
-                                onClick={e => e.stopPropagation()}
-                              />
-                              <div className="mt-0.5">
-                                {delta.severity === "high"
-                                  ? <AlertCircle className="w-4 h-4 text-red-400" />
-                                  : delta.severity === "medium"
-                                  ? <AlertCircle className="w-4 h-4 text-amber-400" />
-                                  : <CheckCircle2 className="w-4 h-4 text-green-400" />}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1 cursor-pointer" onDoubleClick={() => handleDeltaDblClick(delta)} title="雙擊查看詳細分析">
-                                  <Badge variant="outline" className="text-xs">{delta.type}</Badge>
-                                  <Badge
-                                    variant={delta.severity === "high" ? "destructive" : delta.severity === "medium" ? "default" : "secondary"}
-                                    className="text-xs"
-                                  >
-                                    {delta.severity === "high" ? "高" : delta.severity === "medium" ? "中" : "低"}
-                                  </Badge>
-                                  {deltaDebateCache[delta.id]
-                                    ? <span className="text-[9px] text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">✓ 雙擊查看</span>
-
-                                    : <span className="text-[9px] text-muted-foreground">(雙擊分析)</span>}
+                        <div className="px-3 pb-3 space-y-1.5">
+                          {/* Status line while loading */}
+                          {metricsLoading && metricsStatus && (
+                            <div className="flex items-center gap-2 text-xs text-teal-600 py-2 px-1">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                              <span>{metricsStatus}</span>
+                            </div>
+                          )}
+                          {/* Metric cards — same style as upload-analyze */}
+                          {metrics.map(m => {
+                            const bg = m.status === "red" ? "bg-red-500/8 border-red-500/20" : m.status === "yellow" ? "bg-amber-500/8 border-amber-500/20" : "bg-green-500/8 border-green-500/20"
+                            const icon = m.status === "red" ? <AlertCircle className="w-3.5 h-3.5 text-red-500" /> : m.status === "yellow" ? <AlertCircle className="w-3.5 h-3.5 text-amber-500" /> : <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                            const isExpanded = expandedMetric === m.id
+                            return (
+                              <div key={m.id} className={`rounded-lg border p-2 cursor-pointer hover:opacity-80 transition-opacity ${bg}`}
+                                onClick={() => setExpandedMetric(isExpanded ? null : m.id)}>
+                                <div className="flex items-center gap-2">
+                                  <Checkbox
+                                    checked={checkedDeltas.includes(m.id)}
+                                    onCheckedChange={v => handleDeltaCheck(m.id, v as boolean)}
+                                    onClick={e => e.stopPropagation()}
+                                    className="w-3.5 h-3.5 shrink-0"
+                                  />
+                                  {icon}
+                                  <span className="text-xs font-medium flex-1">{m.name}</span>
+                                  
+                                  <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                                 </div>
-                                {/* Quick conclusion from debate cache — shown inline above detail */}
-                                {deltaDebateCache[delta.id] && (() => {
-                                  // Extract first substantive paragraph as the quick summary
-                                  const lines = deltaDebateCache[delta.id].split("\n").map((l: string) => l.trim()).filter(Boolean)
-                                  const summary = lines[0] || ""
-                                  return summary ? (
-                                    <div className="mb-1.5 px-2 py-1.5 rounded-md bg-teal-500/8 border border-teal-500/20 flex items-start gap-1.5">
-                                      <Sparkles className="w-3 h-3 text-teal-500 mt-0.5 shrink-0" />
-                                      <p className="text-[11px] text-teal-800 dark:text-teal-300 leading-relaxed">{summary}</p>
-                                    </div>
-                                  ) : null
-                                })()}
-                                {autoAnalyzing && !deltaDebateCache[delta.id] && (
-                                  <div className="mb-1.5 px-2 py-1.5 rounded-md bg-muted border border-border flex items-center gap-1.5">
-                                    <Loader2 className="w-3 h-3 text-teal-500 animate-spin shrink-0" />
-                                    <p className="text-[11px] text-muted-foreground">Agents 分析中…</p>
-                                  </div>
+                                {/* Preview line */}
+                                {!isExpanded && (
+                                  <p className="text-[10px] text-muted-foreground mt-1 ml-9 line-clamp-2">
+                                    {m.debate?.conclusion && m.debate.conclusion !== "分析中..."
+                                      ? m.debate.conclusion
+                                      : m.agentA.opinion && m.agentA.opinion !== "分析中..."
+                                        ? m.agentA.opinion
+                                        : metricsLoading ? metricsStatus || "分析中..." : ""}
+                                  </p>
                                 )}
-                                <p className="text-sm text-muted-foreground">{delta.detail}</p>
-                                <div className="mt-2 pt-2 border-t border-dashed space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="ghost" size="sm" className="h-7 text-xs text-amber-600"
-                                      onClick={e => {
-                                        e.stopPropagation()
-                                        setChatMessages(p => [...p, { role: "user", content: `[跟導演討論] ${delta.type}：${delta.detail}` }])
-                                        callAgent(`請幫我整理「${delta.type}」的問題報告，準備上報給導演：問題描述、嚴重程度、建議討論方向。`)
-                                      }}
-                                    >
-                                      <Flag className="w-3 h-3 mr-1" />跟導演討論
-                                    </Button>
-                                    <Button
-                                      variant="ghost" size="sm" className="h-7 text-xs"
-                                      onClick={e => { e.stopPropagation(); setExpandedAnnotation(expandedAnnotation === delta.id ? null : delta.id) }}
-                                    >
-                                      <MessageSquare className="w-3 h-3 mr-1" />
-                                      {expandedAnnotation === delta.id ? "收起註解" : "寫註解"}
-                                    </Button>
-                                    {deltaAnnotations[delta.id] && expandedAnnotation !== delta.id && (
-                                      <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                                        {deltaAnnotations[delta.id]}
-                                      </span>
+                                {/* Expanded detail */}
+                                {isExpanded && (
+                                  <div className="mt-2 ml-1 space-y-2">
+                                    {m.agentA.opinion && (
+                                      <div className="p-2 bg-background/60 rounded-md">
+                                        <p className="text-[10px] font-medium text-muted-foreground mb-0.5">{m.agentA.name} — 技術觀察</p>
+                                        <p className="text-xs leading-relaxed">{m.agentA.opinion}</p>
+                                      </div>
                                     )}
-                                  </div>
-                                  {expandedAnnotation === delta.id && (
-                                    <div className="space-y-1" onClick={e => e.stopPropagation()}>
-                                      <Textarea
-                                        placeholder="輸入註解..."
-                                        value={deltaAnnotations[delta.id] || ""}
-                                        onChange={e => { setDeltaAnnotations(p => ({ ...p, [delta.id]: e.target.value })); setSavedAnnotationIds(p => { const n = new Set(p); n.delete(delta.id); return n }) }}
-                                        rows={3}
-                                        className="text-sm"
-                                      />
-                                      <div className="flex items-center gap-2">
-                                        <Button
-                                          size="sm" variant="outline" className="h-6 text-xs gap-1 bg-transparent"
-                                          onClick={() => saveAnnotation(delta.id, deltaAnnotations[delta.id] || "")}
-                                        >
+                                    {m.agentB.opinion && (
+                                      <div className="p-2 bg-background/60 rounded-md">
+                                        <p className="text-[10px] font-medium text-muted-foreground mb-0.5">{m.agentB.name} — 創意觀察</p>
+                                        <p className="text-xs leading-relaxed">{m.agentB.opinion}</p>
+                                      </div>
+                                    )}
+                                    {m.debate?.conclusion && (
+                                      <div className="p-2 bg-teal-500/10 rounded-md border border-teal-500/20">
+                                        <p className="text-[10px] font-semibold text-teal-700 mb-0.5 flex items-center gap-1">
+                                          <Sparkles className="w-3 h-3" />Claude 分析與建議
+                                        </p>
+                                        <p className="text-xs text-teal-800 leading-relaxed whitespace-pre-wrap">{m.debate.conclusion}</p>
+                                      </div>
+                                    )}
+                                    <div className="flex items-center gap-2 pt-1">
+                                      <Button variant="ghost" size="sm" className="h-6 text-[10px] text-amber-600 px-2"
+                                        onClick={e => { e.stopPropagation(); callAgent(`針對「${m.name}」差距（${m.debate?.conclusion || m.agentA.opinion}），請給出詳細改進建議。`) }}>
+                                        <Flag className="w-3 h-3 mr-1" />跟導演討論
+                                      </Button>
+                                      <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2"
+                                        onClick={e => { e.stopPropagation(); setExpandedAnnotation(expandedAnnotation === m.id ? null : m.id) }}>
+                                        <MessageSquare className="w-3 h-3 mr-1" />
+                                        {expandedAnnotation === m.id ? "收起" : "寫註解"}
+                                      </Button>
+                                    </div>
+                                    {expandedAnnotation === m.id && (
+                                      <div className="space-y-1" onClick={e => e.stopPropagation()}>
+                                        <Textarea placeholder="輸入註解..." value={deltaAnnotations[m.id] || ""}
+                                          onChange={e => setDeltaAnnotations(p => ({ ...p, [m.id]: e.target.value }))}
+                                          rows={2} className="text-xs" />
+                                        <Button size="sm" variant="outline" className="h-6 text-xs gap-1"
+                                          onClick={() => saveAnnotation(m.id, deltaAnnotations[m.id] || "")}>
                                           <Save className="w-3 h-3" />儲存
                                         </Button>
-                                        {savedAnnotationIds.has(delta.id) && (
-                                          <span className="text-[10px] text-green-600">✓ 已儲存</span>
-                                        )}
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
+                          {/* Empty state */}
+                          {!metricsLoading && metrics.length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-6">按「重新分析」開始比對</p>
+                          )}
                         </div>
                       </ScrollArea>
                     </CardContent>}
@@ -1144,9 +1245,9 @@ export default function ComparePage() {
                         </div>
                       </CardHeader>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="flex-1 min-h-0 flex flex-col">
+                    <CollapsibleContent className="flex flex-col" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
                       <CardContent className="pt-0 flex-1 min-h-0 flex flex-col">
-                        <ScrollArea className="flex-1 min-h-0 mb-4">
+                        <ScrollArea className="mb-4" style={{ flex: 1, minHeight: 0, height: 0 }}>
                           <div className="space-y-4 pr-2">
                             {chatMessages.map((msg, idx) => (
                               <div key={idx} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
