@@ -17,6 +17,40 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import Link from "next/link"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
+
+// 徹底刪除：後端 + 所有 sessionStorage key
+async function deleteItem(type: "references" | "artworks", id: string) {
+  // 1. 後端
+  try { await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" }) } catch {}
+
+  if (type === "references") {
+    // 2. refhub_refs
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("refhub_refs") || "[]")
+      sessionStorage.setItem("refhub_refs", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+    // 3. c04_ref_previews
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]")
+      sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+    // 4. deleted_ref_ids（加進去讓其他頁面也知道）
+    try {
+      const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]")
+      if (!ids.includes(String(id))) ids.push(String(id))
+      sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids))
+    } catch {}
+    // 5. 廣播給其他 tab/頁面
+    try { window.dispatchEvent(new StorageEvent("storage", { key: "deleted_ref_ids" })) } catch {}
+  } else {
+    // artwork
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("c04_artwork_previews") || "[]")
+      sessionStorage.setItem("c04_artwork_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+  }
+}
+
 const PROJECT_ID = "proj_001"
 
 const SS = {
@@ -49,8 +83,10 @@ export default function GovernancePage() {
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const [artworkImage, setArtworkImage] = useState("")
   const [artworkName, setArtworkName] = useState("")
+  const [artworkId, setArtworkId] = useState("")
   const [refImage, setRefImage] = useState("")
   const [refName, setRefName] = useState("")
+  const [refId, setRefId] = useState("")
   const [artistNote, setArtistNote] = useState("")
   const [reflectionNote, setReflectionNote] = useState("")
   const [supervisorSpec, setSupervisorSpec] = useState("")
@@ -126,7 +162,7 @@ export default function GovernancePage() {
       const aw = SS.get("c04_artwork_previews")
       if (aw) {
         const parsed = JSON.parse(aw)
-        if (parsed.length > 0) { setArtworkImage(parsed[0].preview || ""); setArtworkName(parsed[0].name || "") }
+        if (parsed.length > 0) { setArtworkImage(parsed[0].preview || ""); setArtworkName(parsed[0].name || ""); setArtworkId(parsed[0].id || "") }
       }
     } catch {}
 
@@ -149,7 +185,7 @@ export default function GovernancePage() {
       }
       setAllRefsContext(refs)
       const mainRef = refs.find(r => r.is_pinned || r.priority === "main" || r.priority === "Main") || refs[0]
-      if (mainRef) { setRefImage(mainRef.preview || ""); setRefName(mainRef.title || "") }
+      if (mainRef) { setRefImage(mainRef.preview || ""); setRefName(mainRef.title || ""); setRefId(mainRef.id || "") }
     } catch {}
 
     try { setArtistNote(SS.get("reflection_notes") || "") } catch {}
@@ -303,16 +339,26 @@ export default function GovernancePage() {
                   {artworkImage && (
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-1 truncate">{artworkName || "作品"}</p>
-                      <div className="aspect-video rounded border overflow-hidden bg-muted">
+                      <div className="relative group aspect-video rounded border overflow-hidden bg-muted">
                         <img src={artworkImage} alt="artwork" className="w-full h-full object-cover" />
+                        <button
+                          className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          onClick={() => { if (artworkId) deleteItem("artworks", artworkId); setArtworkImage(""); setArtworkName(""); setArtworkId("") }}
+                          title="移除作品"
+                        ><span className="text-white text-[11px] leading-none">✕</span></button>
                       </div>
                     </div>
                   )}
                   {refImage && (
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-1 truncate">{refName || "Reference"}</p>
-                      <div className="aspect-video rounded border overflow-hidden bg-muted">
+                      <div className="relative group aspect-video rounded border overflow-hidden bg-muted">
                         <img src={refImage} alt="ref" className="w-full h-full object-cover" />
+                        <button
+                          className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          onClick={() => { if (refId) deleteItem("references", refId); setRefImage(""); setRefName(""); setRefId("") }}
+                          title="移除 Reference"
+                        ><span className="text-white text-[11px] leading-none">✕</span></button>
                       </div>
                     </div>
                   )}

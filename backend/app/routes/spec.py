@@ -274,3 +274,38 @@ async def get_feedback_synthesis(project_id: str, shot_id: str):
 @router.get("/Understanding/notifications")
 async def get_notifications():
     return []
+
+
+# ── Delete routes ────────────────────────────────────────────────
+
+@router.delete("/search/references/{ref_id}")
+async def delete_reference(ref_id: str):
+    """Delete a reference from memory and disk."""
+    import os, glob
+    if ref_id not in REFERENCES:
+        raise HTTPException(status_code=404, detail="Reference not found")
+    ref = REFERENCES.pop(ref_id)
+    # Remove file from disk if it was uploaded
+    file_url = ref.get("file_url", "")
+    if file_url.startswith("/uploads/"):
+        upload_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
+        # Try to find and delete the actual file (any extension)
+        filename = file_url.split("/")[-1]
+        filepath = os.path.join(upload_dir, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        else:
+            # Glob search in case extension differs
+            matches = glob.glob(os.path.join(upload_dir, f"{ref_id}.*"))
+            for m in matches:
+                os.remove(m)
+    return {"deleted": ref_id}
+
+
+@router.delete("/search/artworks/{artwork_id}")
+async def delete_artwork(artwork_id: str):
+    """Delete an artwork from memory."""
+    if artwork_id not in ARTWORKS:
+        raise HTTPException(status_code=404, detail="Artwork not found")
+    ARTWORKS.pop(artwork_id)
+    return {"deleted": artwork_id}

@@ -22,6 +22,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
+
+// 刪除後端 ref / artwork（fire-and-forget，本地 state 優先）
+async function deleteItem(type: "references" | "artworks", id: string) {
+  try {
+    await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" })
+  } catch {}
+}
+
 const PROJECT_ID = "proj_001"
 
 const SS = {
@@ -726,7 +734,7 @@ export default function ComparePage() {
                               )}
                               <button
                                 className="absolute top-1 right-1 w-4 h-4 bg-black/70 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                onClick={e => { e.stopPropagation(); setArtworks(p => p.filter(a => a.id !== art.id)) }}
+                                onClick={e => { e.stopPropagation(); deleteItem("artworks", art.id); setArtworks(p => p.filter(a => a.id !== art.id)) }}
                               >
                                 <XIcon className="w-2.5 h-2.5 text-white" />
                               </button>
@@ -800,7 +808,7 @@ export default function ComparePage() {
                             leftPanelMode === "browse" ? (
                               /* ── Browse mode: compact ref row ── */
                               <div key={ref.id}
-                                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedRef === rIdx ? "bg-amber-500/10 border border-amber-500/30" : "hover:bg-muted border border-transparent"}`}
+                                className={`relative group flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedRef === rIdx ? "bg-amber-500/10 border border-amber-500/30" : "hover:bg-muted border border-transparent"}`}
                                 onClick={() => setSelectedRef(rIdx)}
                                 onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${ref.name}${ref.category ? ` (${ref.category})` : ""}` }]); callAgent(`請分析 Reference「${ref.name}」與目前 Artwork 的差距。`) }}
                               >
@@ -810,6 +818,11 @@ export default function ComparePage() {
                                 </div>
                                 <span className="text-[10px] flex-1 truncate">{ref.name}</span>
                                 {ref.importance && <span className={`text-[8px] px-1 py-0.5 rounded ${IMPORTANCE_COLOR[ref.importance] ? IMPORTANCE_COLOR[ref.importance] : "bg-muted"}`}>{ref.importance}</span>}
+                                <button
+                                  className="w-4 h-4 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                  onClick={e => { e.stopPropagation(); deleteItem("references", ref.id); setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
+                                  title="刪除"
+                                ><XIcon className="w-2.5 h-2.5" /></button>
                               </div>
                             ) : (
                               /* ── Expand mode: RefCard ── */
@@ -839,7 +852,7 @@ export default function ComparePage() {
                                     artworkId: updated.artworkId,
                                   } : r))
                                 }}
-                                onDelete={() => { setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
+                                onDelete={() => { deleteItem("references", ref.id); setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
                                 onDiscuss={d => {
                                   setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
 備注：${d.note}` : ""}` }])

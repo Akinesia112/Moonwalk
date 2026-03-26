@@ -19,6 +19,40 @@ import { PipelineSidebar } from "@/components/pipeline-sidebar"
 import Link from "next/link"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
+
+// 徹底刪除：後端 + 所有 sessionStorage key
+async function deleteItem(type: "references" | "artworks", id: string) {
+  // 1. 後端
+  try { await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" }) } catch {}
+
+  if (type === "references") {
+    // 2. refhub_refs
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("refhub_refs") || "[]")
+      sessionStorage.setItem("refhub_refs", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+    // 3. c04_ref_previews
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]")
+      sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+    // 4. deleted_ref_ids（加進去讓其他頁面也知道）
+    try {
+      const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]")
+      if (!ids.includes(String(id))) ids.push(String(id))
+      sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids))
+    } catch {}
+    // 5. 廣播給其他 tab/頁面
+    try { window.dispatchEvent(new StorageEvent("storage", { key: "deleted_ref_ids" })) } catch {}
+  } else {
+    // artwork
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("c04_artwork_previews") || "[]")
+      sessionStorage.setItem("c04_artwork_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+  }
+}
+
 const PROJECT_ID = "proj_001"
 
 const SS = {
@@ -1152,11 +1186,16 @@ export default function QAPage() {
                                     <ChevronDown className={`w-3 h-3 transition-transform shrink-0 ${expandedArtwork===idx?'rotate-180':''}`} onClick={e => { e.stopPropagation(); setExpandedArtwork(expandedArtwork===idx?null:idx) }} />
                                   </div>
                                 </div>
+                                <button
+                                  className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                  onClick={e => { e.stopPropagation(); deleteItem("artworks", art.id); setArtworks(p => p.filter(a => a.id !== art.id)); if (selectedArtwork===idx) setSelectedArtwork(0) }}
+                                  title="刪除"
+                                ><X className="w-3 h-3 text-white" /></button>
                               </div>
                             ) : (
                               /* ── Browse mode: compact row ── */
                               <div
-                                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedArtwork===idx ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted border border-transparent'}`}
+                                className={`relative group flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedArtwork===idx ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted border border-transparent'}`}
                                 onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork===idx?null:idx) }}
                                 onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察這張 Artwork「${art.name}」，分析它與 Reference 的差距，給出具體改進建議。`) }}
                                 title="雙擊匯入對話框討論"
@@ -1172,6 +1211,11 @@ export default function QAPage() {
                                 )}
                                 <span className="text-[10px] font-medium flex-1 truncate">{art.name}</span>
                                 <ChevronDown className={`w-3 h-3 transition-transform shrink-0 ${expandedArtwork===idx?'rotate-180':''}`} />
+                                <button
+                                  className="w-4 h-4 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive ml-0.5"
+                                  onClick={e => { e.stopPropagation(); deleteItem("artworks", art.id); setArtworks(p => p.filter(a => a.id !== art.id)); if (selectedArtwork===idx) setSelectedArtwork(0) }}
+                                  title="刪除"
+                                ><X className="w-2.5 h-2.5" /></button>
                               </div>
                             )}
                             {expandedArtwork === idx && art.refs.length > 0 && (
@@ -1194,6 +1238,11 @@ export default function QAPage() {
                                         title="雙擊匯入對話框討論｜備注按鈕查看備注"
                                       >
                                         <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />
+                                        <button
+                                          className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                          onClick={e => { e.stopPropagation(); deleteItem("references", ref.id); setArtworks(p => p.map(a => ({ ...a, refs: a.refs.filter(r => r.id !== ref.id) }))) }}
+                                          title="刪除"
+                                        ><X className="w-3 h-3 text-white" /></button>
                                         {ref.category && (
                                           <span className={`absolute top-1 left-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm ${CATEGORY_COLOR[ref.category] ?? "bg-white/80 text-gray-800"}`}>
                                             {ref.category}

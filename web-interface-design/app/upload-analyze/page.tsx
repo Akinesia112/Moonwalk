@@ -22,6 +22,40 @@ import { PipelineSidebar } from "@/components/pipeline-sidebar"
 import { RefCard, type RefCardData, CATEGORY_OPTIONS, IMPORTANCE_OPTIONS, USAGE_OPTIONS } from "@/components/ref-card"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
+
+// 徹底刪除：後端 + 所有 sessionStorage key
+async function deleteItem(type: "references" | "artworks", id: string) {
+  // 1. 後端
+  try { await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" }) } catch {}
+
+  if (type === "references") {
+    // 2. refhub_refs
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("refhub_refs") || "[]")
+      sessionStorage.setItem("refhub_refs", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+    // 3. c04_ref_previews
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]")
+      sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+    // 4. deleted_ref_ids（加進去讓其他頁面也知道）
+    try {
+      const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]")
+      if (!ids.includes(String(id))) ids.push(String(id))
+      sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids))
+    } catch {}
+    // 5. 廣播給其他 tab/頁面
+    try { window.dispatchEvent(new StorageEvent("storage", { key: "deleted_ref_ids" })) } catch {}
+  } else {
+    // artwork
+    try {
+      const arr = JSON.parse(sessionStorage.getItem("c04_artwork_previews") || "[]")
+      sessionStorage.setItem("c04_artwork_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
+    } catch {}
+  }
+}
+
 const PROJECT_ID = "proj_001"
 
 interface UploadedArtwork { id: string; file: File; preview: string }
@@ -821,7 +855,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                             <p className="text-[8px] text-white truncate">{aw.file?.name || aw.id}</p>
                           </div>
                           <button className="absolute top-0.5 right-0.5 w-4 h-4 bg-background/80 rounded flex items-center justify-center"
-                            onClick={e => { e.stopPropagation(); setArtworks(p => p.filter(a => a.id !== aw.id)); if (isSelected) setSelectedArtworkId(null); setArtworkSaved(false) }}>
+                            onClick={e => { e.stopPropagation(); deleteItem("artworks", aw.id); setArtworks(p => p.filter(a => a.id !== aw.id)); if (isSelected) setSelectedArtworkId(null); setArtworkSaved(false) }}>
                             <X className="w-2.5 h-2.5" />
                           </button>
                         </div>
@@ -925,7 +959,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                             } : r))
                             setRefsSaved(false)
                           }}
-                          onDelete={() => { setArtistRefs(p => p.filter(r => r.id !== ref.id)); setRefsSaved(false) }}
+                          onDelete={() => { deleteItem("references", ref.id); setArtistRefs(p => p.filter(r => r.id !== ref.id)); setRefsSaved(false) }}
                           onDiscuss={d => {
                             setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
 備注：${d.note}` : ""}` }])
