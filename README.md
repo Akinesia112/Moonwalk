@@ -151,14 +151,17 @@ Then open **`http://localhost:3001`** in your browser.
 1. Open `http://localhost:3001` and click **Sign Up** to create an account.  
 2. Sign in with your credentials.
 3. Navigate through the pipeline panels in order:
-   Senior-Artists
+   
+   Senior-Artists:
    - **C01 Kickoff** — Fill in the project brief and Supervisor Spec to align project contect and creative intention
    - **C02 Reference Hub** — Upload and annotate visual references to set up the creative foundation of project art and design directions
-   Junior-Artists
+   
+   Junior-Artists:
    - **C03 Artist Reflection** — Record and reflect the creative intent before submission
    - **C04 Upload & Analyze** — Upload artworks and run multi-agent analysis for self-reflection
    - **C05 Compare**  — Compare artworks against references
-   Senior-Artists
+   
+   Senior-Artists:
    - **C06 QA** — supervisor/senior artist review artworks/references and annotate on canvas
    - **C07 Governance** — Summarize three-party (Junior-Artists/Senior-Artists/Agents) feedback into a final revision checklist
 
