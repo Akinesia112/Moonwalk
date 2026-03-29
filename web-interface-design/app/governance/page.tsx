@@ -16,55 +16,28 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import Link from "next/link"
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5001"
 
-// Full delete: backend + all sessionStorage keys
 async function deleteItem(type: "references" | "artworks", id: string) {
-  // 1. Backend
   try { await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" }) } catch {}
-
   if (type === "references") {
-    // 2. refhub_refs
-    try {
-      const arr = JSON.parse(sessionStorage.getItem("refhub_refs") || "[]")
-      sessionStorage.setItem("refhub_refs", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
-    } catch {}
-    // 3. c04_ref_previews
-    try {
-      const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]")
-      sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
-    } catch {}
-    // 4. deleted_ref_ids (add so other pages are aware)
-    try {
-      const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]")
-      if (!ids.includes(String(id))) ids.push(String(id))
-      sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids))
-    } catch {}
-    // 5. Broadcast to other tabs/pages
+    try { const arr = JSON.parse(sessionStorage.getItem("refhub_refs") || "[]"); sessionStorage.setItem("refhub_refs", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id)))) } catch {}
+    try { const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]"); sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id)))) } catch {}
+    try { const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]"); if (!ids.includes(String(id))) ids.push(String(id)); sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids)) } catch {}
     try { window.dispatchEvent(new StorageEvent("storage", { key: "deleted_ref_ids" })) } catch {}
   } else {
-    // artwork
-    try {
-      const arr = JSON.parse(sessionStorage.getItem("c04_artwork_previews") || "[]")
-      sessionStorage.setItem("c04_artwork_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
-    } catch {}
+    try { const arr = JSON.parse(sessionStorage.getItem("c04_artwork_previews") || "[]"); sessionStorage.setItem("c04_artwork_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id)))) } catch {}
   }
 }
 
 const PROJECT_ID = "proj_001"
-
 const SS = {
   get: (k: string) => { try { return sessionStorage.getItem(k) } catch { return null } },
   set: (k: string, v: string) => { try { sessionStorage.setItem(k, v) } catch {} },
 }
 
 function stripMd(t: string) {
-  return t
-    .replace(/\*\*(.+?)\*\*/g, "$1")
-    .replace(/\*(.+?)\*/g, "$1")
-    .replace(/^---+$/gm, "")
-    .replace(/^#{1,6} /gm, "")
-    .trim()
+  return t.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1").replace(/^---+$/gm, "").replace(/^#{1,6} /gm, "").trim()
 }
 
 type FeedbackItem = { id: string; text: string; source: string; priority: string; addressed: boolean; aiDraft?: string }
@@ -73,13 +46,12 @@ type ChatMsg = { role: string; content: string }
 export default function GovernancePage() {
   const [chatbotOpen, setChatbotOpen] = useState(true)
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    { role: "ai", content: "Hello! I'm the Decision Loop assistant. I've loaded the QA feedback list and image data. I can help you:\n1. Clarify conflicting opinions\n2. Summarize QA analysis results\n3. Draft the final feedback\n\nWhat do you need help with?" },
+    { role: "ai", content: "Hello! I'm the Decision Loop assistant. I've loaded the QA feedback list and image data. I can help you:\n1. Clarify conflicts between multiple opinions\n2. Consolidate final feedback\n3. Draft actionable revision instructions for the Artist." },
   ])
   const [chatInput, setChatInput] = useState("")
   const [chatLoading, setChatLoading] = useState(false)
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
-  // ── Data from sessionStorage ──────────────────────────────────
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const [artworkImage, setArtworkImage] = useState("")
   const [artworkName, setArtworkName] = useState("")
@@ -92,7 +64,6 @@ export default function GovernancePage() {
   const [supervisorSpec, setSupervisorSpec] = useState("")
   const [allRefsContext, setAllRefsContext] = useState<any[]>([])
 
-  // ── Summarize state ───────────────────────────────────────────
   const [supervisorFeedback, setSupervisorFeedback] = useState("")
   const [aiFeedback, setAiFeedback] = useState("")
   const [clientFeedback, setClientFeedback] = useState("")
@@ -100,7 +71,6 @@ export default function GovernancePage() {
   const [synthText, setSynthText] = useState("")
 
   useEffect(() => {
-    // Load QA feedback from c04_analysis
     let items: FeedbackItem[] = []
     try {
       const raw = SS.get("c04_analysis")
@@ -110,193 +80,95 @@ export default function GovernancePage() {
           items = a.metrics.map((m: any) => ({
             id: "c04-" + (m.id || m.name),
             text: "[" + m.name + "] " + (m.agentA?.opinion || m.summary || ""),
-            source: "AI",
-            priority: m.status === "red" ? "P0" : m.status === "yellow" ? "P1" : "P2",
-            addressed: false,
-            aiDraft: m.suggestions?.join("; ") || m.agentB?.opinion || "",
+            source: "AI", priority: m.status === "red" ? "P0" : m.status === "yellow" ? "P1" : "P2",
+            addressed: false, aiDraft: m.suggestions?.join("; ") || m.agentB?.opinion || "",
           }))
-          // Pre-fill AI feedback field
-          const issues = a.metrics
-            .filter((m: any) => m.status !== "green")
-            .map((m: any) => `${m.name}：${m.agentA?.opinion || m.summary || ""}`)
+          const issues = a.metrics.filter((m: any) => m.status !== "green").map((m: any) => `${m.name}: ${m.agentA?.opinion || m.summary || ""}`)
           if (issues.length > 0) setAiFeedback(issues.join("\n"))
         }
       }
     } catch {}
-
-    // Merge compare delta list
     try {
       const raw = SS.get("compare_delta_list")
       if (raw) {
         const deltas = JSON.parse(raw)
         if (Array.isArray(deltas)) {
           const existingIds = new Set(items.map(f => f.id))
-          const newItems = deltas
-            .filter((d: any) => !existingIds.has("delta-" + (d.id || d.metric)))
-            .map((d: any) => ({
-              id: "delta-" + (d.id || d.metric),
-              text: "[" + (d.metric || d.name) + "] " + (d.gap || d.summary || ""),
-              source: "AI",
-              priority: d.severity === "high" ? "P0" : d.severity === "medium" ? "P1" : "P2",
-              addressed: false,
-              aiDraft: d.suggestion || d.fix || "",
-            }))
+          const newItems = deltas.filter((d: any) => !existingIds.has("delta-" + (d.id || d.metric))).map((d: any) => ({
+            id: "delta-" + (d.id || d.metric), text: "[" + (d.metric || d.name) + "] " + (d.gap || d.summary || ""),
+            source: "AI", priority: d.severity === "high" ? "P0" : d.severity === "medium" ? "P1" : "P2",
+            addressed: false, aiDraft: d.suggestion || d.fix || "",
+          }))
           items = [...items, ...newItems]
         }
       }
     } catch {}
     setFeedbackItems(items)
-
-    // Pre-fill synthText from last QA chat AI message
-    try {
-      const raw = SS.get("qa_chat")
-      if (raw) {
-        const msgs = JSON.parse(raw)
-        const lastAI = [...msgs].reverse().find((m: any) => m.role === "ai")
-        if (lastAI?.content) setSynthText(lastAI.content.slice(0, 400))
-      }
-    } catch {}
-
-    // Load artwork image
-    try {
-      const aw = SS.get("c04_artwork_previews")
-      if (aw) {
-        const parsed = JSON.parse(aw)
-        if (parsed.length > 0) { setArtworkImage(parsed[0].preview || ""); setArtworkName(parsed[0].name || ""); setArtworkId(parsed[0].id || "") }
-      }
-    } catch {}
-
-    // Load refs
+    try { const raw = SS.get("qa_chat"); if (raw) { const msgs = JSON.parse(raw); const lastAI = [...msgs].reverse().find((m: any) => m.role === "ai"); if (lastAI?.content) setSynthText(lastAI.content.slice(0, 400)) } } catch {}
+    try { const aw = SS.get("c04_artwork_previews"); if (aw) { const parsed = JSON.parse(aw); if (parsed.length > 0) { setArtworkImage(parsed[0].preview || ""); setArtworkName(parsed[0].name || ""); setArtworkId(parsed[0].id || "") } } } catch {}
     try {
       const refs: any[] = []
-      const hr = SS.get("refhub_refs")
-      const cp = SS.get("c04_ref_previews")
-      if (hr) {
-        JSON.parse(hr).forEach((r: any) => {
-          refs.push({ id: r.id, title: r.title || r.id, preview: r.preview || r.file_url || "", category: r.category || "", note: r.note || "", is_pinned: r.is_pinned, priority: r.priority })
-        })
-      }
-      if (cp) {
-        JSON.parse(cp).forEach((r: any) => {
-          const idx = refs.findIndex(x => x.id === r.id || x.title?.toLowerCase() === (r.title || "").toLowerCase())
-          if (idx >= 0 && r.preview?.startsWith("data:")) refs[idx].preview = r.preview
-          else if (idx < 0 && r.preview?.startsWith("data:")) refs.push({ id: r.id, title: r.title || r.id, preview: r.preview, category: r.category || "", note: r.note || "" })
-        })
-      }
+      const hr = SS.get("refhub_refs"); const cp = SS.get("c04_ref_previews")
+      if (hr) JSON.parse(hr).forEach((r: any) => { refs.push({ id: r.id, title: r.title || r.id, preview: r.preview || r.file_url || "", category: r.category || "", note: r.note || "", is_pinned: r.is_pinned, priority: r.priority }) })
+      if (cp) JSON.parse(cp).forEach((r: any) => { const idx = refs.findIndex(x => x.id === r.id || x.title?.toLowerCase() === (r.title || "").toLowerCase()); if (idx >= 0 && r.preview?.startsWith("data:")) refs[idx].preview = r.preview; else if (idx < 0 && r.preview?.startsWith("data:")) refs.push({ id: r.id, title: r.title || r.id, preview: r.preview, category: r.category || "", note: r.note || "" }) })
       setAllRefsContext(refs)
       const mainRef = refs.find(r => r.is_pinned || r.priority === "main" || r.priority === "Main") || refs[0]
       if (mainRef) { setRefImage(mainRef.preview || ""); setRefName(mainRef.title || ""); setRefId(mainRef.id || "") }
     } catch {}
-
     try { setArtistNote(SS.get("reflection_notes") || "") } catch {}
     try { setReflectionNote(SS.get("c04_notes") || "") } catch {}
     try { const b = JSON.parse(SS.get("kickoff_brief") || "{}"); setSupervisorSpec(b.supervisor_spec || "") } catch {}
-
-    // Restore draft
-    try {
-      const draft = SS.get("governance_draft")
-      if (draft) {
-        const d = JSON.parse(draft)
-        if (d.supervisorFeedback) setSupervisorFeedback(d.supervisorFeedback)
-        if (d.clientFeedback) setClientFeedback(d.clientFeedback)
-        if (d.finalAuthority) setFinalAuthority(d.finalAuthority)
-        if (d.synthText) setSynthText(d.synthText)
-      }
-    } catch {}
+    try { const draft = SS.get("governance_draft"); if (draft) { const d = JSON.parse(draft); if (d.supervisorFeedback) setSupervisorFeedback(d.supervisorFeedback); if (d.clientFeedback) setClientFeedback(d.clientFeedback); if (d.finalAuthority) setFinalAuthority(d.finalAuthority); if (d.synthText) setSynthText(d.synthText) } } catch {}
   }, [])
 
   useEffect(() => { chatScrollRef.current?.scrollIntoView({ behavior: "smooth" }) }, [chatMessages])
 
-  const saveDraft = () => {
-    SS.set("governance_draft", JSON.stringify({ supervisorFeedback, clientFeedback, finalAuthority, synthText }))
-  }
+  const saveDraft = () => SS.set("governance_draft", JSON.stringify({ supervisorFeedback, clientFeedback, finalAuthority, synthText }))
 
-  // ── Real agent call with vision ───────────────────────────────
   const callAgent = useCallback(async (msg: string) => {
     setChatLoading(true)
-
     const context = [
       artworkName ? `Artwork: ${artworkName}` : "",
       refName ? `Reference: ${refName}` : "",
       artistNote?.trim() ? `Understanding Notes:\n${artistNote.trim()}` : "",
-      reflectionNote?.trim() ? `Creative Reflection Notes：\n${reflectionNote.trim()}` : "",
-      supervisorSpec?.trim() ? `Supervisor Spec：\n${supervisorSpec.trim()}` : "",
-      supervisorFeedback?.trim() ? `Supervisor Feedback:\n${supervisorFeedback.trim()}` : "",
-      clientFeedback?.trim() ? `Client Feedback:\n${clientFeedback.trim()}` : "",
+      reflectionNote?.trim() ? `Creative Reflection Notes:\n${reflectionNote.trim()}` : "",
+      supervisorSpec?.trim() ? `Supervisor Spec:\n${supervisorSpec.trim()}` : "",
+      supervisorFeedback?.trim() ? `Supervisor feedback:\n${supervisorFeedback.trim()}` : "",
+      clientFeedback?.trim() ? `Client feedback:\n${clientFeedback.trim()}` : "",
       feedbackItems.length > 0
-        ? `QA Feedback List (provide specific improvement suggestions based on this list):\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
-        : "(No QA feedback available. Please provide VFX advisory suggestions based on the user's question.)",
+        ? `QA Feedback List:\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
+        : "(No QA feedback data available.)",
     ].filter(Boolean).join("\n\n")
-
-    const history = chatMessages.slice(-6).map(m => ({
-      role: m.role === "ai" ? "assistant" : "user",
-      content: m.content,
-    }))
-
-    // Try governance endpoint first, fallback to analysis
-    const endpoints = [
-      `${API}/suggestion/chat/governance`,
-      `${API}/suggestion/chat/analysis`,
-    ]
-
+    const history = chatMessages.slice(-6).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content }))
     let replied = false
-    for (const endpoint of endpoints) {
+    for (const endpoint of [`${API}/suggestion/chat/governance`, `${API}/suggestion/chat/analysis`]) {
       try {
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            project_id: PROJECT_ID,
-            message: msg,
-            context,
-            all_refs_context: allRefsContext,
-            history,
-          }),
-        })
+        const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project_id: PROJECT_ID, message: msg, context, all_refs_context: allRefsContext, history }) })
         if (!res.ok) continue
         const data = await res.json()
         const reply = data.response || data.reply || ""
-        if (reply.trim()) {
-          setChatMessages(p => [...p, { role: "ai", content: stripMd(reply) }])
-          replied = true
-          break
-        }
-      } catch {
-        // network error → try next endpoint
-      }
+        if (reply.trim()) { setChatMessages(p => [...p, { role: "ai", content: stripMd(reply) }]); replied = true; break }
+      } catch {}
     }
-
-    if (!replied) {
-      setChatMessages(p => [...p, { role: "ai", content: "Connection failed. Please confirm the backend is running (http://127.0.0.1:5000)." }])
-    }
-
+    if (!replied) setChatMessages(p => [...p, { role: "ai", content: "Connection failed. Please confirm the backend is running." }])
     setChatLoading(false)
   }, [chatMessages, artworkName, refName, artistNote, reflectionNote, supervisorSpec, supervisorFeedback, clientFeedback, feedbackItems, allRefsContext])
 
   const handleChatSend = () => {
-    const msg = chatInput.trim()
-    if (!msg || chatLoading) return
-    setChatMessages(p => [...p, { role: "user", content: msg }])
-    setChatInput("")
-    callAgent(msg)
+    const msg = chatInput.trim(); if (!msg || chatLoading) return
+    setChatMessages(p => [...p, { role: "user", content: msg }]); setChatInput(""); callAgent(msg)
   }
 
   const handleSendQAToChat = () => {
     if (feedbackItems.length === 0) return
-    const summary = `Please provide a final summary based on the following QA feedback to help the director decide:\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
-    setChatMessages(p => [...p, { role: "user", content: "[QA Feedback Imported — Please Summarize]" }])
-    callAgent(summary)
+    const summary = `Based on the following QA feedback list, provide a final consolidated recommendation:\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
+    setChatMessages(p => [...p, { role: "user", content: "[QA Feedback Imported — Please Analyze]" }]); callAgent(summary)
   }
 
   const p0 = feedbackItems.filter(f => f.priority === "P0")
   const p1 = feedbackItems.filter(f => f.priority === "P1")
   const p2 = feedbackItems.filter(f => f.priority === "P2")
-
-  const priColor = (p: string) =>
-    p === "P0" ? "bg-red-500/10 text-red-600 border-red-500/30" :
-    p === "P1" ? "bg-amber-500/10 text-amber-600 border-amber-500/30" :
-    "bg-green-500/10 text-green-600 border-green-500/30"
-
+  const priColor = (p: string) => p === "P0" ? "bg-red-500/10 text-red-600 border-red-500/30" : p === "P1" ? "bg-amber-500/10 text-amber-600 border-amber-500/30" : "bg-green-500/10 text-green-600 border-green-500/30"
   const visionCount = allRefsContext.filter(r => r.preview?.startsWith("data:")).length
 
   return (
@@ -304,23 +176,18 @@ export default function GovernancePage() {
       <TopBar />
       <div className="flex h-[calc(100vh-57px)]">
         <PipelineSidebar />
-
         <main className="flex-1 overflow-hidden flex flex-col min-w-0">
-          {/* Header — compact */}
           <div className="border-b border-border bg-card px-6 py-3 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-red-500/10 text-red-400">
-                <Shield className="w-4 h-4" />
-              </div>
+              <div className="p-1.5 rounded-lg bg-red-500/10 text-red-400"><Shield className="w-4 h-4" /></div>
               <Badge variant="outline" className="text-xs">C07</Badge>
               <h1 className="text-lg font-bold">Decision Loop</h1>
             </div>
           </div>
 
-          {/* 3-column layout filling remaining height */}
           <div className="flex-1 grid grid-cols-12 min-h-0 overflow-hidden">
 
-            {/* ── Col 1: QA Feedback inherited ──────────────── */}
+            {/* ── Col 1: QA Feedback ── */}
             <div className="col-span-3 border-r border-border flex flex-col min-h-0">
               <div className="px-4 py-2.5 border-b border-border shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -332,8 +199,6 @@ export default function GovernancePage() {
                   {p1.length > 0 && <Badge className="text-[10px] h-4 px-1.5 bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/10">{p1.length} P1</Badge>}
                 </div>
               </div>
-
-              {/* Artwork + Ref thumbnails */}
               {(artworkImage || refImage) && (
                 <div className="px-3 pt-2.5 pb-2 grid grid-cols-2 gap-2 shrink-0 border-b border-border">
                   {artworkImage && (
@@ -341,11 +206,7 @@ export default function GovernancePage() {
                       <p className="text-[10px] text-muted-foreground mb-1 truncate">{artworkName || "Artwork"}</p>
                       <div className="relative group aspect-video rounded border overflow-hidden bg-muted">
                         <img src={artworkImage} alt="artwork" className="w-full h-full object-cover" />
-                        <button
-                          className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          onClick={() => { if (artworkId) deleteItem("artworks", artworkId); setArtworkImage(""); setArtworkName(""); setArtworkId("") }}
-                          title="Remove artwork"
-                        ><span className="text-white text-[11px] leading-none">✕</span></button>
+                        <button className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={() => { if (artworkId) deleteItem("artworks", artworkId); setArtworkImage(""); setArtworkName(""); setArtworkId("") }} title="Remove artwork"><span className="text-white text-[11px] leading-none">✕</span></button>
                       </div>
                     </div>
                   )}
@@ -354,29 +215,20 @@ export default function GovernancePage() {
                       <p className="text-[10px] text-muted-foreground mb-1 truncate">{refName || "Reference"}</p>
                       <div className="relative group aspect-video rounded border overflow-hidden bg-muted">
                         <img src={refImage} alt="ref" className="w-full h-full object-cover" />
-                        <button
-                          className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          onClick={() => { if (refId) deleteItem("references", refId); setRefImage(""); setRefName(""); setRefId("") }}
-                          title="Remove Reference"
-                        ><span className="text-white text-[11px] leading-none">✕</span></button>
+                        <button className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={() => { if (refId) deleteItem("references", refId); setRefImage(""); setRefName(""); setRefId("") }} title="Remove Reference"><span className="text-white text-[11px] leading-none">✕</span></button>
                       </div>
                     </div>
                   )}
                 </div>
               )}
-
               <ScrollArea className="flex-1 min-h-0">
                 <div className="px-3 py-2.5 space-y-1.5">
                   {feedbackItems.length === 0 ? (
-                    <div className="text-xs text-muted-foreground text-center py-10">
-                      No QA feedback available<br />Please complete QA analysis first
-                    </div>
+                    <div className="text-xs text-muted-foreground text-center py-10">No QA feedback yet<br />Please complete QA analysis first</div>
                   ) : feedbackItems.map(f => (
                     <div key={f.id} className={`px-2.5 py-2 rounded-lg border text-xs ${priColor(f.priority)}`}>
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        {f.priority === "P0" ? <AlertCircle className="w-3 h-3 shrink-0" /> :
-                         f.priority === "P1" ? <AlertTriangle className="w-3 h-3 shrink-0" /> :
-                         <CheckCircle2 className="w-3 h-3 shrink-0" />}
+                        {f.priority === "P0" ? <AlertCircle className="w-3 h-3 shrink-0" /> : f.priority === "P1" ? <AlertTriangle className="w-3 h-3 shrink-0" /> : <CheckCircle2 className="w-3 h-3 shrink-0" />}
                         <span className="font-semibold">{f.priority}</span>
                         <span className="text-[10px] opacity-60">{f.source}</span>
                       </div>
@@ -386,22 +238,21 @@ export default function GovernancePage() {
                   ))}
                 </div>
               </ScrollArea>
-
               {feedbackItems.length > 0 && (
                 <div className="px-3 pb-3 shrink-0">
                   <Button size="sm" variant="outline" className="w-full text-xs h-7 bg-transparent gap-1.5" onClick={handleSendQAToChat}>
-                    <Sparkles className="w-3 h-3" />Send to AI assistant for summarize
+                    <Sparkles className="w-3 h-3" />Send to AI for analysis
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* ── Col 2: Final Summarize ─────────────────────── */}
-            <div className="col-span-5 border-r border-border flex flex-col min-h-0 overflow-y-auto">
-              <div className="p-4 space-y-3">
+            {/* ── Col 2: Final Synthesis ── */}
+            <div className="col-span-5 border-r border-border flex flex-col min-h-0 overflow-hidden">
 
-                {/* QA summary stats */}
-                {feedbackItems.length > 0 && (
+              {/* Stats bar — fixed height */}
+              {feedbackItems.length > 0 && (
+                <div className="px-4 pt-4 pb-2 shrink-0">
                   <div className="grid grid-cols-3 gap-2">
                     {[{ label: "P0 Critical", count: p0.length, cls: "bg-red-500/5 border-red-500/20 text-red-500" },
                       { label: "P1 Important", count: p1.length, cls: "bg-amber-500/5 border-amber-500/20 text-amber-500" },
@@ -413,91 +264,94 @@ export default function GovernancePage() {
                       </div>
                     ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Main Summarize card */}
-                <Card className="border-teal-500/30 bg-teal-500/5">
-                  <CardHeader className="px-4 pt-3 pb-2">
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <Sparkles className="w-4 h-4 text-teal-600" />
-                      Final Feedback Summary
-                    </CardTitle>
-                    <CardDescription className="text-xs">Consolidate three-party feedback; final authority sends after review</CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4 space-y-3">
+              {/* Card header — fixed */}
+              <div className="px-4 pt-2 pb-1 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-teal-600" />
+                  <span className="text-sm font-semibold">Final Feedback Summary</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Consolidate three-party feedback; final authority sends after review</p>
+              </div>
 
-                    {/* Three-source inputs */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { icon: <Crown className="w-3 h-3 text-amber-500" />, label: "Supervisor", val: supervisorFeedback, set: setSupervisorFeedback, ph: "Supervisor feedback..." },
-                        { icon: <Bot className="w-3 h-3 text-teal-500" />, label: "AI Analysis", val: aiFeedback, set: setAiFeedback, ph: "AI Analysis (auto-imported)", muted: true },
-                        { icon: <Users className="w-3 h-3 text-purple-500" />, label: "Client", val: clientFeedback, set: setClientFeedback, ph: "Client feedback..." },
-                      ].map(col => (
-                        <div key={col.label} className="space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            {col.icon}
-                            <span className="text-xs font-medium">{col.label}</span>
-                          </div>
-                          <Textarea
-                            placeholder={col.ph}
-                            className={`text-xs min-h-[80px] resize-none ${col.muted ? "bg-muted/40" : ""}`}
-                            value={col.val}
-                            onChange={e => col.set(e.target.value)}
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Final authority selector */}
-                    <div className="flex items-center gap-3 py-1 border-t border-teal-500/20">
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Crown className="w-3.5 h-3.5 text-amber-400" />
-                        <Label className="text-xs font-medium">Decision Maker</Label>
+              {/* Three columns — fixed height */}
+              <div className="px-4 pb-2 shrink-0">
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { icon: <Crown className="w-3 h-3 text-amber-500" />, label: "Supervisor", val: supervisorFeedback, set: setSupervisorFeedback, ph: "Supervisor feedback..." },
+                    { icon: <Bot className="w-3 h-3 text-teal-500" />, label: "AI Analysis", val: aiFeedback, set: setAiFeedback, ph: "AI analysis (auto-imported)", muted: true },
+                    { icon: <Users className="w-3 h-3 text-purple-500" />, label: "Client", val: clientFeedback, set: setClientFeedback, ph: "Client feedback..." },
+                  ].map(col => (
+                    <div key={col.label} className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        {col.icon}
+                        <span className="text-xs font-medium">{col.label}</span>
                       </div>
-                      <Select value={finalAuthority} onValueChange={setFinalAuthority}>
-                        <SelectTrigger className="h-7 text-xs w-36">
-                          <SelectValue placeholder="Decision Maker" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["Supervisor", "Art Director", "Director", "Client", "PM"].map(v => (
-                            <SelectItem key={v} value={v}>{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {finalAuthority && (
-                        <span className="text-xs text-muted-foreground">Decided by <strong className="text-foreground">{finalAuthority}</strong> (final authority)</span>
-                      )}
-                    </div>
-
-                    {/* Summarize textarea */}
-                    <div className="space-y-1">
-                      <Label className="text-xs">Final Consolidated Feedback (edit before sending)</Label>
                       <Textarea
-                        placeholder="Based on the above, consolidate final feedback for the Artist..."
-                        className="min-h-[110px] text-sm resize-none"
-                        value={synthText}
-                        onChange={e => setSynthText(e.target.value)}
+                        placeholder={col.ph}
+                        className={`text-xs resize-none ${col.muted ? "bg-muted/40" : ""}`}
+                        style={{ height: 350 }}
+                        value={col.val}
+                        onChange={e => col.set(e.target.value)}
                       />
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    <div className="flex items-center justify-between border-t border-teal-500/20 pt-2">
-                      <p className="text-xs text-muted-foreground">After sending, the Artist will receive this feedback</p>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent" onClick={saveDraft}>Save Draft</Button>
-                        <Link href="/upload-analyze">
-                          <Button size="sm" className="h-7 text-xs gap-1">
-                            <Send className="w-3 h-3" />Send to Artist<ArrowRight className="w-3 h-3" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Decision Maker — fixed */}
+              <div className="px-4 py-2 shrink-0 border-t border-teal-500/20 flex items-center gap-3">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <Label className="text-xs font-medium">Decision Maker</Label>
+                </div>
+                <Select value={finalAuthority} onValueChange={setFinalAuthority}>
+                  <SelectTrigger className="h-7 text-xs w-36">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Supervisor", "Art Director", "Director", "Client", "PM"].map(v => (
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {finalAuthority && (
+                  <span className="text-xs text-muted-foreground">Decided by <strong className="text-foreground">{finalAuthority}</strong> (final authority)</span>
+                )}
+              </div>
 
+              {/* Synthesis label — fixed */}
+              <div className="px-4 pt-1 shrink-0">
+                <Label className="text-xs">Final Consolidated Feedback (edit before sending)</Label>
+              </div>
+
+              {/* Synthesis textarea — fills remaining space */}
+              <div className="px-4 pb-2 flex-1 min-h-0">
+                <Textarea
+                  placeholder="Consolidate the above feedback into final instructions for the Artist..."
+                  className="w-full h-full text-sm resize-none"
+                  value={synthText}
+                  onChange={e => setSynthText(e.target.value)}
+                />
+              </div>
+
+              {/* Footer — fixed */}
+              <div className="px-4 pb-4 shrink-0 flex items-center justify-between border-t border-teal-500/20 pt-2">
+                <p className="text-xs text-muted-foreground">After sending, the Artist will receive this feedback</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent" onClick={saveDraft}>Save Draft</Button>
+                  <Link href="/upload-analyze">
+                    <Button size="sm" className="h-7 text-xs gap-1">
+                      <Send className="w-3 h-3" />Send to Artist<ArrowRight className="w-3 h-3" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
 
-            {/* ── Col 3: AI Chatbot ──────────────────────────── */}
+            {/* ── Col 3: AI Chatbot ── */}
             <div className="col-span-4 flex flex-col min-h-0">
               <Collapsible open={chatbotOpen} onOpenChange={setChatbotOpen} className="flex flex-col flex-1 min-h-0">
                 <CollapsibleTrigger asChild>
@@ -506,22 +360,15 @@ export default function GovernancePage() {
                       <Bot className="w-4 h-4 text-teal-600" />
                       <div>
                         <p className="text-xs font-semibold">AI Decision Assistant</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {visionCount > 0 ? `Vision loaded ${visionCount} image(s)` : "AI Clarification Chatbot"}
-                        </p>
+                        <p className="text-[10px] text-muted-foreground">{visionCount > 0 ? `Vision: ${visionCount} image(s) loaded` : "AI Clarification Chatbot"}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      {visionCount > 0 && (
-                        <Badge className="text-[10px] h-4 px-1.5 bg-teal-500/10 text-teal-600 border border-teal-500/30 hover:bg-teal-500/10">
-                          <ImageIcon className="w-2.5 h-2.5 mr-0.5" />Vision
-                        </Badge>
-                      )}
+                      {visionCount > 0 && <Badge className="text-[10px] h-4 px-1.5 bg-teal-500/10 text-teal-600 border border-teal-500/30 hover:bg-teal-500/10"><ImageIcon className="w-2.5 h-2.5 mr-0.5" />Vision</Badge>}
                       {chatbotOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </div>
                   </div>
                 </CollapsibleTrigger>
-
                 <CollapsibleContent className="flex-1 min-h-0 flex flex-col">
                   <ScrollArea className="flex-1 min-h-0">
                     <div className="p-3 space-y-3">
@@ -539,9 +386,7 @@ export default function GovernancePage() {
                       ))}
                       {chatLoading && (
                         <div className="flex gap-2">
-                          <Avatar className="w-6 h-6 shrink-0">
-                            <AvatarFallback className="bg-teal-500/10 text-teal-600"><Bot className="w-3 h-3" /></AvatarFallback>
-                          </Avatar>
+                          <Avatar className="w-6 h-6 shrink-0"><AvatarFallback className="bg-teal-500/10 text-teal-600"><Bot className="w-3 h-3" /></AvatarFallback></Avatar>
                           <div className="rounded-lg px-3 py-2 bg-muted flex items-center gap-1.5">
                             <Loader2 className="w-3 h-3 animate-spin text-teal-600" />
                             <span className="text-xs text-muted-foreground">Thinking...</span>
@@ -551,34 +396,22 @@ export default function GovernancePage() {
                       <div ref={chatScrollRef} />
                     </div>
                   </ScrollArea>
-
-                  {/* Quick actions */}
                   <div className="px-3 py-2 border-t border-border flex flex-wrap gap-1 shrink-0">
                     {[
-                      { label: "Summarize QA", prompt: "Based on the current QA feedback list, identify the 3 most important revision directions with specific numeric suggestions." },
-                      { label: "Clarify Conflicts", prompt: "What are the key conflicts among the three parties? How can consensus be reached while respecting the Spec?" },
-                      { label: "Draft Feedback", prompt: "Based on the QA analysis and three-party feedback, draft final revision instructions for the Artist in bullet format with specific values." },
-                      { label: "Analyze Images", prompt: "Directly describe the visual gap between the current artwork and Reference images across three dimensions: lighting, color temperature, and composition." },
+                      { label: "Summarize QA", prompt: "Based on the current QA feedback list, consolidate the 3 most important revision directions with specific numeric suggestions." },
+                      { label: "Clarify Conflicts", prompt: "What are the key conflicts between the three parties? How can we reach consensus while respecting the Spec?" },
+                      { label: "Draft Feedback", prompt: "Based on the QA analysis and three-party opinions, draft a final revision instruction list for the Artist with specific numeric values." },
+                      { label: "Analyze Images", prompt: "Directly describe the visual gap between the current artwork and the Reference images, covering lighting, color temperature, and composition." },
                     ].map(q => (
-                      <Button key={q.label} variant="outline" size="sm"
-                        className="text-[10px] h-6 px-2 bg-transparent"
+                      <Button key={q.label} variant="outline" size="sm" className="text-[10px] h-6 px-2 bg-transparent"
                         onClick={() => { setChatMessages(p => [...p, { role: "user", content: q.label }]); callAgent(q.prompt) }}>
                         {q.label}
                       </Button>
                     ))}
                   </div>
-
                   <div className="px-3 pb-3 flex gap-2 shrink-0">
-                    <Input
-                      placeholder="Type your question..."
-                      className="text-xs h-8"
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter") handleChatSend() }}
-                    />
-                    <Button size="icon" className="w-8 h-8 shrink-0" onClick={handleChatSend} disabled={chatLoading}>
-                      <Send className="w-3.5 h-3.5" />
-                    </Button>
+                    <Input placeholder="Type your question..." className="text-xs h-8" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") handleChatSend() }} />
+                    <Button size="icon" className="w-8 h-8 shrink-0" onClick={handleChatSend} disabled={chatLoading}><Send className="w-3.5 h-3.5" /></Button>
                   </div>
                 </CollapsibleContent>
               </Collapsible>

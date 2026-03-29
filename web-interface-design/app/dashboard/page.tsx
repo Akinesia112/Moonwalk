@@ -71,10 +71,10 @@ async function authFetch(path: string, options: RequestInit = {}, token?: string
   try {
     res = await fetch(`${API}${path}`, { ...options, headers })
   } catch (err: any) {
-    // Network error (backend not running, CORS blocked, DNS failure, etc.)
+    // Network-level failure (backend not running, CORS preflight blocked, DNS resolution failed, etc.)
     const msg = err?.message ?? String(err)
     if (msg.toLowerCase().includes("fetch")) {
-      throw new Error(`Cannot connect to backend (${API}). Please ensure the backend is running.`)
+      throw new Error(`Cannot connect to backend (${API}). Please confirm the backend service is running.`)
     }
     throw new Error(msg)
   }
@@ -82,7 +82,7 @@ async function authFetch(path: string, options: RequestInit = {}, token?: string
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     const detail = data.detail
-    if (Array.isArray(detail)) throw new Error(detail.map((d: any) => d.msg ?? JSON.stringify(d)).join("; "))
+    if (Array.isArray(detail)) throw new Error(detail.map((d: any) => d.msg ?? JSON.stringify(d)).join("；"))
     if (typeof detail === "string") throw new Error(detail)
     if (detail) throw new Error(JSON.stringify(detail))
     throw new Error(data.message ?? data.error ?? `HTTP ${res.status}`)
@@ -110,23 +110,28 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  { label: "Analyze Artwork", icon: "✦", prompt: "Analyze the lighting and composition of this artwork" },
-  { label: "Gap Analysis", icon: "◈", prompt: "Compare gaps between Artwork and Reference" },
-  { label: "Director Notes", icon: "◎", prompt: "Summarize key revision points to escalate to the director" },
-  { label: "Style Suggestions", icon: "⟡", prompt: "Give me style adjustment suggestions based on the Reference" },
+  { label: "Analyze artwork", icon: "✦", prompt: "Analyze the lighting and composition of this artwork" },
+  { label: "Compare gaps", icon: "◈", prompt: "Compare the gaps between Artwork and Reference" },
+  { label: "Director notes", icon: "◎", prompt: "Summarize the key revision points to report to the director" },
+  { label: "Style tips", icon: "⟡", prompt: "Give me style adjustment suggestions based on the Reference" },
 ]
 
-const HOURS = new Date().getHours()
-const GREETING =
-  HOURS < 5 ? "Still working late" :
-  HOURS < 12 ? "Good morning, Moonwalk" :
-  HOURS < 18 ? "Afternoon session" :
-  HOURS < 22 ? "Good evening" : "Late night"
+// Greeting computed client-side only (avoids SSR hydration mismatch)
+function getGreeting(): string {
+  const h = new Date().getHours()
+  if (h < 5)  return "Working late tonight"
+  if (h < 12) return "Good morning, Moonwalk"
+  if (h < 18) return "Afternoon session"
+  if (h < 22) return "Good evening"
+  return "Burning the midnight oil"
+}
 
 /* ─────────────────────────────────────────────────────────
    AgentChatPanel
 ───────────────────────────────────────────────────────── */
 function AgentChatPanel() {
+  const [greeting, setGreeting] = useState("")
+  useEffect(() => { setGreeting(getGreeting()) }, [])
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
@@ -196,7 +201,7 @@ function AgentChatPanel() {
       }))
       const chatHistory = msgHistory.slice(0, -1)
 
-      // Convert image attachments to all_refs_context format so Claude Vision can see them
+      // Convert image attachments to all_refs_context format for backend Claude Vision
       const imageRefs = userMsg.attachments
         ?.filter(a => a.type === "image" && a.preview)
         .map(a => ({
@@ -209,7 +214,7 @@ function AgentChatPanel() {
           preview: a.preview,   // base64 data URL — parsed by _build_ref_image_blocks
         })) ?? []
 
-      // With images → /chat/reference (Claude Vision); text only → /chat/compare (3-AI debate)
+      // With images: use /chat/reference (Claude Vision); text-only: use /chat/compare (3-AI debate)
       const endpoint = imageRefs.length > 0
         ? `${API}/suggestion/chat/reference`
         : `${API}/suggestion/chat/compare`
@@ -247,7 +252,7 @@ function AgentChatPanel() {
         data.content?.[0]?.text ??
         data.choices?.[0]?.message?.content ??
         (typeof data === "string" ? data : undefined) ??
-        `[Unknown format] keys: ${Object.keys(data).join(', ')}`
+        `[Unknown format] keys: ${Object.keys(data).join(", ")}`
 
       setMessages((p) => [...p, {
         id: crypto.randomUUID(),
@@ -267,7 +272,7 @@ function AgentChatPanel() {
     }
   }, [input, attachments, messages])
 
-  // Fix: isComposing check prevents IME composition from triggering Send
+  // ✅ Fix: add isComposing check to prevent send triggering during IME composition
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -286,9 +291,12 @@ function AgentChatPanel() {
   return (
     <div className="flex flex-col" style={{ height: "100%", minHeight: 0 }}>
 
-      {/* Empty state */}
-      {isEmpty && (
-        <div className="flex flex-col items-center justify-center gap-6 pb-4 select-none" style={{ flex: 1, minHeight: 0 }}>
+      {/* Scrollable message area — always occupies all available space */}
+      <div className="overflow-y-auto flex flex-col" style={{ flex: 1, minHeight: 0 }}>
+
+        {/* Empty state — centered inside scroll area */}
+        {isEmpty && (
+          <div className="flex flex-col items-center justify-center gap-6 px-4 py-8 select-none" style={{ flex: 1, minHeight: 0 }}>
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2">
               <span style={{
@@ -306,7 +314,7 @@ function AgentChatPanel() {
                 margin: 0,
                 fontFamily: "system-ui, sans-serif",
               }}>
-                {GREETING}
+                {greeting}
               </h2>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -327,12 +335,12 @@ function AgentChatPanel() {
               </button>
             ))}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Message thread */}
-      {!isEmpty && (
-        <div className="overflow-y-auto px-4 py-4 flex flex-col gap-4" style={{ flex: 1, minHeight: 0 }}>
+        {/* Message thread — inside the same scrollable container */}
+        {!isEmpty && (
+          <div className="px-4 py-4 flex flex-col gap-4">
           {messages.map((m) => (
             <div key={m.id} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
               <div style={{
@@ -385,7 +393,7 @@ function AgentChatPanel() {
                 <span className="text-[11px] text-muted-foreground" style={{
                   alignSelf: m.role === "user" ? "flex-end" : "flex-start",
                 }}>
-                  {m.ts.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}
+                  {m.ts.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}
                 </span>
               </div>
             </div>
@@ -411,9 +419,11 @@ function AgentChatPanel() {
               </div>
             </div>
           )}
-          <div ref={bottomRef} />
-        </div>
-      )}
+            <div ref={bottomRef} />
+          </div>
+        )}
+
+      </div>{/* end scroll area */}
 
       {/* Attachment previews */}
       {attachments.length > 0 && (
@@ -459,7 +469,7 @@ function AgentChatPanel() {
         {dragOver && (
           <div className="absolute inset-0 flex items-center justify-center text-sm pointer-events-none"
             style={{ color: "var(--color-teal-500)", zIndex: 1 }}>
-            Drop to upload
+            Release to upload
           </div>
         )}
 
@@ -468,7 +478,7 @@ function AgentChatPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={isEmpty ? "How can I help?" : "Continue the conversation… (Enter to send, Shift+Enter for new line)"}
+          placeholder={isEmpty ? "How can I help you?" : "Continue the conversation… (Enter to send, Shift+Enter for new line)"}
           rows={1}
           style={{
             width: "100%", border: "none", outline: "none", resize: "none",
@@ -495,7 +505,7 @@ function AgentChatPanel() {
               style={{ background: "transparent", cursor: "pointer" }}
             >+</button>
             <span className="text-[11px] text-muted-foreground opacity-70">
-              Images / Files / Drag & drop
+              Image / Document / Drag to upload
             </span>
           </div>
 
@@ -547,11 +557,12 @@ const ROLE_COLOR: Record<Role, string> = {
   junior_artist: "bg-sky-500/15 text-sky-700 border-sky-300",
 }
 
-// Auth modal tab type
+// ✅ Auth modal tab types
 type AuthTab = "login" | "register"
 
 /* ─────────────────────────────────────────────────────────
-   AuthModal — standalone top-level component to avoid remounting on every keystroke
+   AuthModal — standalone top-level component, prevents remount on every keystroke
+   which would cause input to lose focus
 ───────────────────────────────────────────────────────── */
 interface AuthModalProps {
   open: boolean
@@ -608,7 +619,7 @@ function AuthModal({
             {authTab === "login" ? "Sign In" : "Create Account"}
           </DialogTitle>
           <DialogDescription>
-            {authTab === "login" ? "Enter your username and password" : "Fill in your details to create an account"}
+            {authTab === "login" ? "Enter your username and password" : "Fill in the details to create a new account"}
           </DialogDescription>
         </DialogHeader>
 
@@ -626,7 +637,7 @@ function AuthModal({
                 boxShadow: authTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
               }}
             >
-              {tab === "login" ? "Sign In" : "Sign Up"}
+              {tab === "login" ? "Sign In" : "Register"}
             </button>
           ))}
         </div>
@@ -695,7 +706,7 @@ function AuthModal({
             <div className="space-y-1.5">
               <Label>Username</Label>
               <Input
-                placeholder="Letters, numbers, underscores allowed"
+                placeholder="Letters, numbers, underscores"
                 value={regUsername}
                 onChange={e => setRegUsername(e.target.value)}
                 onKeyDown={makeInputKeyDown(handleRegister)}
@@ -706,7 +717,7 @@ function AuthModal({
               <div className="relative">
                 <Input
                   type={showRegPw ? "text" : "password"}
-                  placeholder="At least 6 characters, special characters allowed"
+                  placeholder="At least 6 characters"
                   value={regPw}
                   onChange={e => setRegPw(e.target.value)}
                   onKeyDown={makeInputKeyDown(handleRegister)}
@@ -721,7 +732,7 @@ function AuthModal({
               <Label>Confirm Password</Label>
               <Input
                 type={showRegPw ? "text" : "password"}
-                placeholder="Re-enter password"
+                placeholder="Confirm password"
                 value={regPwConfirm}
                 onChange={e => setRegPwConfirm(e.target.value)}
                 onKeyDown={makeInputKeyDown(handleRegister)}
@@ -774,7 +785,7 @@ export default function DashboardPage() {
   const [users,       setUsers]       = useState<UserRecord[]>([])
   const [authOpen,    setAuthOpen]    = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
-  // Login/Register tab toggle
+  // ✅ Login/register tab toggle
   const [authTab,     setAuthTab]     = useState<AuthTab>("login")
 
   // Login form
@@ -783,7 +794,7 @@ export default function DashboardPage() {
   const [showPw,     setShowPw]     = useState(false)
   const [loginErr,   setLoginErr]   = useState("")
 
-  // Register form
+  // ✅ Register form
   const [regUsername, setRegUsername] = useState("")
   const [regPw,       setRegPw]       = useState("")
   const [regPwConfirm,setRegPwConfirm]= useState("")
@@ -826,7 +837,7 @@ export default function DashboardPage() {
 
   const handleLogin = async () => {
     setLoginErr("")
-    if (!loginEmail.trim() || !loginPw) { setLoginErr("Please fill in your username and password"); return }
+    if (!loginEmail.trim() || !loginPw) { setLoginErr("Please enter your username and password"); return }
     setAuthLoading(true)
     try {
       const data = await authFetch("/auth/login", {
@@ -842,7 +853,7 @@ export default function DashboardPage() {
     finally { setAuthLoading(false) }
   }
 
-  // handleRegister handler
+  // ✅ handleRegister
   const handleRegister = async () => {
     setRegErr(""); setRegOk("")
     if (!regUsername.trim() || !regPw) {
@@ -910,7 +921,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top-level AuthModal — not defined inside render to avoid remounting on keystroke */}
+      {/* ✅ Top-level AuthModal — not defined inside render to prevent remount on every keystroke */}
       <AuthModal
         open={authOpen}
         onOpenChange={v => { setAuthOpen(v); setLoginErr(""); setRegErr(""); setRegOk("") }}
@@ -947,7 +958,7 @@ export default function DashboardPage() {
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </Button>
             <div className="w-px h-6 bg-border" />
-            {/* UserSection inlined to avoid remounting */}
+            {/* ✅ UserSection inlined — not a child component to avoid remount */}
             <div className="flex items-center gap-2">
               {authUser ? (
                 <>
@@ -962,14 +973,14 @@ export default function DashboardPage() {
                       {initials(authUser.username)}
                     </AvatarFallback>
                   </Avatar>
-                  <Button variant="ghost" size="icon" title="Sign Out" onClick={handleLogout}>
+                  <Button variant="ghost" size="icon" title="Sign out" onClick={handleLogout}>
                     <LogOut className="w-4 h-4" />
                   </Button>
                 </>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" onClick={() => { setAuthTab("register"); setAuthOpen(true) }}>
-                    Sign Up
+                    Register
                   </Button>
                   <Button size="sm" className="bg-teal-600 hover:bg-teal-700" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>
                     Sign In
@@ -995,7 +1006,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">
-                  {authUser ? `Welcome back, ${authUser.username}.` : "Welcome to MoonWalk."}
+                  {authUser ? `Welcome back, ${authUser.username}.` : "Welcome to MoonWalk VFX."}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {authUser
@@ -1029,7 +1040,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Agent Chat Panel */}
-            <Card className="lg:col-span-2 overflow-hidden" style={{ minHeight: 520, display: "flex", flexDirection: "column" }}>
+            <Card className="lg:col-span-2 overflow-hidden" style={{ height: 600, display: "flex", flexDirection: "column" }}>
               <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                 <AgentChatPanel />
               </div>
@@ -1041,7 +1052,7 @@ export default function DashboardPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <User className="w-4 h-4 text-teal-600" />
-                    {authUser ? "Account Info" : "Sign In / Sign Up"}
+                    {authUser ? "Account" : "Sign In / Register"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -1064,7 +1075,7 @@ export default function DashboardPage() {
 
                       {/* Accessible pages */}
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1.5 font-medium">Accessible Pages</p>
+                        <p className="text-xs text-muted-foreground mb-1.5 font-medium">Accessible pages</p>
                         <div className="flex flex-col gap-1">
                           {(() => {
                             const PAGE_LABELS: Record<string, string> = {
@@ -1089,7 +1100,7 @@ export default function DashboardPage() {
                       {/* Admin: user management */}
                       {authUser.role === "admin" && (
                         <div className="border-t pt-3 space-y-2.5">
-                          <p className="text-xs font-medium text-muted-foreground">User Management</p>
+                          <p className="text-xs font-medium text-muted-foreground">Account management</p>
 
                           <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
                             {users.map(u => (
@@ -1113,7 +1124,7 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="space-y-1.5 border rounded-md p-2.5 bg-muted/20">
-                            <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Add Account</p>
+                            <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Add account</p>
                             {addErr && <p className="text-[11px] text-red-600">{addErr}</p>}
                             {addOk  && <p className="text-[11px] text-teal-600">{addOk}</p>}
                             <Input className="h-7 text-xs" type="email" placeholder="Email" value={newEmail}
@@ -1140,21 +1151,21 @@ export default function DashboardPage() {
 
                       <Button variant="outline" className="w-full justify-start bg-transparent text-sm text-red-600 border-red-200 hover:bg-red-50"
                         onClick={handleLogout}>
-                        <LogOut className="w-4 h-4 mr-2" />Sign Out
+                        <LogOut className="w-4 h-4 mr-2" />Sign out
                       </Button>
                     </>
                   ) : (
                     <>
-                      <p className="text-xs text-muted-foreground">Sign in to access pages based on your role</p>
+                      <p className="text-xs text-muted-foreground">Sign in to access pages based on your role.</p>
                       <div className="space-y-1.5 text-xs text-muted-foreground border rounded-md p-2.5 bg-muted/30">
-                        <p className="font-medium text-foreground mb-1">Role Permissions</p>
+                        <p className="font-medium text-foreground mb-1">Role permissions</p>
                         <p><span className="font-medium text-purple-700">Admin</span> — All pages</p>
                         <p><span className="font-medium text-teal-700">Senior Artist</span> — C01, C02, C06, C07</p>
                         <p><span className="font-medium text-sky-700">Junior Artist</span> — C03, C04, C05</p>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" className="flex-1" onClick={() => { setAuthTab("register"); setAuthOpen(true) }}>
-                          Sign Up
+                          Register
                         </Button>
                         <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>
                           Sign In

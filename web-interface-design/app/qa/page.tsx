@@ -111,8 +111,8 @@ type ChatMsg = { role: string; content: string }
 
 export default function QAPage() {
   // ── Layout ────────────────────────────────────────────────────
-  const [leftW, setLeftW] = useState(350)
-  const [rightW, setRightW] = useState(300)
+  const [leftW, setLeftW] = useState(300)
+  const [rightW, setRightW] = useState(500)
   const hDragRef = useRef<{ side: "left"|"right"; startX: number; startW: number } | null>(null)
 
   const startHDrag = (side: "left"|"right") => (e: React.MouseEvent) => {
@@ -1152,8 +1152,8 @@ export default function QAPage() {
                     <input ref={artworkFileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { handleArtworkUpload(Array.from(e.target.files||[])); e.target.value="" }} />
                   </CardHeader>
                   <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-                    <ScrollArea className="h-full min-h-0">
-                      <div className="space-y-1 px-2 pb-2">
+                    <div className="h-full overflow-y-auto overflow-x-hidden">
+                      <div className="space-y-1 px-2 pb-2 w-full min-w-0">
                         {artworks.length === 0 && (
                           <div
                             className="border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors py-8"
@@ -1171,15 +1171,15 @@ export default function QAPage() {
                           <div key={art.id}>
                             {leftPanelMode === "expand" ? (
                               /* ── Expand mode: large thumbnail ── */
-                              <div className="relative group mb-1">
+                              <div className="relative group mb-1 w-full min-w-0">
                                 <div
-                                  className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork===idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
+                                  className={`w-full min-w-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork===idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                                   onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork===idx?null:idx) }}
                                   onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[Discuss Artwork] ${art.name}` }]); callAgent(`Please examine this artwork "${art.name}", analyze the gaps between it and the Reference, and provide specific improvement suggestions.`) }}
                                   title="Double-click to import to chat"
                                 >
-                                  <div className="aspect-video bg-muted overflow-hidden relative">
-                                    {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
+                                  <div style={{ width: "100%", height: 160, overflow: "hidden", background: "hsl(var(--muted))", flexShrink: 0 }}>
+                                    {art.image && <img src={art.image} alt={art.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
                                   </div>
                                   <div className="p-1.5 flex items-center justify-between">
                                     <p className="text-[10px] font-medium truncate">{art.name}</p>
@@ -1219,15 +1219,16 @@ export default function QAPage() {
                               </div>
                             )}
                             {expandedArtwork === idx && art.refs.length > 0 && (
-                              <div className="ml-3 pl-2 border-l-2 border-primary/20 space-y-0.5 mt-0.5 mb-1">
+                              <div className="ml-3 pl-2 pr-2 border-l-2 border-primary/20 space-y-0.5 mt-0.5 mb-1 w-full min-w-0">
                                 {art.refs.filter(r => r.image).map((ref, rIdx) => (
                                   <div key={ref.id}
                                     className={`flex flex-col gap-0.5 p-1 rounded cursor-pointer text-[10px] ${selectedRef===rIdx?'bg-amber-500/10 text-amber-700':'hover:bg-muted text-muted-foreground'}`}
                                     onClick={() => setSelectedRef(rIdx)}
                                   >
-                                    <div className="w-full relative rounded overflow-hidden">
+                                    <div className="w-full min-w-0 relative rounded overflow-hidden" style={{ maxWidth: "100%" }}>
                                       <div
-                                        className="aspect-video bg-muted overflow-hidden relative rounded group"
+                                        className="bg-muted overflow-hidden relative rounded group"
+                                        style={{ width: "100%", height: 160, flexShrink: 0 }}
                                         style={{ cursor: "pointer" }}
                                         onDoubleClick={e => {
                                           e.stopPropagation()
@@ -1237,7 +1238,7 @@ Notes: ${ref.note}` : ""}` }])
                                         }}
                                         title="Double-click to import to chat | click Notes button to view notes"
                                       >
-                                        <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />
+                                        <img src={ref.image} alt={ref.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                                         <button
                                           className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                           onClick={e => { e.stopPropagation(); deleteItem("references", ref.id); setArtworks(p => p.map(a => ({ ...a, refs: a.refs.filter(r => r.id !== ref.id) }))) }}
@@ -1272,7 +1273,7 @@ Notes: ${ref.note}` : ""}` }])
                           </div>
                         ))}
                       </div>
-                    </ScrollArea>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

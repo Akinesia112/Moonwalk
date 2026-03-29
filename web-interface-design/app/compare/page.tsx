@@ -116,8 +116,8 @@ export default function ComparePage() {
   const leftVDragRef = useRef<{ startY: number; startH: number } | null>(null)
 
   // Horizontal resize (left/right panels)
-  const [leftW, setLeftW] = useState(600)
-  const [rightW, setRightW] = useState(380)
+  const [leftW, setLeftW] = useState(400)
+  const [rightW, setRightW] = useState(700)
   const hDragRef = useRef<{ side: "left" | "right"; startX: number; startW: number } | null>(null)
 
   // Delta detail dialog
@@ -669,8 +669,8 @@ export default function ComparePage() {
                       }} />
                     </CardHeader>
                     <CardContent className="p-0 flex-1 min-h-0">
-                      <ScrollArea className="h-full">
-                        <div className="px-3 pb-2 space-y-1.5"
+                      <div className="h-full overflow-y-auto overflow-x-hidden">
+                        <div className="px-3 pb-2 space-y-1.5 w-full min-w-0"
                           onDragOver={e => { e.preventDefault() }}
                           onDrop={e => {
                             e.preventDefault()
@@ -696,17 +696,17 @@ export default function ComparePage() {
                             </div>
                           )}
                           {artworkList.map((art, idx) => (
-                            <div key={art.id} className="relative group">
+                            <div key={art.id} className="relative group w-full min-w-0">
                               {leftPanelMode === "expand" ? (
                                 /* ── Expand mode: large thumbnail card ── */
                                 <div
-                                  className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork === idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
+                                  className={`group w-full min-w-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork === idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                                   onClick={() => { setSelectedArtwork(idx); setSelectedRef(0) }}
                                   onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[Discuss Artwork] ${art.name}` }]); callAgent(`Please examine artwork "${art.name}", analyze the gaps between it and the currently selected Reference, and give 2–3 specific improvement suggestions.`) }}
                                   title="Double-click to import to chat"
                                 >
-                                  <div className="aspect-video bg-muted overflow-hidden relative">
-                                    {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
+                                  <div style={{ width: "100%", height: 160, overflow: "hidden", background: "hsl(var(--muted))", position: "relative", flexShrink: 0 }}>
+                                    {art.image && <img src={art.image} alt={art.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                                       <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">Double-click to discuss</span>
                                     </div>
@@ -736,7 +736,7 @@ export default function ComparePage() {
                             </div>
                           ))}
                         </div>
-                      </ScrollArea>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -773,8 +773,8 @@ export default function ComparePage() {
                       }} />
                     </CardHeader>
                     <CardContent className="p-0 flex-1 min-h-0">
-                      <ScrollArea className="h-full">
-                        <div className="px-3 pb-2 space-y-1.5"
+                      <div className="h-full overflow-y-auto overflow-x-hidden">
+                        <div className="px-3 pb-2 space-y-1.5 w-full min-w-0"
                           onDragOver={e => { e.preventDefault() }}
                           onDrop={e => {
                             e.preventDefault()
@@ -820,66 +820,41 @@ export default function ComparePage() {
                                 ><XIcon className="w-2.5 h-2.5" /></button>
                               </div>
                             ) : (
-                              /* ── Expand mode: RefCard ── */
+                              /* ── Expand mode: same card style as artwork ── */
                               <div
                                 key={ref.id}
-                                className={`rounded-xl transition-all ${selectedRef === rIdx ? "ring-2 ring-amber-500 ring-offset-1" : "hover:ring-1 hover:ring-amber-500/50"}`}
+                                className={`group w-full min-w-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedRef === rIdx ? "border-amber-500 ring-2 ring-amber-500/30" : "border-border hover:border-amber-500/50"}`}
                                 onClick={() => setSelectedRef(rIdx)}
+                                onDoubleClick={() => {
+                                  setChatMessages(p => [...p, { role: "user", content: `[Discuss Reference] ${ref.name}${ref.category ? ` (${ref.category})` : ""}` }])
+                                  callAgent(`Please analyze the visual characteristics of Reference "${ref.name}"${ref.category ? ` (${ref.category})` : ""} and identify the main gaps between it and the currently selected Artwork.`)
+                                }}
+                                title="Double-click to import to chat"
                               >
-                              <RefCard
-                                data={{
-                                  id: String(ref.id),
-                                  title: ref.name,
-                                  preview: ref.image,
-                                  category: ref.category,
-                                  importance: ref.importance ?? "Secondary",
-                                  usage: ref.usage,
-                                  note: ref.note,
-                                }}
-                                artworkOptions={artworks.map(a => ({ id: a.id, name: a.name }))}
-                                onChange={updated => {
-                                  setAllRefs(p => p.map(r => r.id === ref.id ? {
-                                    ...r,
-                                    category: updated.category,
-                                    importance: updated.importance,
-                                    usage: updated.usage,
-                                    note: updated.note,
-                                    artworkId: updated.artworkId,
-                                  } : r))
-                                }}
-                                onDelete={() => { deleteItem("references", ref.id); setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
-                                onDiscuss={d => {
-                                  setChatMessages(p => [...p, { role: "user", content: `[Discuss Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
-Notes: ${d.note}` : ""}` }])
-                                  callAgent(`Please analyze the visual characteristics of Reference "${d.title}"${d.category ? ` (${d.category})` : ""} and identify the main gaps between it and the currently selected Artwork.${d.note ? `Notes: ${d.note}` : ""}`)
-                                }}
-                                onSave={updated => {
-                                  try {
-                                    const cached = JSON.parse(SS.get("refhub_refs") || "[]")
-                                    const cacheMap: Record<string, any> = {}
-                                    cached.forEach((c: any) => { cacheMap[c.id] = c })
-                                    if (cacheMap[String(ref.id)]) {
-                                      cacheMap[String(ref.id)] = { ...cacheMap[String(ref.id)], category: updated.category, note: updated.note, importance: updated.importance, usage: updated.usage, artworkId: updated.artworkId }
-                                      SS.set("refhub_refs", JSON.stringify(Object.values(cacheMap)))
-                                    }
-                                    // Also update c04_ref_previews
-                                    const ar = JSON.parse(SS.get("c04_ref_previews") || "[]")
-                                    const arMap: Record<string, any> = {}
-                                    ar.forEach((r: any) => { arMap[r.id] = r })
-                                    if (arMap[String(ref.id)]) {
-                                      arMap[String(ref.id)] = { ...arMap[String(ref.id)], category: updated.category, note: updated.note, importance: updated.importance, usage: updated.usage, artworkId: updated.artworkId }
-                                      SS.set("c04_ref_previews", JSON.stringify(Object.values(arMap)))
-                                    }
-                                  } catch {}
-                                }}
-                                showSave={true}
-                                className="cursor-pointer"
-                              />
+                                <div style={{ width: "100%", height: 160, overflow: "hidden", background: "hsl(var(--muted))", position: "relative", flexShrink: 0 }}>
+                                  {ref.image && <img src={ref.image} alt={ref.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
+                                  {ref.category && (
+                                    <span className={`absolute top-1 left-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${CATEGORY_COLOR[ref.category] ?? "bg-white/80 text-gray-800"}`}>
+                                      {ref.category}
+                                    </span>
+                                  )}
+                                  {ref.importance && (
+                                    <span className={`absolute top-1 right-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${IMPORTANCE_COLOR[ref.importance] ?? "bg-white/80 text-gray-700 border-gray-300"}`}>
+                                      {ref.importance}
+                                    </span>
+                                  )}
+                                  <button
+                                    className="absolute bottom-1 right-1 w-4 h-4 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white bg-black/60 hover:bg-red-500"
+                                    onClick={e => { e.stopPropagation(); deleteItem("references", ref.id); setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
+                                    title="Delete"
+                                  ><XIcon className="w-2.5 h-2.5" /></button>
+                                </div>
+                                <div className="p-1.5"><p className="text-[10px] font-medium truncate">{ref.name}</p></div>
                               </div>
                             )
                           ))}
                         </div>
-                      </ScrollArea>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>

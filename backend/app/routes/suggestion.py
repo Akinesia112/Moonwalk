@@ -22,6 +22,15 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
+def _strip_md(text: str) -> str:
+    """Remove markdown symbols that should not appear in plain-text responses."""
+    import re
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    text = re.sub(r'#{1,6} ', '', text)
+    text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
+    return text.strip()
+
 router = APIRouter(prefix="/suggestion", tags=["suggestion"])
 
 
@@ -260,6 +269,7 @@ async def chat_brief(req: BriefChatRequest):
         history=_history_msgs(req),
         page_focus=FOCUS["brief"],
     )
+    reply = _strip_md(reply)
     return {"response": reply, "reply": reply}
 
 
@@ -305,6 +315,7 @@ async def chat_reference(req: BriefChatRequest):
             history=_history_msgs(req),
             page_focus=FOCUS["reference"],
         )
+    reply = _strip_md(reply)
     return {"response": reply, "reply": reply}
 
 
@@ -339,6 +350,7 @@ async def chat_reflection(req: BriefChatRequest):
             history=_history_msgs(req),
             page_focus=FOCUS["reflection"],
         )
+    reply = _strip_md(reply)
     return {"response": reply, "reply": reply}
 
 
@@ -350,6 +362,7 @@ async def chat_analysis(req: BriefChatRequest):
         history=_history_msgs(req),
         page_focus=FOCUS["analysis"],
     )
+    reply = _strip_md(reply)
     return {"response": reply, "reply": reply}
 
 
@@ -366,6 +379,7 @@ async def chat_compare(req: BriefChatRequest):
             "Suggestions must be specific enough to be directly actionable in VFX software."
         ),
     )
+    reply = _strip_md(reply)
     return {"response": reply, "reply": reply}
 
 @router.post("/chat/mode")
@@ -410,5 +424,6 @@ async def chat_mode(req: ModeChatRequest):
         f"Please integrate the above and output the final version directly."
     )}])
 
+    final = _strip_md(final)
     return {"response": final, "reply": final,
             "debate": {"view_1": tech_view, "view_2": creative_view, "synthesis": final}}
