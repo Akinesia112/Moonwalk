@@ -90,7 +90,7 @@ class RegisterRequest(BaseModel):
     role: Optional[str] = "junior_artist"
 
 class LoginRequest(BaseModel):
-    # 支援 username 或 email 登入
+    # Supports login by username or email
     username: Optional[str] = None
     email: Optional[str] = None
     password: str
@@ -114,7 +114,7 @@ def _get_user_by_email(email: str) -> Optional[dict]:
     return users.get(email.lower())
 
 def _get_user_by_username(username: str) -> Optional[dict]:
-    """找 username（忽略大小寫）"""
+    """Look up username (case-insensitive)"""
     users = _load(USERS_FILE)
     username_lower = username.lower()
     for u in users.values():
@@ -139,14 +139,14 @@ def _require_auth(credentials: HTTPAuthorizationCredentials = Depends(security))
 async def register(body: RegisterRequest):
     users = _load(USERS_FILE)
 
-    # 用 username 當 key，email 有就用，沒有就產 placeholder
+    # Use username as key; use email if provided, otherwise generate a placeholder
     username = body.username.strip()
     if len(username) < 2:
         raise HTTPException(status_code=400, detail="Username too short")
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
-    # 檢查 username 是否重複
+    # Check if username is already taken
     if _get_user_by_username(username):
         raise HTTPException(status_code=409, detail="Username already taken")
 
@@ -154,7 +154,7 @@ async def register(body: RegisterRequest):
     if email in users:
         raise HTTPException(status_code=409, detail="Email already registered")
 
-    # placeholder email → 直接 verified，不需要驗證流程
+    # Placeholder email → directly verified, no verification flow needed
     is_placeholder = _is_placeholder_email(email)
     verify_token   = None if is_placeholder else _make_token()
 
@@ -163,7 +163,7 @@ async def register(body: RegisterRequest):
         "username":       username,
         "password_hash":  _hash(body.password),
         "role":           body.role if body.role in ("admin", "senior_artist", "junior_artist") else "junior_artist",
-        "verified":       is_placeholder,   # ← placeholder 直接 True
+        "verified":       is_placeholder,   # ← placeholder is directly True
         "verify_token":   verify_token,
         "verify_expires": None if is_placeholder else time.time() + VERIFY_TTL,
         "created_at":     time.time(),
@@ -176,11 +176,11 @@ async def register(body: RegisterRequest):
         link = f"{APP_URL}/auth/verify?token={verify_token}&email={email}"
         _send_email(
             email,
-            "Moonwalk VFX — 驗證您的電子郵件",
-            f"""<h2>歡迎加入 Moonwalk VFX</h2>
-            <p>Hi {username}，請點擊下方連結驗證您的電子郵件：</p>
-            <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">驗證電子郵件</a>
-            <p style="color:#888;font-size:12px;">連結24小時內有效。</p>"""
+            "Moonwalk VFX — Verify Your Email",
+            f"""<h2>Welcome to Moonwalk VFX</h2>
+            <p>Hi {username}, please click the link below to verify your email:</p>
+            <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">Verify Email</a>
+            <p style="color:#888;font-size:12px;">This link is valid for 24 hours.</p>"""
         )
 
     return {"message": "Registration successful", "email": email, "verified": is_placeholder}
@@ -188,20 +188,20 @@ async def register(body: RegisterRequest):
 
 @router.post("/login")
 async def login(body: LoginRequest):
-    # 支援 username 或 email 登入
+    # Supports login by username or email
     user = None
     if body.username:
         user = _get_user_by_username(body.username)
     if user is None and body.email:
         user = _get_user_by_email(body.email)
-    # 也試著把 username 當 email 找（相容舊行為）
+    # Also try finding username as email (backward compatibility)
     if user is None and body.username and "@" in body.username:
         user = _get_user_by_email(body.username)
 
     if not user or user["password_hash"] != _hash(body.password):
-        raise HTTPException(status_code=401, detail="帳號或密碼錯誤")
+        raise HTTPException(status_code=401, detail="Invalid username or password")
     if not user.get("verified", False):
-        raise HTTPException(status_code=403, detail="請先驗證電子郵件後再登入")
+        raise HTTPException(status_code=403, detail="Please verify your email before signing in")
 
     token  = _make_token()
     tokens = _load(TOKENS_FILE)
@@ -323,10 +323,10 @@ async def forgot_password(body: ForgotRequest):
     users[email]["reset_expires"] = time.time() + RESET_TTL
     _save(USERS_FILE, users)
     link = f"{APP_URL}/auth/reset-password?token={reset_token}"
-    _send_email(email, "Moonwalk VFX — 重設密碼",
-        f"""<h2>重設密碼</h2>
-        <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">重設密碼</a>
-        <p style="color:#888;font-size:12px;">30分鐘內有效。</p>""")
+    _send_email(email, "Moonwalk VFX — Reset Your Password",
+        f"""<h2>Reset Your Password</h2>
+        <a href="{link}" style="padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">Reset Password</a>
+        <p style="color:#888;font-size:12px;">This link is valid for 30 minutes.</p>""")
     return {"message": "If that email is registered, a reset link has been sent."}
 
 

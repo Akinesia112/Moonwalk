@@ -18,9 +18,9 @@ import Link from "next/link"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 
-// 徹底刪除：後端 + 所有 sessionStorage key
+// Full delete: backend + all sessionStorage keys
 async function deleteItem(type: "references" | "artworks", id: string) {
-  // 1. 後端
+  // 1. Backend
   try { await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" }) } catch {}
 
   if (type === "references") {
@@ -34,13 +34,13 @@ async function deleteItem(type: "references" | "artworks", id: string) {
       const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]")
       sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
     } catch {}
-    // 4. deleted_ref_ids（加進去讓其他頁面也知道）
+    // 4. deleted_ref_ids (add so other pages are aware)
     try {
       const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]")
       if (!ids.includes(String(id))) ids.push(String(id))
       sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids))
     } catch {}
-    // 5. 廣播給其他 tab/頁面
+    // 5. Broadcast to other tabs/pages
     try { window.dispatchEvent(new StorageEvent("storage", { key: "deleted_ref_ids" })) } catch {}
   } else {
     // artwork
@@ -73,7 +73,7 @@ type ChatMsg = { role: string; content: string }
 export default function GovernancePage() {
   const [chatbotOpen, setChatbotOpen] = useState(true)
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    { role: "ai", content: "您好！我是 Decision Loop 助手。已讀取 QA 的回饋清單與圖片資訊，可以協助您：\n1. 釐清多方意見衝突\n2. 綜合 QA 分析結果\n3. 協助起草最終回饋\n\n有什麼需要協助的嗎？" },
+    { role: "ai", content: "Hello! I'm the Decision Loop assistant. I've loaded the QA feedback list and image data. I can help you:\n1. Clarify conflicting opinions\n2. Synthesize QA analysis results\n3. Draft the final feedback\n\nWhat do you need help with?" },
   ])
   const [chatInput, setChatInput] = useState("")
   const [chatLoading, setChatLoading] = useState(false)
@@ -113,7 +113,7 @@ export default function GovernancePage() {
             source: "AI",
             priority: m.status === "red" ? "P0" : m.status === "yellow" ? "P1" : "P2",
             addressed: false,
-            aiDraft: m.suggestions?.join("；") || m.agentB?.opinion || "",
+            aiDraft: m.suggestions?.join("; ") || m.agentB?.opinion || "",
           }))
           // Pre-fill AI feedback field
           const issues = a.metrics
@@ -216,16 +216,16 @@ export default function GovernancePage() {
     setChatLoading(true)
 
     const context = [
-      artworkName ? `作品：${artworkName}` : "",
-      refName ? `Reference：${refName}` : "",
-      artistNote?.trim() ? `理解筆記：\n${artistNote.trim()}` : "",
-      reflectionNote?.trim() ? `創作反思筆記：\n${reflectionNote.trim()}` : "",
+      artworkName ? `Artwork: ${artworkName}` : "",
+      refName ? `Reference: ${refName}` : "",
+      artistNote?.trim() ? `Understanding Notes:\n${artistNote.trim()}` : "",
+      reflectionNote?.trim() ? `Creative Reflection Notes：\n${reflectionNote.trim()}` : "",
       supervisorSpec?.trim() ? `Supervisor Spec：\n${supervisorSpec.trim()}` : "",
-      supervisorFeedback?.trim() ? `Supervisor 意見：\n${supervisorFeedback.trim()}` : "",
-      clientFeedback?.trim() ? `Client 意見：\n${clientFeedback.trim()}` : "",
+      supervisorFeedback?.trim() ? `Supervisor Feedback:\n${supervisorFeedback.trim()}` : "",
+      clientFeedback?.trim() ? `Client Feedback:\n${clientFeedback.trim()}` : "",
       feedbackItems.length > 0
-        ? `QA 回饋清單（請根據此清單給出具體改進建議）：\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
-        : "（目前無 QA 回饋資料，請根據用戶問題給出 VFX 顧問建議）",
+        ? `QA Feedback List (provide specific improvement suggestions based on this list):\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
+        : "(No QA feedback available. Please provide VFX advisory suggestions based on the user's question.)",
     ].filter(Boolean).join("\n\n")
 
     const history = chatMessages.slice(-6).map(m => ({
@@ -267,7 +267,7 @@ export default function GovernancePage() {
     }
 
     if (!replied) {
-      setChatMessages(p => [...p, { role: "ai", content: "連線失敗，請確認後端是否啟動（http://127.0.0.1:5000）。" }])
+      setChatMessages(p => [...p, { role: "ai", content: "Connection failed. Please confirm the backend is running (http://127.0.0.1:5000)." }])
     }
 
     setChatLoading(false)
@@ -283,8 +283,8 @@ export default function GovernancePage() {
 
   const handleSendQAToChat = () => {
     if (feedbackItems.length === 0) return
-    const summary = `請根據以下 QA 回饋清單，給出最終綜合建議，幫助導演做出裁決：\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
-    setChatMessages(p => [...p, { role: "user", content: "[QA 回饋匯入 — 請綜合分析]" }])
+    const summary = `Please provide a final synthesis based on the following QA feedback to help the director decide:\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
+    setChatMessages(p => [...p, { role: "user", content: "[QA Feedback Imported — Please Synthesize]" }])
     callAgent(summary)
   }
 
@@ -325,7 +325,7 @@ export default function GovernancePage() {
               <div className="px-4 py-2.5 border-b border-border shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold">QA 回饋清單</span>
+                  <span className="text-xs font-semibold">QA Feedback List</span>
                 </div>
                 <div className="flex items-center gap-1">
                   {p0.length > 0 && <Badge className="text-[10px] h-4 px-1.5 bg-red-500/10 text-red-600 border border-red-500/30 hover:bg-red-500/10">{p0.length} P0</Badge>}
@@ -338,13 +338,13 @@ export default function GovernancePage() {
                 <div className="px-3 pt-2.5 pb-2 grid grid-cols-2 gap-2 shrink-0 border-b border-border">
                   {artworkImage && (
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-1 truncate">{artworkName || "作品"}</p>
+                      <p className="text-[10px] text-muted-foreground mb-1 truncate">{artworkName || "Artwork"}</p>
                       <div className="relative group aspect-video rounded border overflow-hidden bg-muted">
                         <img src={artworkImage} alt="artwork" className="w-full h-full object-cover" />
                         <button
                           className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                           onClick={() => { if (artworkId) deleteItem("artworks", artworkId); setArtworkImage(""); setArtworkName(""); setArtworkId("") }}
-                          title="移除作品"
+                          title="Remove artwork"
                         ><span className="text-white text-[11px] leading-none">✕</span></button>
                       </div>
                     </div>
@@ -357,7 +357,7 @@ export default function GovernancePage() {
                         <button
                           className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                           onClick={() => { if (refId) deleteItem("references", refId); setRefImage(""); setRefName(""); setRefId("") }}
-                          title="移除 Reference"
+                          title="Remove Reference"
                         ><span className="text-white text-[11px] leading-none">✕</span></button>
                       </div>
                     </div>
@@ -369,7 +369,7 @@ export default function GovernancePage() {
                 <div className="px-3 py-2.5 space-y-1.5">
                   {feedbackItems.length === 0 ? (
                     <div className="text-xs text-muted-foreground text-center py-10">
-                      尚無 QA 回饋資料<br />請先完成 QA 分析
+                      No QA feedback available<br />Please complete QA analysis first
                     </div>
                   ) : feedbackItems.map(f => (
                     <div key={f.id} className={`px-2.5 py-2 rounded-lg border text-xs ${priColor(f.priority)}`}>
@@ -390,7 +390,7 @@ export default function GovernancePage() {
               {feedbackItems.length > 0 && (
                 <div className="px-3 pb-3 shrink-0">
                   <Button size="sm" variant="outline" className="w-full text-xs h-7 bg-transparent gap-1.5" onClick={handleSendQAToChat}>
-                    <Sparkles className="w-3 h-3" />送入 AI 助手綜合分析
+                    <Sparkles className="w-3 h-3" />Send to AI assistant for synthesis
                   </Button>
                 </div>
               )}
@@ -403,9 +403,9 @@ export default function GovernancePage() {
                 {/* QA summary stats */}
                 {feedbackItems.length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
-                    {[{ label: "P0 緊急", count: p0.length, cls: "bg-red-500/5 border-red-500/20 text-red-500" },
-                      { label: "P1 重要", count: p1.length, cls: "bg-amber-500/5 border-amber-500/20 text-amber-500" },
-                      { label: "P2 建議", count: p2.length, cls: "bg-green-500/5 border-green-500/20 text-green-500" }
+                    {[{ label: "P0 Critical", count: p0.length, cls: "bg-red-500/5 border-red-500/20 text-red-500" },
+                      { label: "P1 Important", count: p1.length, cls: "bg-amber-500/5 border-amber-500/20 text-amber-500" },
+                      { label: "P2 Suggested", count: p2.length, cls: "bg-green-500/5 border-green-500/20 text-green-500" }
                     ].map(s => (
                       <div key={s.label} className={`p-2 rounded-lg border text-center ${s.cls}`}>
                         <p className="text-xl font-bold">{s.count}</p>
@@ -420,18 +420,18 @@ export default function GovernancePage() {
                   <CardHeader className="px-4 pt-3 pb-2">
                     <CardTitle className="flex items-center gap-2 text-sm">
                       <Sparkles className="w-4 h-4 text-teal-600" />
-                      最終回饋綜合 Final Feedback Synthesis
+                      Final Feedback Synthesis
                     </CardTitle>
-                    <CardDescription className="text-xs">三方意見匯整，由決策者作最終裁決後送出</CardDescription>
+                    <CardDescription className="text-xs">Consolidate three-party feedback; final authority sends after review</CardDescription>
                   </CardHeader>
                   <CardContent className="px-4 pb-4 space-y-3">
 
                     {/* Three-source inputs */}
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { icon: <Crown className="w-3 h-3 text-amber-500" />, label: "Supervisor", val: supervisorFeedback, set: setSupervisorFeedback, ph: "Supervisor 意見..." },
-                        { icon: <Bot className="w-3 h-3 text-teal-500" />, label: "AI 分析", val: aiFeedback, set: setAiFeedback, ph: "AI 分析（自動匯入）", muted: true },
-                        { icon: <Users className="w-3 h-3 text-purple-500" />, label: "Client", val: clientFeedback, set: setClientFeedback, ph: "Client 意見..." },
+                        { icon: <Crown className="w-3 h-3 text-amber-500" />, label: "Supervisor", val: supervisorFeedback, set: setSupervisorFeedback, ph: "Supervisor feedback..." },
+                        { icon: <Bot className="w-3 h-3 text-teal-500" />, label: "AI Analysis", val: aiFeedback, set: setAiFeedback, ph: "AI Analysis (auto-imported)", muted: true },
+                        { icon: <Users className="w-3 h-3 text-purple-500" />, label: "Client", val: clientFeedback, set: setClientFeedback, ph: "Client feedback..." },
                       ].map(col => (
                         <div key={col.label} className="space-y-1">
                           <div className="flex items-center gap-1.5">
@@ -452,11 +452,11 @@ export default function GovernancePage() {
                     <div className="flex items-center gap-3 py-1 border-t border-teal-500/20">
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Crown className="w-3.5 h-3.5 text-amber-400" />
-                        <Label className="text-xs font-medium">最終決策者</Label>
+                        <Label className="text-xs font-medium">Final Decision Maker</Label>
                       </div>
                       <Select value={finalAuthority} onValueChange={setFinalAuthority}>
                         <SelectTrigger className="h-7 text-xs w-36">
-                          <SelectValue placeholder="選擇決策者" />
+                          <SelectValue placeholder="Select decision maker" />
                         </SelectTrigger>
                         <SelectContent>
                           {["Supervisor", "Art Director", "Director", "Client", "PM"].map(v => (
@@ -465,15 +465,15 @@ export default function GovernancePage() {
                         </SelectContent>
                       </Select>
                       {finalAuthority && (
-                        <span className="text-xs text-muted-foreground">由 <strong className="text-foreground">{finalAuthority}</strong> 最終裁決</span>
+                        <span className="text-xs text-muted-foreground">Decided by <strong className="text-foreground">{finalAuthority}</strong> (final authority)</span>
                       )}
                     </div>
 
                     {/* Synthesis textarea */}
                     <div className="space-y-1">
-                      <Label className="text-xs">綜合最終回饋（決策者編輯後送出）</Label>
+                      <Label className="text-xs">Final Consolidated Feedback (edit before sending)</Label>
                       <Textarea
-                        placeholder="根據以上意見，綜合出給 Artist 的最終回饋..."
+                        placeholder="Based on the above, consolidate final feedback for the Artist..."
                         className="min-h-[110px] text-sm resize-none"
                         value={synthText}
                         onChange={e => setSynthText(e.target.value)}
@@ -481,12 +481,12 @@ export default function GovernancePage() {
                     </div>
 
                     <div className="flex items-center justify-between border-t border-teal-500/20 pt-2">
-                      <p className="text-xs text-muted-foreground">送出後，Artist 將收到此回饋</p>
+                      <p className="text-xs text-muted-foreground">After sending, the Artist will receive this feedback</p>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent" onClick={saveDraft}>儲存草稿</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent" onClick={saveDraft}>Save Draft</Button>
                         <Link href="/upload-analyze">
                           <Button size="sm" className="h-7 text-xs gap-1">
-                            <Send className="w-3 h-3" />送出給 Artist<ArrowRight className="w-3 h-3" />
+                            <Send className="w-3 h-3" />Send to Artist<ArrowRight className="w-3 h-3" />
                           </Button>
                         </Link>
                       </div>
@@ -505,9 +505,9 @@ export default function GovernancePage() {
                     <div className="flex items-center gap-2">
                       <Bot className="w-4 h-4 text-teal-600" />
                       <div>
-                        <p className="text-xs font-semibold">AI Decision 助手</p>
+                        <p className="text-xs font-semibold">AI Decision Assistant</p>
                         <p className="text-[10px] text-muted-foreground">
-                          {visionCount > 0 ? `Vision 已讀取 ${visionCount} 張圖片` : "AI Clarification Chatbot"}
+                          {visionCount > 0 ? `Vision loaded ${visionCount} image(s)` : "AI Clarification Chatbot"}
                         </p>
                       </div>
                     </div>
@@ -544,7 +544,7 @@ export default function GovernancePage() {
                           </Avatar>
                           <div className="rounded-lg px-3 py-2 bg-muted flex items-center gap-1.5">
                             <Loader2 className="w-3 h-3 animate-spin text-teal-600" />
-                            <span className="text-xs text-muted-foreground">思考中...</span>
+                            <span className="text-xs text-muted-foreground">Thinking...</span>
                           </div>
                         </div>
                       )}
@@ -555,10 +555,10 @@ export default function GovernancePage() {
                   {/* Quick actions */}
                   <div className="px-3 py-2 border-t border-border flex flex-wrap gap-1 shrink-0">
                     {[
-                      { label: "綜合 QA", prompt: "請根據目前的 QA 回饋清單，幫我整合出最重要的 3 個修改方向，附上具體數值建議。" },
-                      { label: "釐清衝突", prompt: "目前三方意見有什麼關鍵衝突點？如何在尊重 Spec 的前提下達成共識？" },
-                      { label: "起草回饋", prompt: "請根據 QA 分析與三方意見，起草一份給 Artist 的最終修改指示，條列格式，附具體數值。" },
-                      { label: "分析圖片", prompt: "請直接描述目前作品圖片與 Reference 圖片的視覺差距，從光影、色溫、構圖三個維度具體說明。" },
+                      { label: "Synthesize QA", prompt: "Based on the current QA feedback list, identify the 3 most important revision directions with specific numeric suggestions." },
+                      { label: "Clarify Conflicts", prompt: "What are the key conflicts among the three parties? How can consensus be reached while respecting the Spec?" },
+                      { label: "Draft Feedback", prompt: "Based on the QA analysis and three-party feedback, draft final revision instructions for the Artist in bullet format with specific values." },
+                      { label: "Analyze Images", prompt: "Directly describe the visual gap between the current artwork and Reference images across three dimensions: lighting, color temperature, and composition." },
                     ].map(q => (
                       <Button key={q.label} variant="outline" size="sm"
                         className="text-[10px] h-6 px-2 bg-transparent"
@@ -570,7 +570,7 @@ export default function GovernancePage() {
 
                   <div className="px-3 pb-3 flex gap-2 shrink-0">
                     <Input
-                      placeholder="輸入問題..."
+                      placeholder="Type your question..."
                       className="text-xs h-8"
                       value={chatInput}
                       onChange={e => setChatInput(e.target.value)}

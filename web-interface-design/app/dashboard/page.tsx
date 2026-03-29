@@ -71,10 +71,10 @@ async function authFetch(path: string, options: RequestInit = {}, token?: string
   try {
     res = await fetch(`${API}${path}`, { ...options, headers })
   } catch (err: any) {
-    // 網路層失敗（後端沒跑、CORS preflight 被擋、DNS 解析失敗等）
+    // Network error (backend not running, CORS blocked, DNS failure, etc.)
     const msg = err?.message ?? String(err)
     if (msg.toLowerCase().includes("fetch")) {
-      throw new Error(`無法連線到後端 (${API})，請確認後端服務已啟動`)
+      throw new Error(`Cannot connect to backend (${API}). Please ensure the backend is running.`)
     }
     throw new Error(msg)
   }
@@ -82,7 +82,7 @@ async function authFetch(path: string, options: RequestInit = {}, token?: string
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     const detail = data.detail
-    if (Array.isArray(detail)) throw new Error(detail.map((d: any) => d.msg ?? JSON.stringify(d)).join("；"))
+    if (Array.isArray(detail)) throw new Error(detail.map((d: any) => d.msg ?? JSON.stringify(d)).join("; "))
     if (typeof detail === "string") throw new Error(detail)
     if (detail) throw new Error(JSON.stringify(detail))
     throw new Error(data.message ?? data.error ?? `HTTP ${res.status}`)
@@ -110,18 +110,18 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  { label: "分析作品", icon: "✦", prompt: "幫我分析這張作品的光影與構圖" },
-  { label: "差距對比", icon: "◈", prompt: "比對 Artwork 與 Reference 的差距" },
-  { label: "導演意見", icon: "◎", prompt: "整理需要上報給導演的修改重點" },
-  { label: "風格建議", icon: "⟡", prompt: "根據 Reference 給我風格調整建議" },
+  { label: "Analyze Artwork", icon: "✦", prompt: "Analyze the lighting and composition of this artwork" },
+  { label: "Gap Analysis", icon: "◈", prompt: "Compare gaps between Artwork and Reference" },
+  { label: "Director Notes", icon: "◎", prompt: "Summarize key revision points to escalate to the director" },
+  { label: "Style Suggestions", icon: "⟡", prompt: "Give me style adjustment suggestions based on the Reference" },
 ]
 
 const HOURS = new Date().getHours()
 const GREETING =
-  HOURS < 5 ? "深夜了，還在工作" :
-  HOURS < 12 ? "早安，Moonwalk" :
-  HOURS < 18 ? "午後繼續" :
-  HOURS < 22 ? "晚上好" : "夜深了"
+  HOURS < 5 ? "Still working late" :
+  HOURS < 12 ? "Good morning, Moonwalk" :
+  HOURS < 18 ? "Afternoon session" :
+  HOURS < 22 ? "Good evening" : "Late night"
 
 /* ─────────────────────────────────────────────────────────
    AgentChatPanel
@@ -192,11 +192,11 @@ function AgentChatPanel() {
     try {
       const msgHistory = [...messages, userMsg].map((m) => ({
         role: m.role === "agent" ? "assistant" : "user",
-        content: m.content || "(附件)",
+        content: m.content || "(attachment)",
       }))
       const chatHistory = msgHistory.slice(0, -1)
 
-      // 把圖片附件轉成 all_refs_context 格式，讓後端 Claude Vision 能看到圖
+      // Convert image attachments to all_refs_context format so Claude Vision can see them
       const imageRefs = userMsg.attachments
         ?.filter(a => a.type === "image" && a.preview)
         .map(a => ({
@@ -206,10 +206,10 @@ function AgentChatPanel() {
           note: "",
           is_pinned: false,
           priority: "secondary",
-          preview: a.preview,   // base64 data URL — _build_ref_image_blocks 會解析
+          preview: a.preview,   // base64 data URL — parsed by _build_ref_image_blocks
         })) ?? []
 
-      // 有圖用 /chat/reference（Claude Vision），純文字用 /chat/compare（3-AI debate）
+      // With images → /chat/reference (Claude Vision); text only → /chat/compare (3-AI debate)
       const endpoint = imageRefs.length > 0
         ? `${API}/suggestion/chat/reference`
         : `${API}/suggestion/chat/compare`
@@ -218,7 +218,7 @@ function AgentChatPanel() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message:           content || "(附件)",
+          message:           content || "(attachment)",
           history:           chatHistory,
           all_refs_context:  imageRefs,
           context:           "",
@@ -247,7 +247,7 @@ function AgentChatPanel() {
         data.content?.[0]?.text ??
         data.choices?.[0]?.message?.content ??
         (typeof data === "string" ? data : undefined) ??
-        `[未知格式] keys: ${Object.keys(data).join(", ")}`
+        `[Unknown format] keys: ${Object.keys(data).join(', ')}`
 
       setMessages((p) => [...p, {
         id: crypto.randomUUID(),
@@ -259,7 +259,7 @@ function AgentChatPanel() {
       setMessages((p) => [...p, {
         id: crypto.randomUUID(),
         role: "agent",
-        content: e?.message ?? "連線失敗",
+        content: e?.message ?? "Connection failed",
         ts: new Date(),
       }])
     } finally {
@@ -267,7 +267,7 @@ function AgentChatPanel() {
     }
   }, [input, attachments, messages])
 
-  // ✅ 修正：加上 isComposing 檢查，避免 IME 選字時觸發送出
+  // Fix: isComposing check prevents IME composition from triggering Send
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -310,7 +310,7 @@ function AgentChatPanel() {
               </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              告訴我你需要什麼，或上傳作品開始分析
+              Tell me what you need, or upload artwork to start analysis
             </p>
           </div>
 
@@ -459,7 +459,7 @@ function AgentChatPanel() {
         {dragOver && (
           <div className="absolute inset-0 flex items-center justify-center text-sm pointer-events-none"
             style={{ color: "var(--color-teal-500)", zIndex: 1 }}>
-            放開以上傳
+            Drop to upload
           </div>
         )}
 
@@ -468,7 +468,7 @@ function AgentChatPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={isEmpty ? "有什麼需要幫忙的？" : "繼續對話…（Enter 送出，Shift+Enter 換行）"}
+          placeholder={isEmpty ? "How can I help?" : "Continue the conversation… (Enter to send, Shift+Enter for new line)"}
           rows={1}
           style={{
             width: "100%", border: "none", outline: "none", resize: "none",
@@ -490,12 +490,12 @@ function AgentChatPanel() {
             />
             <button
               onClick={() => fileRef.current?.click()}
-              title="上傳檔案"
+              title="Upload file"
               className="w-8 h-8 rounded-lg border flex items-center justify-center text-base text-muted-foreground hover:bg-accent transition-colors"
               style={{ background: "transparent", cursor: "pointer" }}
             >+</button>
             <span className="text-[11px] text-muted-foreground opacity-70">
-              圖片 / 文件 / 拖曳上傳
+              Images / Files / Drag & drop
             </span>
           </div>
 
@@ -514,7 +514,7 @@ function AgentChatPanel() {
               display: "flex", alignItems: "center", gap: 5,
             }}
           >
-            {loading ? "思考中…" : "送出"}
+            {loading ? "Thinking…" : "Send"}
             {!loading && <span style={{ fontSize: "11px", opacity: 0.8 }}>↵</span>}
           </button>
         </div>
@@ -547,12 +547,11 @@ const ROLE_COLOR: Record<Role, string> = {
   junior_artist: "bg-sky-500/15 text-sky-700 border-sky-300",
 }
 
-// ✅ Auth modal 頁籤類型
+// Auth modal tab type
 type AuthTab = "login" | "register"
 
 /* ─────────────────────────────────────────────────────────
-   AuthModal — 獨立 top-level component，避免每次 keystroke
-   重新 mount 導致 input 失去 focus
+   AuthModal — standalone top-level component to avoid remounting on every keystroke
 ───────────────────────────────────────────────────────── */
 interface AuthModalProps {
   open: boolean
@@ -606,10 +605,10 @@ function AuthModal({
             <div className="w-7 h-7 rounded-md bg-teal-600 flex items-center justify-center">
               <span className="text-white text-xs font-bold">VFX</span>
             </div>
-            {authTab === "login" ? "登入帳號" : "建立帳號"}
+            {authTab === "login" ? "Sign In" : "Create Account"}
           </DialogTitle>
           <DialogDescription>
-            {authTab === "login" ? "輸入您的帳號與密碼" : "填寫資訊以建立新帳號"}
+            {authTab === "login" ? "Enter your username and password" : "Fill in your details to create an account"}
           </DialogDescription>
         </DialogHeader>
 
@@ -627,7 +626,7 @@ function AuthModal({
                 boxShadow: authTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
               }}
             >
-              {tab === "login" ? "登入" : "註冊"}
+              {tab === "login" ? "Sign In" : "Sign Up"}
             </button>
           ))}
         </div>
@@ -642,20 +641,20 @@ function AuthModal({
               </Alert>
             )}
             <div className="space-y-1.5">
-              <Label>使用者名稱</Label>
+              <Label>Username</Label>
               <Input
-                placeholder="輸入帳號"
+                placeholder="Enter username"
                 value={loginEmail}
                 onChange={e => setLoginEmail(e.target.value)}
                 onKeyDown={makeInputKeyDown(handleLogin)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>密碼</Label>
+              <Label>Password</Label>
               <div className="relative">
                 <Input
                   type={showPw ? "text" : "password"}
-                  placeholder="輸入密碼"
+                  placeholder="Enter password"
                   value={loginPw}
                   onChange={e => setLoginPw(e.target.value)}
                   onKeyDown={makeInputKeyDown(handleLogin)}
@@ -667,12 +666,12 @@ function AuthModal({
               </div>
             </div>
             <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={handleLogin} disabled={authLoading}>
-              {authLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />登入中...</> : "登入"}
+              {authLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Signing in...</> : "Sign In"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              還沒有帳號？
+              Don't have an account?
               <button className="text-teal-600 hover:underline ml-1" onClick={() => setAuthTab("register")}>
-                建立帳號
+                Create Account
               </button>
             </p>
           </div>
@@ -694,20 +693,20 @@ function AuthModal({
               </Alert>
             )}
             <div className="space-y-1.5">
-              <Label>使用者名稱</Label>
+              <Label>Username</Label>
               <Input
-                placeholder="英文、數字、底線皆可"
+                placeholder="Letters, numbers, underscores allowed"
                 value={regUsername}
                 onChange={e => setRegUsername(e.target.value)}
                 onKeyDown={makeInputKeyDown(handleRegister)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>密碼</Label>
+              <Label>Password</Label>
               <div className="relative">
                 <Input
                   type={showRegPw ? "text" : "password"}
-                  placeholder="至少 6 個字元，可含特殊符號"
+                  placeholder="At least 6 characters, special characters allowed"
                   value={regPw}
                   onChange={e => setRegPw(e.target.value)}
                   onKeyDown={makeInputKeyDown(handleRegister)}
@@ -719,17 +718,17 @@ function AuthModal({
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>確認密碼</Label>
+              <Label>Confirm Password</Label>
               <Input
                 type={showRegPw ? "text" : "password"}
-                placeholder="再次輸入密碼"
+                placeholder="Re-enter password"
                 value={regPwConfirm}
                 onChange={e => setRegPwConfirm(e.target.value)}
                 onKeyDown={makeInputKeyDown(handleRegister)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>身份</Label>
+              <Label>Role</Label>
               <div className="grid grid-cols-3 gap-1.5">
                 {([
                   ["junior_artist", "Junior Artist", "bg-sky-500/15 text-sky-700 border-sky-300"],
@@ -752,12 +751,12 @@ function AuthModal({
               </div>
             </div>
             <Button className="w-full bg-teal-600 hover:bg-teal-700 mt-1" onClick={handleRegister} disabled={authLoading}>
-              {authLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />建立中...</> : "建立帳號"}
+              {authLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : "Create Account"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              已有帳號？
+              Already have an account?
               <button className="text-teal-600 hover:underline ml-1" onClick={() => setAuthTab("login")}>
-                直接登入
+                Sign in
               </button>
             </p>
           </div>
@@ -775,7 +774,7 @@ export default function DashboardPage() {
   const [users,       setUsers]       = useState<UserRecord[]>([])
   const [authOpen,    setAuthOpen]    = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
-  // ✅ 新增：登入/註冊切換頁籤
+  // Login/Register tab toggle
   const [authTab,     setAuthTab]     = useState<AuthTab>("login")
 
   // Login form
@@ -784,7 +783,7 @@ export default function DashboardPage() {
   const [showPw,     setShowPw]     = useState(false)
   const [loginErr,   setLoginErr]   = useState("")
 
-  // ✅ 新增：Register form
+  // Register form
   const [regUsername, setRegUsername] = useState("")
   const [regPw,       setRegPw]       = useState("")
   const [regPwConfirm,setRegPwConfirm]= useState("")
@@ -827,7 +826,7 @@ export default function DashboardPage() {
 
   const handleLogin = async () => {
     setLoginErr("")
-    if (!loginEmail.trim() || !loginPw) { setLoginErr("請填寫帳號與密碼"); return }
+    if (!loginEmail.trim() || !loginPw) { setLoginErr("Please fill in your username and password"); return }
     setAuthLoading(true)
     try {
       const data = await authFetch("/auth/login", {
@@ -843,17 +842,17 @@ export default function DashboardPage() {
     finally { setAuthLoading(false) }
   }
 
-  // ✅ 新增：handleRegister
+  // handleRegister handler
   const handleRegister = async () => {
     setRegErr(""); setRegOk("")
     if (!regUsername.trim() || !regPw) {
-      setRegErr("請填寫所有欄位"); return
+      setRegErr("Please fill in all fields"); return
     }
     if (regPw !== regPwConfirm) {
-      setRegErr("兩次密碼不一致"); return
+      setRegErr("Passwords do not match"); return
     }
     if (regPw.length < 6) {
-      setRegErr("密碼至少需要 6 個字元"); return
+      setRegErr("Password must be at least 6 characters"); return
     }
     setAuthLoading(true)
     try {
@@ -866,7 +865,7 @@ export default function DashboardPage() {
           email: `${regUsername.trim()}@placeholder.local`,
         }),
       })
-      setRegOk("註冊成功！請登入")
+      setRegOk("Registration successful! Please sign in.")
       setTimeout(() => {
         setRegOk("")
         setAuthTab("login")
@@ -887,14 +886,14 @@ export default function DashboardPage() {
 
   const handleAddUser = async () => {
     setAddErr(""); setAddOk("")
-    if (!newEmail.trim() || !newName.trim() || !newPw.trim()) { setAddErr("請填寫所有欄位"); return }
+    if (!newEmail.trim() || !newName.trim() || !newPw.trim()) { setAddErr("Please fill in all fields"); return }
     try {
       await authFetch("/auth/admin/users", {
         method: "POST",
         body: JSON.stringify({ email: newEmail.trim(), username: newName.trim(), password: newPw.trim(), role: newRole }),
       }, authUser!.token)
       setNewEmail(""); setNewName(""); setNewPw(""); setNewRole("junior_artist")
-      setAddOk(`已新增 ${newEmail.trim()}`)
+      setAddOk(`User ${newEmail.trim()} added`)
       setTimeout(() => setAddOk(""), 2500)
       fetchUsers()
     } catch (e: any) { setAddErr(e.message) }
@@ -911,7 +910,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ✅ 頂層 AuthModal，不在 render 函式內定義，避免每次 keystroke 重新 mount */}
+      {/* Top-level AuthModal — not defined inside render to avoid remounting on keystroke */}
       <AuthModal
         open={authOpen}
         onOpenChange={v => { setAuthOpen(v); setLoginErr(""); setRegErr(""); setRegOk("") }}
@@ -948,7 +947,7 @@ export default function DashboardPage() {
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </Button>
             <div className="w-px h-6 bg-border" />
-            {/* ✅ UserSection 內聯，不作為子 component 以避免 remount */}
+            {/* UserSection inlined to avoid remounting */}
             <div className="flex items-center gap-2">
               {authUser ? (
                 <>
@@ -963,17 +962,17 @@ export default function DashboardPage() {
                       {initials(authUser.username)}
                     </AvatarFallback>
                   </Avatar>
-                  <Button variant="ghost" size="icon" title="登出" onClick={handleLogout}>
+                  <Button variant="ghost" size="icon" title="Sign Out" onClick={handleLogout}>
                     <LogOut className="w-4 h-4" />
                   </Button>
                 </>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" onClick={() => { setAuthTab("register"); setAuthOpen(true) }}>
-                    註冊
+                    Sign Up
                   </Button>
                   <Button size="sm" className="bg-teal-600 hover:bg-teal-700" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>
-                    登入
+                    Sign In
                   </Button>
                 </>
               )}
@@ -996,12 +995,12 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">
-                  {authUser ? `Welcome back, ${authUser.username}.` : "Welcome to MoonWalk VFX."}
+                  {authUser ? `Welcome back, ${authUser.username}.` : "Welcome to MoonWalk."}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {authUser
-                    ? <span>目前身分：<span className={`font-medium px-1.5 py-0.5 rounded border text-xs ${ROLE_COLOR[authUser.role]}`}>{ROLE_LABEL[authUser.role]}</span></span>
-                    : <span>請 <button className="text-teal-600 hover:underline" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>登入</button> 以開始使用</span>
+                    ? <span>Current role: <span className={`font-medium px-1.5 py-0.5 rounded border text-xs ${ROLE_COLOR[authUser.role]}`}>{ROLE_LABEL[authUser.role]}</span></span>
+                    : <span>Please <button className="text-teal-600 hover:underline" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>Sign In</button> to get started</span>
                   }
                 </p>
               </div>
@@ -1042,7 +1041,7 @@ export default function DashboardPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <User className="w-4 h-4 text-teal-600" />
-                    {authUser ? "帳號資訊" : "登入 / 註冊"}
+                    {authUser ? "Account Info" : "Sign In / Sign Up"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -1065,7 +1064,7 @@ export default function DashboardPage() {
 
                       {/* Accessible pages */}
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1.5 font-medium">可存取頁面</p>
+                        <p className="text-xs text-muted-foreground mb-1.5 font-medium">Accessible Pages</p>
                         <div className="flex flex-col gap-1">
                           {(() => {
                             const PAGE_LABELS: Record<string, string> = {
@@ -1090,7 +1089,7 @@ export default function DashboardPage() {
                       {/* Admin: user management */}
                       {authUser.role === "admin" && (
                         <div className="border-t pt-3 space-y-2.5">
-                          <p className="text-xs font-medium text-muted-foreground">帳號管理</p>
+                          <p className="text-xs font-medium text-muted-foreground">User Management</p>
 
                           <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
                             {users.map(u => (
@@ -1105,7 +1104,7 @@ export default function DashboardPage() {
                                     <button
                                       onClick={() => handleDeleteUser(u.email)}
                                       className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
-                                      title="刪除帳號"
+                                      title="Delete account"
                                     >✕</button>
                                   )}
                                 </div>
@@ -1114,14 +1113,14 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="space-y-1.5 border rounded-md p-2.5 bg-muted/20">
-                            <p className="text-[11px] font-medium text-muted-foreground mb-1.5">新增帳號</p>
+                            <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Add Account</p>
                             {addErr && <p className="text-[11px] text-red-600">{addErr}</p>}
                             {addOk  && <p className="text-[11px] text-teal-600">{addOk}</p>}
                             <Input className="h-7 text-xs" type="email" placeholder="Email" value={newEmail}
                               onChange={e => setNewEmail(e.target.value)} />
-                            <Input className="h-7 text-xs" placeholder="顯示名稱" value={newName}
+                            <Input className="h-7 text-xs" placeholder="Display name" value={newName}
                               onChange={e => setNewName(e.target.value)} />
-                            <Input className="h-7 text-xs" type="password" placeholder="密碼" value={newPw}
+                            <Input className="h-7 text-xs" type="password" placeholder="Password" value={newPw}
                               onChange={e => setNewPw(e.target.value)} />
                             <select
                               className="w-full h-7 text-xs rounded-md border border-input bg-background px-2"
@@ -1133,7 +1132,7 @@ export default function DashboardPage() {
                               <option value="admin">Admin</option>
                             </select>
                             <Button className="w-full h-7 text-xs bg-teal-600 hover:bg-teal-700" onClick={handleAddUser}>
-                              新增
+                              Add
                             </Button>
                           </div>
                         </div>
@@ -1141,24 +1140,24 @@ export default function DashboardPage() {
 
                       <Button variant="outline" className="w-full justify-start bg-transparent text-sm text-red-600 border-red-200 hover:bg-red-50"
                         onClick={handleLogout}>
-                        <LogOut className="w-4 h-4 mr-2" />登出
+                        <LogOut className="w-4 h-4 mr-2" />Sign Out
                       </Button>
                     </>
                   ) : (
                     <>
-                      <p className="text-xs text-muted-foreground">登入後可根據權限存取對應頁面</p>
+                      <p className="text-xs text-muted-foreground">Sign in to access pages based on your role</p>
                       <div className="space-y-1.5 text-xs text-muted-foreground border rounded-md p-2.5 bg-muted/30">
-                        <p className="font-medium text-foreground mb-1">權限說明</p>
-                        <p><span className="font-medium text-purple-700">Admin</span> — 所有頁面</p>
+                        <p className="font-medium text-foreground mb-1">Role Permissions</p>
+                        <p><span className="font-medium text-purple-700">Admin</span> — All pages</p>
                         <p><span className="font-medium text-teal-700">Senior Artist</span> — C01, C02, C06, C07</p>
                         <p><span className="font-medium text-sky-700">Junior Artist</span> — C03, C04, C05</p>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" className="flex-1" onClick={() => { setAuthTab("register"); setAuthOpen(true) }}>
-                          註冊
+                          Sign Up
                         </Button>
                         <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={() => { setAuthTab("login"); setAuthOpen(true) }}>
-                          登入
+                          Sign In
                         </Button>
                       </div>
                     </>

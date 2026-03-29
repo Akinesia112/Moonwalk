@@ -20,9 +20,9 @@ import Link from "next/link"
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 
-// 徹底刪除：後端 + 所有 sessionStorage key
+// Full delete: backend + all sessionStorage keys
 async function deleteItem(type: "references" | "artworks", id: string) {
-  // 1. 後端
+  // 1. Backend
   try { await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" }) } catch {}
 
   if (type === "references") {
@@ -36,13 +36,13 @@ async function deleteItem(type: "references" | "artworks", id: string) {
       const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]")
       sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
     } catch {}
-    // 4. deleted_ref_ids（加進去讓其他頁面也知道）
+    // 4. deleted_ref_ids (add so other pages are aware)
     try {
       const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]")
       if (!ids.includes(String(id))) ids.push(String(id))
       sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids))
     } catch {}
-    // 5. 廣播給其他 tab/頁面
+    // 5. Broadcast to other tabs/pages
     try { window.dispatchEvent(new StorageEvent("storage", { key: "deleted_ref_ids" })) } catch {}
   } else {
     // artwork
@@ -95,7 +95,7 @@ function stripMd(t: string) {
                 )}
               </div>
               <div className="rounded-lg bg-muted p-3 text-sm leading-relaxed whitespace-pre-wrap min-h-[60px]">
-                {noteDialogRef.note || "（無備注）"}
+                {noteDialogRef.note || "(No notes)"}
               </div>
             </div>
           </div>
@@ -348,7 +348,7 @@ export default function QAPage() {
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
     setHydrated(true)
-    try { setArtistNote(SS.get("reflection_notes") || "") } catch {}   // artist-reflection 理解筆記
+    try { setArtistNote(SS.get("reflection_notes") || "") } catch {}   // artist-reflection understanding notes
     try {
       const note = SS.get("c04_notes") || ""
       setReflectionNote(note)
@@ -363,7 +363,7 @@ export default function QAPage() {
           setNotesHistory(note.trim() && !hist.includes(note) ? [note, ...hist] : hist.length > 0 ? hist : note ? [note] : [])
         }
       } catch {}
-    } catch {}       // upload-analyze 創作反思筆記
+    } catch {}       // upload-analyze creative reflection notes
     try { const b = JSON.parse(SS.get("kickoff_brief") || "{}"); setSupervisorSpec(b.supervisor_spec || "") } catch {}
     // Restore text annotations / labels / specs / chat
     try { const v = SS.get("qa_annotations"); if (v) setAnnotations(JSON.parse(v)) } catch {}
@@ -380,7 +380,7 @@ export default function QAPage() {
       if (catList.length > 0) setLabels(catList)
     } catch {}
 
-    // Load upload-analyze 分項指標 → feedbackItems
+    // Load upload-analyze per-metric results → feedbackItems
     try {
       const raw = SS.get("c04_analysis")
       if (raw) {
@@ -524,8 +524,8 @@ export default function QAPage() {
   useEffect(() => { if (hydrated) try { SS.set("qa_chat", JSON.stringify(chatMessages)) } catch {} }, [chatMessages, hydrated])
 
   // Artist notes from sessionStorage
-  // artistNote     = 理解筆記    from artist-reflection  (key: "reflection_notes")
-  // reflectionNote = 創作反思筆記 from upload-analyze     (key: "c04_notes")
+  // artistNote     = understanding notes  from artist-reflection  (key: "reflection_notes")
+  // reflectionNote = creative reflection notes from upload-analyze (key: "c04_notes")
   const [artistNote, setArtistNote] = useState("")
   const [reflectionNote, setReflectionNote] = useState("")
   const [supervisorSpec, setSupervisorSpec] = useState("")
@@ -533,10 +533,10 @@ export default function QAPage() {
 
   // ── Brief/Specs ───────────────────────────────────────────────
   const BRIEF_LABELS: Record<string, string> = {
-    project_name: "專案名稱", client: "客戶", director: "導演/創意總監 & Supervisor",
-    confidentiality: "密等", selling_points: "產品賣點", keywords: "情緒關鍵詞",
-    restrictions: "禁忌事項", style: "風格關鍵字", mood: "色調/氛圍",
-    worldview: "世界觀", supervisor_spec: "Supervisor Spec",
+    project_name: "Project Name", client: "Client", director: "Director/Creative Director & Supervisor",
+    confidentiality: "Confidentiality Level", selling_points: "Key Selling Points", keywords: "Emotional Keywords",
+    restrictions: "Restrictions / Taboos", style: "Style Keywords", mood: "Color Tone / Atmosphere",
+    worldview: "World Concept", supervisor_spec: "Supervisor Spec",
   }
 
   const directorSpecs = (() => {
@@ -591,19 +591,19 @@ export default function QAPage() {
   type MetricItem = { id:string; name:string; status:string; agents:string[]; consensus:boolean; refBasis:string; supervisorNote:string|null }
   type MetricDetail = { analysis: string; suggestions: string[]; agentOpinions: { agent: string; opinion: string; confidence: number }[]; debate?: { agentA: {name:string;opinion:string;severity:string}; agentB: {name:string;opinion:string;severity:string}; consensus: string } }
   const STATIC_METRICS: MetricItem[] = [
-    { id:"composition", name:"構圖", status:"red", agents:["Composition_J","Composition_K"], consensus:false, refBasis:"Reference #2", supervisorNote:"建議參考非對稱構圖" },
-    { id:"lighting", name:"光影", status:"yellow", agents:["Light_J","Light_K"], consensus:true, refBasis:"Reference #1", supervisorNote:"補光強度微調" },
-    { id:"color", name:"色彩", status:"green", agents:["Color_J","Color_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
-    { id:"texture", name:"材質", status:"green", agents:["Texture_J","Texture_K"], consensus:true, refBasis:"Reference #3", supervisorNote:null },
-    { id:"motion", name:"動態", status:"yellow", agents:["Motion_J","Motion_K"], consensus:false, refBasis:"Spec", supervisorNote:"模糊程度確認" },
-    { id:"depth", name:"景深", status:"green", agents:["Depth_J","Depth_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
-    { id:"exposure", name:"曝光", status:"red", agents:["Exposure_J","Exposure_K"], consensus:true, refBasis:"Reference #1", supervisorNote:"優先修正" },
-    { id:"style", name:"風格", status:"green", agents:["Style_J","Style_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
+    { id:"composition", name:"Composition", status:"red", agents:["Composition_J","Composition_K"], consensus:false, refBasis:"Reference #2", supervisorNote:"Consider asymmetric composition" },
+    { id:"lighting", name:"Lighting", status:"yellow", agents:["Light_J","Light_K"], consensus:true, refBasis:"Reference #1", supervisorNote:"Fine-tune fill light intensity" },
+    { id:"color", name:"Color", status:"green", agents:["Color_J","Color_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
+    { id:"texture", name:"Texture", status:"green", agents:["Texture_J","Texture_K"], consensus:true, refBasis:"Reference #3", supervisorNote:null },
+    { id:"motion", name:"Motion", status:"yellow", agents:["Motion_J","Motion_K"], consensus:false, refBasis:"Spec", supervisorNote:"Confirm blur level" },
+    { id:"depth", name:"Depth of Field", status:"green", agents:["Depth_J","Depth_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
+    { id:"exposure", name:"Exposure", status:"red", agents:["Exposure_J","Exposure_K"], consensus:true, refBasis:"Reference #1", supervisorNote:"Fix first" },
+    { id:"style", name:"Style", status:"green", agents:["Style_J","Style_K"], consensus:true, refBasis:"Spec", supervisorNote:null },
   ]
   const STATIC_DETAILS: Record<string, MetricDetail> = {
-    composition: { analysis:"構圖重心偏左 15%", suggestions:["主體右移 10-15%","調整留白","參考 Ref #2"], agentOpinions:[{agent:"Composition_J",opinion:"不符合三分法",confidence:85},{agent:"Composition_K",opinion:"動態構圖邊緣案例",confidence:72}], debate:{agentA:{name:"Composition_J",opinion:"偏左",severity:"high"},agentB:{name:"Composition_K",opinion:"動態構圖可接受",severity:"medium"},consensus:"是否嚴格遵循三分法"} },
-    lighting: { analysis:"補光不足，陰影過重", suggestions:["左側補光 +20%","色溫 4800K"], agentOpinions:[{agent:"Light_J",opinion:"偏暗",confidence:88},{agent:"Light_K",opinion:"色溫輕微",confidence:82}] },
-    exposure: { analysis:"高光過曝 clipping 8%", suggestions:["曝光 -0.5 stops","漸層濾鏡"], agentOpinions:[{agent:"Exposure_J",opinion:"過曝",confidence:95},{agent:"Exposure_K",opinion:"高光損失",confidence:93}] },
+    composition: { analysis:"Composition center shifted left 15%", suggestions:["Shift subject right 10–15%","Adjust negative space","Refer to Ref #2"], agentOpinions:[{agent:"Composition_J",opinion:"Does not follow rule of thirds",confidence:85},{agent:"Composition_K",opinion:"Edge case for motion composition",confidence:72}], debate:{agentA:{name:"Composition_J",opinion:"Shifted left",severity:"high"},agentB:{name:"Composition_K",opinion:"Motion composition acceptable",severity:"medium"},consensus:"Whether to strictly follow the rule of thirds"} },
+    lighting: { analysis:"Insufficient fill light, shadows too heavy", suggestions:["Increase left fill light +20%","Color temperature 4800K"], agentOpinions:[{agent:"Light_J",opinion:"Too dark",confidence:88},{agent:"Light_K",opinion:"Color temperature slightly off",confidence:82}] },
+    exposure: { analysis:"Highlights overexposed, clipping 8%", suggestions:["Exposure -0.5 stops","Gradient filter"], agentOpinions:[{agent:"Exposure_J",opinion:"Overexposed",confidence:95},{agent:"Exposure_K",opinion:"Highlight clipping",confidence:93}] },
   }
   const [c04Metrics, setC04Metrics] = useState<MetricItem[]>([])
   const [c04Details, setC04Details] = useState<Record<string, MetricDetail>>({})
@@ -641,7 +641,7 @@ export default function QAPage() {
           } : undefined),
         }
         details[key] = entry          // by id (e.g. "light")
-        if (m.name) details[m.name] = entry   // by Chinese name (e.g. "光影")
+        if (m.name) details[m.name] = entry   // by Chinese name (e.g. "Lighting")
       })
       setC04Metrics(items); setC04Details(details)
     } catch {}
@@ -659,13 +659,13 @@ export default function QAPage() {
 
     // Build rich context so multi-agents understand full artist intent
     const ctxParts = [
-      `作品：${currentArt?.name || "（未選取）"}`,
-      `Reference：${currentRef?.name || "（未選取）"}`,
+      `Artwork: ${currentArt?.name || "(not selected)"}`,
+      `Reference: ${currentRef?.name || "(not selected)"}`,
     ]
     if (artistNote?.trim())
-      ctxParts.push(`理解筆記（Artist Reflection）：\n${artistNote.trim()}`)
+      ctxParts.push(`Understanding Notes (Artist Reflection):\n${artistNote.trim()}`)
     if (reflectionNote?.trim())
-      ctxParts.push(`創作反思筆記（Upload Analyze）：\n${reflectionNote.trim()}`)
+      ctxParts.push(`Creative Reflection Notes (Upload Analyze):\n${reflectionNote.trim()}`)
     if (supervisorSpec?.trim())
       ctxParts.push(`Supervisor Spec：\n${supervisorSpec.trim()}`)
     const ctx = ctxParts.join("\n\n")
@@ -681,9 +681,9 @@ export default function QAPage() {
         }),
       })
       const data = await res.json()
-      setChatMessages(p => [...p, { role: "ai", content: stripMd(data.response || data.reply || "抱歉，無法回應。") }])
+      setChatMessages(p => [...p, { role: "ai", content: stripMd(data.response || data.reply || "Sorry, unable to respond.") }])
     } catch {
-      setChatMessages(p => [...p, { role: "ai", content: "連線失敗，請確認後端。" }])
+      setChatMessages(p => [...p, { role: "ai", content: "Connection failed. Please confirm the backend." }])
     }
     setChatLoading(false)
   }, [currentArt, currentRef, chatMessages, artistNote, reflectionNote, supervisorSpec])
@@ -706,8 +706,8 @@ export default function QAPage() {
           .map((m: any) => m.name + "：" + (m.agentA?.opinion || "")).join("\n")
       } catch { return "" }
     })()
-    const ctx = ["作品：" + currentArt.name, "Reference：" + currentRef.name, analysisCtx ? "AI分析問題：\n" + analysisCtx : ""].filter(Boolean).join("\n")
-    const prompt = "根據作品「" + currentArt.name + "」與 Reference「" + currentRef.name + "」的 VFX 差距分析，用繁體中文生成：\n1. 3個具體畫面標註（10-20字，指出具體位置＋問題，例如「右上角主光 rim light 不足」）\n2. 3個 Supervisor Spec 規範（10-20字，針對具體視覺指標，例如「主光源方向須從右側 45° 照射」）\n3. 3個 Label 標籤（從 Lighting/Color/Composition/Style/Texture/Motion/Mood/VFX 選最相關）\n只回傳 JSON，格式：{\"annotations\":[\"...\"],\"specs\":[\"...\"],\"labels\":[\"...\"]}"
+    const ctx = ["Artwork: " + currentArt.name, "Reference: " + currentRef.name, analysisCtx ? "AI Analysis:\n" + analysisCtx : ""].filter(Boolean).join("\n")
+    const prompt = "Based on artwork '" + currentArt.name + "' and Reference '" + currentRef.name + "' VFX gap analysis, generate in English:\n1. 3 specific frame annotations (10-20 words indicating specific location + issue)\n2. 3 Supervisor Spec rules (10-20 words, e.g. 'Key light must come from the right at 45°')\n3. 3 Label tags (most relevant from Lighting/Color/Composition/Style/Texture/Motion/Mood/VFX)\nReturn JSON only, format: {\"annotations\":[\"...\"],\"specs\":[\"...\"],\"labels\":[\"...\"]}"
     fetch(API + "/suggestion/chat/analysis", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ project_id: PROJECT_ID, message: prompt, context: ctx }),
@@ -735,18 +735,18 @@ export default function QAPage() {
       const metric = metrics.find(m => m.id === metricId)
       const detail = metric ? (metricDetails[metricId] || metricDetails[metric.name]) : null
       if (metric && detail) {
-        setFeedbackItems(p => [...p, { id:"metric-"+Date.now(), text:"["+metric.name+"] "+detail.analysis+(detail.suggestions.length?". 建議："+detail.suggestions.join("、"):""), source:"AI", priority: metric.status==="red"?"P0":metric.status==="yellow"?"P1":"P2", supplement:"", addressed:false }])
+        setFeedbackItems(p => [...p, { id:"metric-"+Date.now(), text:"["+metric.name+"] "+detail.analysis+(detail.suggestions.length?". Suggestions: "+detail.suggestions.join(", "):""), source:"AI", priority: metric.status==="red"?"P0":metric.status==="yellow"?"P1":"P2", supplement:"", addressed:false }])
       }
       if (metric) {
         // Build full context: analysis + Agent A/B opinions + Debate
-        const parts: string[] = ["[勾選 Metric] " + metric.name + " (" + (metric.status==="red"?"紅燈":metric.status==="yellow"?"黃燈":"綠燈") + ") - " + metric.refBasis]
+        const parts: string[] = ["[Checked Metric] " + metric.name + " (" + (metric.status==="red"?"Red":metric.status==="yellow"?"Yellow":"Green") + ") - " + metric.refBasis]
         if (detail?.agentOpinions?.[0]?.opinion) parts.push("Agent A（" + detail.agentOpinions[0].agent + "）：" + detail.agentOpinions[0].opinion)
         if (detail?.agentOpinions?.[1]?.opinion) parts.push("Agent B（" + detail.agentOpinions[1].agent + "）：" + detail.agentOpinions[1].opinion)
-        if (detail?.debate?.consensus) parts.push("Debate 結論：" + detail.debate.consensus)
-        if (detail?.analysis) parts.push("分析：" + detail.analysis)
+        if (detail?.debate?.consensus) parts.push("Debate Conclusion: " + detail.debate.consensus)
+        if (detail?.analysis) parts.push("Analysis: " + detail.analysis)
         const msg = parts.join("\n")
         setChatMessages(p => [...p, { role:"user", content: msg }])
-        callAgent("針對「" + metric.name + "」指標，根據以下 Agent Debate 內容給出具體改進建議：\n" + msg)
+        callAgent("For '" + metric.name + "' metric, provide specific improvement suggestions based on the following Agent Debate:\n" + msg)
       }
     } else {
       setCheckedMetrics(p => p.filter(id => id !== metricId))
@@ -763,8 +763,8 @@ export default function QAPage() {
 
   const handleAnalyzeFeedback = () => {
     setAnalyzingFeedback(true)
-    const msg = `請分析以下 ${feedbackItems.length} 筆回饋並給出優先處理順序和具體建議：\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
-    setChatMessages(p => [...p, { role:"user", content:"[AI 分析回饋]" }])
+    const msg = `Please analyze the following ${feedbackItems.length} feedback items and provide prioritized action suggestions:\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
+    setChatMessages(p => [...p, { role:"user", content:"[AI Feedback Analysis]" }])
     callAgent(msg).finally(() => setAnalyzingFeedback(false))
   }
 
@@ -1080,9 +1080,9 @@ export default function QAPage() {
   }
 
   const canvasTools = [
-    {id:"pointer",icon:MousePointer,label:"選擇"},{id:"brush",icon:PenTool,label:"畫筆"},
-    {id:"circle",icon:Circle,label:"圓形"},{id:"rect",icon:Square,label:"矩形"},
-    {id:"text",icon:Type,label:"文字"},{id:"eraser",icon:Eraser,label:"橡皮擦"},
+    {id:"pointer",icon:MousePointer,label:"Select"},{id:"brush",icon:PenTool,label:"Brush"},
+    {id:"circle",icon:Circle,label:"Circle"},{id:"rect",icon:Square,label:"Rectangle"},
+    {id:"text",icon:Type,label:"Text"},{id:"eraser",icon:Eraser,label:"Eraser"},
   ]
   const colorPalette = ["#ef4444","#f59e0b","#22c55e","#14b8a6","#3b82f6","#a78bfa","#000000","#ffffff"]
   const fillPalette = ["transparent","#ef4444","#f59e0b","#22c55e","#14b8a6","#3b82f6","#a78bfa","#00000044","#ffffff44"]
@@ -1144,9 +1144,9 @@ export default function QAPage() {
                         Artworks ({artworks.length})
                       </CardTitle>
                       <div className="flex items-center gap-1">
-                        <Button size="sm" variant={leftPanelMode==="browse"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("browse")} title="收納瀏覽模式"><LayoutList className="w-3 h-3" /></Button>
-                        <Button size="sm" variant={leftPanelMode==="expand"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("expand")} title="展開模式"><Maximize2 className="w-3 h-3" /></Button>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artworkFileRef.current?.click()} title="上傳 Artwork"><Upload className="w-3 h-3" /></Button>
+                        <Button size="sm" variant={leftPanelMode==="browse"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("browse")} title="Compact browse mode"><LayoutList className="w-3 h-3" /></Button>
+                        <Button size="sm" variant={leftPanelMode==="expand"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("expand")} title="Expand mode"><Maximize2 className="w-3 h-3" /></Button>
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artworkFileRef.current?.click()} title="Upload Artwork"><Upload className="w-3 h-3" /></Button>
                       </div>
                     </div>
                     <input ref={artworkFileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { handleArtworkUpload(Array.from(e.target.files||[])); e.target.value="" }} />
@@ -1163,7 +1163,7 @@ export default function QAPage() {
                             onDrop={e => { e.preventDefault(); e.currentTarget.classList.remove("border-primary","bg-primary/5"); handleArtworkUpload(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"))) }}
                           >
                             <Upload className="w-7 h-7 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">點擊或拖曳上傳圖片</p>
+                            <p className="text-xs text-muted-foreground">Click or drag to upload image</p>
                             <p className="text-[10px] text-muted-foreground opacity-60">JPG, PNG, WEBP</p>
                           </div>
                         )}
@@ -1175,8 +1175,8 @@ export default function QAPage() {
                                 <div
                                   className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork===idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                                   onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork===idx?null:idx) }}
-                                  onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察這張 Artwork「${art.name}」，分析它與 Reference 的差距，給出具體改進建議。`) }}
-                                  title="雙擊匯入對話框討論"
+                                  onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[Discuss Artwork] ${art.name}` }]); callAgent(`Please examine this artwork "${art.name}", analyze the gaps between it and the Reference, and provide specific improvement suggestions.`) }}
+                                  title="Double-click to import to chat"
                                 >
                                   <div className="aspect-video bg-muted overflow-hidden relative">
                                     {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
@@ -1189,7 +1189,7 @@ export default function QAPage() {
                                 <button
                                   className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                   onClick={e => { e.stopPropagation(); deleteItem("artworks", art.id); setArtworks(p => p.filter(a => a.id !== art.id)); if (selectedArtwork===idx) setSelectedArtwork(0) }}
-                                  title="刪除"
+                                  title="Delete"
                                 ><X className="w-3 h-3 text-white" /></button>
                               </div>
                             ) : (
@@ -1197,8 +1197,8 @@ export default function QAPage() {
                               <div
                                 className={`relative group flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedArtwork===idx ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted border border-transparent'}`}
                                 onClick={() => { setSelectedArtwork(idx); setSelectedRef(0); setExpandedArtwork(expandedArtwork===idx?null:idx) }}
-                                onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察這張 Artwork「${art.name}」，分析它與 Reference 的差距，給出具體改進建議。`) }}
-                                title="雙擊匯入對話框討論"
+                                onDoubleClick={e => { e.stopPropagation(); setChatMessages(p => [...p, { role:"user", content: `[Discuss Artwork] ${art.name}` }]); callAgent(`Please examine this artwork "${art.name}", analyze the gaps between it and the Reference, and provide specific improvement suggestions.`) }}
+                                title="Double-click to import to chat"
                               >
                                 {art.image ? (
                                   <div className="w-10 h-7 rounded overflow-hidden shrink-0">
@@ -1214,7 +1214,7 @@ export default function QAPage() {
                                 <button
                                   className="w-4 h-4 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive ml-0.5"
                                   onClick={e => { e.stopPropagation(); deleteItem("artworks", art.id); setArtworks(p => p.filter(a => a.id !== art.id)); if (selectedArtwork===idx) setSelectedArtwork(0) }}
-                                  title="刪除"
+                                  title="Delete"
                                 ><X className="w-2.5 h-2.5" /></button>
                               </div>
                             )}
@@ -1231,17 +1231,17 @@ export default function QAPage() {
                                         style={{ cursor: "pointer" }}
                                         onDoubleClick={e => {
                                           e.stopPropagation()
-                                          setChatMessages(p => [...p, { role:"user", content: `[討論 Reference] ${ref.name}${ref.category ? ` (${ref.category})` : ""}${ref.note ? `
-備注：${ref.note}` : ""}` }])
-                                          callAgent(`請分析 Reference「${ref.name}」${ref.category ? `（${ref.category}）` : ""}的視覺特徵，以及它對當前 Artwork 的參考價值。${ref.note ? `Artist 備注：${ref.note}` : ""}`)
+                                          setChatMessages(p => [...p, { role:"user", content: `[Discuss Reference] ${ref.name}${ref.category ? ` (${ref.category})` : ""}${ref.note ? `
+Notes: ${ref.note}` : ""}` }])
+                                          callAgent(`Please analyze the visual characteristics of Reference "${ref.name}"${ref.category ? ` (${ref.category})` : ""} and its reference value for the current artwork.${ref.note ? `Artist Notes: ${ref.note}` : ""}`)
                                         }}
-                                        title="雙擊匯入對話框討論｜備注按鈕查看備注"
+                                        title="Double-click to import to chat | click Notes button to view notes"
                                       >
                                         <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />
                                         <button
                                           className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                           onClick={e => { e.stopPropagation(); deleteItem("references", ref.id); setArtworks(p => p.map(a => ({ ...a, refs: a.refs.filter(r => r.id !== ref.id) }))) }}
-                                          title="刪除"
+                                          title="Delete"
                                         ><X className="w-3 h-3 text-white" /></button>
                                         {ref.category && (
                                           <span className={`absolute top-1 left-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm ${CATEGORY_COLOR[ref.category] ?? "bg-white/80 text-gray-800"}`}>
@@ -1257,9 +1257,9 @@ export default function QAPage() {
                                           <button
                                             className="absolute bottom-1 left-1 flex items-center gap-0.5 bg-black/60 hover:bg-black/80 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow transition-colors"
                                             onClick={e => { e.stopPropagation(); setNoteDialogRef({ name: ref.name, note: ref.note!, preview: ref.image, category: ref.category, importance: ref.importance }) }}
-                                            title="點擊查看備注"
+                                            title="Click to view notes"
                                           >
-                                            <FileText className="w-2 h-2" />備注
+                                            <FileText className="w-2 h-2" />Notes
                                           </button>
                                         )}
                                       </div>
@@ -1288,7 +1288,7 @@ export default function QAPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="flex items-center gap-2 text-sm"><PenTool className="w-4 h-4 text-teal-600" />Supervisor Review Canvas</CardTitle>
-                        <CardDescription className="text-[10px] mt-0.5">整合 Specs、作品、Reference，可直接圈選標註</CardDescription>
+                        <CardDescription className="text-[10px] mt-0.5">Integrate Specs, Artwork, and References — annotate directly</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -1306,7 +1306,7 @@ export default function QAPage() {
                         <div className="relative">
                           <button type="button" className="flex items-center gap-1 px-1.5 h-7 rounded border text-[9px] hover:bg-muted" onClick={() => { setShowStrokeDD(p=>!p); setShowFillDD(false); setShowSizeDD(false); setShowOpacityDD(false) }}>
                             <div className="w-3 h-3 rounded-full border border-border shrink-0" style={{backgroundColor:brushColor}}/>
-                            <span>邊線</span>
+                            <span>Stroke</span>
                           </button>
                           {showStrokeDD && (
                             <div className="absolute top-8 left-0 z-50 flex bg-card border rounded-lg shadow-lg p-2 gap-1 flex-wrap w-28">
@@ -1320,7 +1320,7 @@ export default function QAPage() {
                         <div className="relative">
                           <button type="button" className="flex items-center gap-1 px-1.5 h-7 rounded border text-[9px] hover:bg-muted" onClick={() => { setShowFillDD(p=>!p); setShowStrokeDD(false); setShowSizeDD(false); setShowOpacityDD(false) }}>
                             <div className="w-3 h-3 rounded-full border border-border shrink-0" style={{backgroundColor:fillColor==="transparent"?"transparent":fillColor, backgroundImage:fillColor==="transparent"?'repeating-conic-gradient(#aaa 0% 25%,transparent 0% 50%) 0 0/4px 4px':'none'}}/>
-                            <span>填色</span>
+                            <span>Fill</span>
                           </button>
                           {showFillDD && (
                             <div className="absolute top-8 left-0 z-50 flex bg-card border rounded-lg shadow-lg p-2 gap-1 flex-wrap w-32">
@@ -1333,12 +1333,12 @@ export default function QAPage() {
                         {/* Size popover */}
                         <div className="relative">
                           <button type="button" className="flex items-center gap-1 px-1.5 h-7 rounded border text-[9px] hover:bg-muted" onClick={() => { setShowSizeDD(p=>!p); setShowStrokeDD(false); setShowFillDD(false); setShowOpacityDD(false) }}>
-                            <span>粗細 {brushSize}</span>
+                            <span>Size {brushSize}</span>
                           </button>
                           {showSizeDD && (
                             <div className="absolute top-8 left-0 z-50 bg-card border rounded-lg shadow-lg p-3 w-48">
                               <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[10px]">粗細</span>
+                                <span className="text-[10px]">Size</span>
                                 <input type="number" min={1} max={15} value={brushSize} className="w-12 h-6 text-xs border rounded px-1 text-center" onKeyDown={e=>e.stopPropagation()} onChange={e => { const v=Number(e.target.value); if(!isNaN(v)) setBrushSize(Math.max(1,Math.min(15,v))) }} />
                               </div>
                               <input type="range" min={1} max={15} step={1} value={brushSize} className="w-full accent-primary" onChange={e => setBrushSize(Number(e.target.value))} />
@@ -1348,12 +1348,12 @@ export default function QAPage() {
                         {/* Opacity popover */}
                         <div className="relative">
                           <button type="button" className="flex items-center gap-1 px-1.5 h-7 rounded border text-[9px] hover:bg-muted" onClick={() => { setShowOpacityDD(p=>!p); setShowStrokeDD(false); setShowFillDD(false); setShowSizeDD(false) }}>
-                            <span>透明 {Math.round(brushOpacity*100)}%</span>
+                            <span>Opacity {Math.round(brushOpacity*100)}%</span>
                           </button>
                           {showOpacityDD && (
                             <div className="absolute top-8 left-0 z-50 bg-card border rounded-lg shadow-lg p-3 w-48">
                               <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[10px]">透明度</span>
+                                <span className="text-[10px]">Opacity</span>
                                 <input type="number" min={0} max={100} value={Math.round(brushOpacity*100)} className="w-12 h-6 text-xs border rounded px-1 text-center" onKeyDown={e=>e.stopPropagation()} onChange={e => { const v=Number(e.target.value); if(!isNaN(v)) setBrushOpacity(Math.max(0,Math.min(100,v))/100) }} />
                               </div>
                               <input type="range" min={0} max={100} value={Math.round(brushOpacity*100)} className="w-full accent-primary" onChange={e => setBrushOpacity(Number(e.target.value)/100)} />
@@ -1371,19 +1371,19 @@ export default function QAPage() {
                             <option value="Georgia">Georgia</option>
                             <option value="Impact">Impact</option>
                           </select>
-                          <span className="text-[9px] text-muted-foreground">字號</span>
+                          <span className="text-[9px] text-muted-foreground">Font Size</span>
                           <input type="number" min={8} max={120} value={textFontSize} className="w-10 h-6 text-xs border rounded px-1 text-center" onKeyDown={e=>e.stopPropagation()} onChange={e=>{const v=Number(e.target.value);if(!isNaN(v)&&v>0)setTextFontSize(Math.max(8,Math.min(120,v)))}} />
                           <button type="button" className={`h-6 w-6 rounded text-xs font-bold border transition-colors ${textBold?'bg-primary text-primary-foreground':'hover:bg-muted'}`} onClick={()=>setTextBold(p=>!p)}>B</button>
                           <button type="button" className={`h-6 w-6 rounded text-xs italic border transition-colors ${textItalic?'bg-primary text-primary-foreground':'hover:bg-muted'}`} onClick={()=>setTextItalic(p=>!p)}>I</button>
                         </>)}
                         <div className="w-px h-5 bg-border mx-1" />
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="復原上一步（跨Work/Ref）" onClick={() => {
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Undo last step (across Work/Ref)" onClick={() => {
                           const entry = globalUndoRef.current.pop()
                           if (!entry) return
                           if (entry.panel === "ref") setRefAnnotations(entry.anns)
                           else setCanvasAnnotations(entry.anns)
                         }}><Undo2 className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="全部清除（Work + Ref）" onClick={() => {
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Clear all (Work + Ref)" onClick={() => {
                           globalUndoRef.current = [
                             ...globalUndoRef.current.slice(-40),
                             {panel:"work", anns:[...canvasAnnotations]},
@@ -1393,7 +1393,7 @@ export default function QAPage() {
                           setRefAnnotations([])
                         }}><Trash2 className="w-3.5 h-3.5" /></Button>
                         <div className="w-px h-5 bg-border mx-0.5" />
-                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-teal-600 hover:bg-teal-700 text-white" title="輸出 Artwork 標註圖" onClick={() => {
+                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-teal-600 hover:bg-teal-700 text-white" title="Export Artwork annotation" onClick={() => {
                           const canvas = canvasRef.current
                           const img = canvasContainerRef.current?.querySelector("img") as HTMLImageElement | null
                           if (!canvas || !img) return
@@ -1404,9 +1404,9 @@ export default function QAPage() {
                           ctx.drawImage(canvas, 0, 0)
                           const link = document.createElement("a"); link.download = `${currentArt?.name||"artwork"}_annotated.png`; link.href = off.toDataURL("image/png"); document.body.appendChild(link); link.click(); document.body.removeChild(link)
                         }}>
-                          <Save className="w-3.5 h-3.5" />輸出 Work
+                          <Save className="w-3.5 h-3.5" />Export Work
                         </Button>
-                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-cyan-600 hover:bg-cyan-700 text-white" title="輸出 Reference 標註圖" onClick={() => {
+                        <Button variant="default" size="sm" className="h-7 px-2 text-[10px] gap-1 bg-cyan-600 hover:bg-cyan-700 text-white" title="Export Reference annotation" onClick={() => {
                           const canvas = refCanvasRef.current
                           const img = refCanvasContainerRef.current?.querySelector("img") as HTMLImageElement | null
                           if (!canvas || !img) return
@@ -1417,7 +1417,7 @@ export default function QAPage() {
                           ctx.drawImage(canvas, 0, 0)
                           const link = document.createElement("a"); link.download = `${currentRef?.name||"reference"}_annotated.png`; link.href = off.toDataURL("image/png"); document.body.appendChild(link); link.click(); document.body.removeChild(link)
                         }}>
-                          <Save className="w-3.5 h-3.5" />輸出 Ref
+                          <Save className="w-3.5 h-3.5" />Export Ref
                         </Button>
                       </div>
                       <div className="flex items-center gap-1">
@@ -1490,7 +1490,7 @@ export default function QAPage() {
                                   />
                                 </div>
                               ) : (
-                                <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Artwork</p></div>
+                                <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>Select Artwork</p></div>
                               )}
                             </div>
                             {/* Work text overlay — outside scaled container */}
@@ -1507,7 +1507,7 @@ export default function QAPage() {
                                     onChange={e=>{const v=Number(e.target.value);if(!isNaN(v)&&v>0)setTextFontSize(Math.max(8,Math.min(120,v)))}}
                                   />
                                   <input type="color" value={brushColor} onChange={e=>setBrushColor(e.target.value)}
-                                    className="w-5 h-5 rounded cursor-pointer border border-zinc-600 bg-transparent p-0" title="顏色"
+                                    className="w-5 h-5 rounded cursor-pointer border border-zinc-600 bg-transparent p-0" title="Color"
                                   />
                                   <button type="button" onMouseDown={e=>{e.preventDefault();setTextBold(p=>!p)}}
                                     className={`h-5 w-5 rounded text-[10px] font-bold border transition-colors ${textBold?"bg-teal-500 text-white border-teal-400":"text-zinc-300 border-zinc-600 hover:bg-zinc-700"}`}>B</button>
@@ -1524,14 +1524,14 @@ export default function QAPage() {
                                   autoFocus type="text" value={textInputValue}
                                   onChange={e=>setTextInputValue(e.target.value)}
                                   onCompositionStart={()=>{isComposingRef.current=true}} onCompositionEnd={()=>{isComposingRef.current=false}} onKeyDown={e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(isComposingRef.current)return;const now=Date.now();if(now-lastEnterRef.current<400){lastEnterRef.current=0;handleTextSubmit()}else{lastEnterRef.current=now}}if(e.key==="Escape"&&!isComposingRef.current){e.preventDefault();setTextInputPos(null);setTextInputValue("")}}}
-                                  placeholder="輸入文字… 雙按 Enter 確認"
+                                  placeholder="Enter text… double press Enter to confirm"
                                   className="min-w-[140px] border-2 border-teal-500 rounded px-2 py-0.5 shadow-lg outline-none bg-white/90 placeholder:text-zinc-400"
                                   style={{font:`${textBold?"bold ":""}${textItalic?"italic ":""}${textFontSize}px ${textFont}`,color:brushColor}}
                                 />
                               </div>
                             )}
                             <Badge className="absolute top-2 left-2 bg-blue-500 text-[10px] h-5 z-10 pointer-events-none">Work</Badge>
-                            <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap pointer-events-none">Ctrl/⌘ + 滾輪縮放</p>
+                            <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap pointer-events-none">Ctrl/⌘ + Scroll to zoom</p>
                           </div>
                           <div className="w-px bg-white/30 shrink-0" />
                           {/* Reference: img + canvas overlay, same as artwork */}
@@ -1554,7 +1554,7 @@ export default function QAPage() {
                                   />
                                 </div>
                               ) : (
-                                <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>選擇 Reference</p></div>
+                                <div className="text-white/40 text-xs text-center"><ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>Select Reference</p></div>
                               )}
                             </div>
                             {/* Ref text overlay — outside scaled container, unaffected by zoom */}
@@ -1571,7 +1571,7 @@ export default function QAPage() {
                                     onChange={e=>{const v=Number(e.target.value);if(!isNaN(v)&&v>0)setTextFontSize(Math.max(8,Math.min(120,v)))}}
                                   />
                                   <input type="color" value={brushColor} onChange={e=>setBrushColor(e.target.value)}
-                                    className="w-5 h-5 rounded cursor-pointer border border-zinc-600 bg-transparent p-0" title="顏色"
+                                    className="w-5 h-5 rounded cursor-pointer border border-zinc-600 bg-transparent p-0" title="Color"
                                   />
                                   <button type="button" onMouseDown={e=>{e.preventDefault();setTextBold(p=>!p)}}
                                     className={`h-5 w-5 rounded text-[10px] font-bold border transition-colors ${textBold?"bg-amber-500 text-white border-amber-400":"text-zinc-300 border-zinc-600 hover:bg-zinc-700"}`}>B</button>
@@ -1588,43 +1588,43 @@ export default function QAPage() {
                                   autoFocus type="text" value={textInputValue}
                                   onChange={e=>setTextInputValue(e.target.value)}
                                   onCompositionStart={()=>{isComposingRef.current=true}} onCompositionEnd={()=>{isComposingRef.current=false}} onKeyDown={e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(isComposingRef.current)return;const now=Date.now();if(now-lastEnterRef.current<400){lastEnterRef.current=0;handleTextSubmit()}else{lastEnterRef.current=now}}if(e.key==="Escape"&&!isComposingRef.current){e.preventDefault();setTextInputPos(null);setTextInputValue("")}}}
-                                  placeholder="輸入文字… 雙按 Enter 確認"
+                                  placeholder="Enter text… double press Enter to confirm"
                                   className="min-w-[140px] border-2 border-amber-500 rounded px-2 py-0.5 shadow-lg outline-none bg-white/90 placeholder:text-zinc-400"
                                   style={{font:`${textBold?"bold ":""}${textItalic?"italic ":""}${textFontSize}px ${textFont}`,color:brushColor}}
                                 />
                               </div>
                             )}
                             <Badge className="absolute top-2 right-2 bg-amber-500 text-[10px] h-5">Ref</Badge>
-                            <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap">Ctrl/⌘ + 滾輪縮放</p>
+                            <p className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/50 whitespace-nowrap">Ctrl/⌘ + Scroll to zoom</p>
                           </div>
                         </div>{/* end flex-1 flex min-h-0 Work+Ref */}
                       </div>{/* end canvas-center */}
 
-                      {/* Right sidebar: 註解 + Labels + Specs */}
+                      {/* Right sidebar: Annotations + Labels + Specs */}
                       <div className="w-44 border-l flex flex-col shrink-0 bg-card overflow-hidden">
                         <div className="flex items-center gap-1.5 px-2 py-1 border-b shrink-0">
                           <Tag className="w-3 h-3 text-teal-600"/>
-                          <span className="text-[10px] font-semibold">註解 · Labels · Specs</span>
+                          <span className="text-[10px] font-semibold">Annotations · Labels · Specs</span>
                           {loadingSuggestions && <Loader2 className="w-2.5 h-2.5 animate-spin text-teal-500"/>}
                         </div>
                         <ScrollArea className="flex-1 min-h-0">
                           <div className="divide-y">
-                            {/* 新增註解 */}
+                            {/* Add Annotation */}
                             <div className="px-2 py-1.5">
-                              <h4 className="text-[10px] font-semibold mb-1">新增註解</h4>
+                              <h4 className="text-[10px] font-semibold mb-1">Add Annotation</h4>
                               {suggestedAnnotations.length > 0 && (
                                 <div className="flex flex-wrap gap-0.5 mb-1">
                                   {suggestedAnnotations.map((s, i) => (
                                     <button key={i} type="button"
                                       className="text-[8px] px-1 py-0.5 rounded border border-teal-500/40 text-teal-700 bg-teal-500/5 hover:bg-teal-500/15 transition-colors text-left w-full"
-                                      onClick={() => { setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:s,time:"剛剛",ai:true}]); setSuggestedAnnotations(p=>p.filter((_,j)=>j!==i)) }}
+                                      onClick={() => { setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:s,time:"Just now",ai:true}]); setSuggestedAnnotations(p=>p.filter((_,j)=>j!==i)) }}
                                     >{s}</button>
                                   ))}
                                 </div>
                               )}
                               <div className="flex gap-1 mb-1">
-                                <Input placeholder="輸入導演註解..." value={newAnnotationText} onChange={e=>setNewAnnotationText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/>
-                                <Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={() => {if(newAnnotationText.trim()){setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:newAnnotationText,time:"剛剛"}]);setNewAnnotationText("")}}}><Plus className="w-2.5 h-2.5"/></Button>
+                                <Input placeholder="Enter director annotation..." value={newAnnotationText} onChange={e=>setNewAnnotationText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/>
+                                <Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={() => {if(newAnnotationText.trim()){setAnnotations(p=>[...p,{id:"ann-"+Date.now(),text:newAnnotationText,time:"Just now"}]);setNewAnnotationText("")}}}><Plus className="w-2.5 h-2.5"/></Button>
                               </div>
                               <div className="space-y-0.5">{annotations.map(ann=><div key={ann.id} className="flex items-start gap-1 min-w-0"><Tag className="w-2 h-2 text-teal-600 mt-0.5 shrink-0"/><span className="text-[8px] break-words leading-tight">{ann.text}</span></div>)}</div>
                             </div>
@@ -1642,7 +1642,7 @@ export default function QAPage() {
                                 </div>
                               )}
                               <div className="flex flex-wrap gap-0.5 mb-1">{labels.map((label,i)=><Badge key={i} variant="outline" className="text-[8px] gap-0.5 h-3.5">{label}<button type="button" onClick={()=>setLabels(p=>p.filter((_,j)=>j!==i))} className="ml-0.5 hover:text-red-500"><X className="w-1.5 h-1.5"/></button></Badge>)}</div>
-                              <div className="flex gap-1"><Input placeholder="新增 Label..." value={newLabel} onChange={e=>setNewLabel(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newLabel.trim()){setLabels(p=>[...p,newLabel]);setNewLabel("")}}}><Plus className="w-2 h-2"/></Button></div>
+                              <div className="flex gap-1"><Input placeholder="Add Label..." value={newLabel} onChange={e=>setNewLabel(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newLabel.trim()){setLabels(p=>[...p,newLabel]);setNewLabel("")}}}><Plus className="w-2 h-2"/></Button></div>
                             </div>
                             {/* Specs */}
                             <div className="px-2 py-1.5">
@@ -1658,12 +1658,12 @@ export default function QAPage() {
                                 </div>
                               )}
                               <div className="space-y-0.5 mb-1">{inlineSpecs.map((spec,i)=><div key={i} className="flex items-start justify-between gap-1"><div className="flex items-start gap-1 min-w-0"><CheckCircle2 className="w-2 h-2 text-teal-500 mt-0.5 shrink-0"/><span className="text-[8px] break-words">{spec}</span></div><button type="button" onClick={()=>setInlineSpecs(p=>p.filter((_,j)=>j!==i))} className="text-muted-foreground hover:text-red-500 shrink-0"><X className="w-2 h-2"/></button></div>)}</div>
-                              <div className="flex gap-1"><Input placeholder="新增 Spec..." value={newSpecText} onChange={e=>setNewSpecText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newSpecText.trim()){setInlineSpecs(p=>[...p,newSpecText]);setNewSpecText("")}}}><Plus className="w-2 h-2"/></Button></div>
+                              <div className="flex gap-1"><Input placeholder="Add Spec..." value={newSpecText} onChange={e=>setNewSpecText(e.target.value)} onKeyDown={e=>e.stopPropagation()} className="text-[9px] h-5"/><Button size="sm" className="h-5 w-5 p-0 shrink-0" onClick={()=>{if(newSpecText.trim()){setInlineSpecs(p=>[...p,newSpecText]);setNewSpecText("")}}}><Plus className="w-2 h-2"/></Button></div>
                             </div>
                             {/* Submit */}
                             <div className="px-2 py-1.5 bg-teal-500/5">
                               <Button size="sm" className="w-full h-7 text-[10px] gap-1" onClick={() => {
-                                const summary = [`[Canvas Review Submit]`,`文字註解 (${annotations.length}): ${annotations.map(a=>a.text).join("; ")}`,`Labels: ${labels.join(", ")}`,`Specs: ${inlineSpecs.join("; ")}`,`畫筆標記: ${canvasAnnotations.filter(a=>a.type==="brush").length} 筆`,`圈選/框選: ${canvasAnnotations.filter(a=>a.type==="circle"||a.type==="rect").length} 個`].filter(Boolean).join("\n")
+                                const summary = [`[Canvas Review Submit]`,`Annotations (${annotations.length}): ${annotations.map(a=>a.text).join("; ")}`,`Labels: ${labels.join(", ")}`,`Specs: ${inlineSpecs.join("; ")}`,`Brush marks: ${canvasAnnotations.filter(a=>a.type==="brush").length}  strokes`,`Circles/Rectangles: ${canvasAnnotations.filter(a=>a.type==="circle"||a.type==="rect").length}`].filter(Boolean).join("\n")
                                 setChatMessages(p=>[...p,{role:"user",content:summary}])
                                 callAgent(summary)
                               }}><Send className="w-3 h-3"/>Submit to Agent</Button>
@@ -1703,7 +1703,7 @@ export default function QAPage() {
                               <div key={m.id} className={`p-1.5 rounded-lg ${getStatusBg(m.status)} ${isMetricMentioned(m.id)?"border-2":"border border-dashed"} cursor-pointer select-none`}
                                 onClick={()=>{setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
                                 onDoubleClick={e=>{e.stopPropagation();setSelectedMetricDetail(m);setShowMetricDetailDialog(true)}}
-                                title="單擊/雙擊查看詳情・勾選 checkbox 送入 AI 對話"
+                                title="Click/Double-click to view details · Check to send to AI chat"
                               >
                                 <div className="flex items-center gap-1">
                                   <Checkbox checked={checkedMetrics.includes(m.id)} onCheckedChange={c=>handleMetricCheck(m.id,c as boolean)} className="h-3 w-3" onClick={e=>e.stopPropagation()}/>
@@ -1712,7 +1712,7 @@ export default function QAPage() {
                                 </div>
                                 <div className="flex items-center gap-1 mt-0.5 ml-4">
                                   <Badge variant="outline" className="text-[7px] h-3 px-0.5">{m.refBasis}</Badge>
-                                  {!m.consensus&&<Badge variant="outline" className="text-[7px] h-3 px-0.5 bg-amber-500/10 text-amber-600">分歧</Badge>}
+                                  {!m.consensus&&<Badge variant="outline" className="text-[7px] h-3 px-0.5 bg-amber-500/10 text-amber-600">Divergent</Badge>}
                                 </div>
                               </div>
                             ))}
@@ -1745,9 +1745,9 @@ export default function QAPage() {
                       </CollapsibleTrigger>
                       <CollapsibleContent className="flex-1 min-h-0 overflow-y-auto">
                         <CardContent className="pt-0 pb-2 px-3 h-full">
-                          {/* 創作反思筆記 scrolling history — from upload-analyze page (c04_notes) */}
+                          {/* Creative reflection notes scrolling history — from upload-analyze page (c04_notes) */}
                           {!hydrated || notesHistory.length === 0 ? (
-                            <p className="text-[10px] text-muted-foreground py-1">尚無創作反思筆記（來自 Upload Analyze 頁面）</p>
+                            <p className="text-[10px] text-muted-foreground py-1">No creative reflection notes yet (from the Upload Analyze page)</p>
                           ) : (
                             <ScrollArea className="h-full pr-3">
                               <div className="space-y-1.5 pr-1">
@@ -1759,8 +1759,8 @@ export default function QAPage() {
                                         <span className="text-[8px] font-semibold text-violet-700">#{notesHistory.length - i}</span>
                                       </div>
                                       <button className="text-[8px] text-violet-500 hover:text-violet-700"
-                                        onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[創作反思 #${notesHistory.length - i}] ${note}` }]); callAgent(`Artist 的創作反思：\n${note}`) }}>
-                                        發送 AI →
+                                        onClick={() => { setChatMessages(p => [...p, { role:"user", content:`[Reflection #${notesHistory.length - i}] ${note}` }]); callAgent(`Artist's creative reflection:\n${note}`) }}>
+                                        Send to AI →
                                       </button>
                                     </div>
                                     <p className="text-[9px] leading-relaxed whitespace-pre-line">{note}</p>
@@ -1783,33 +1783,33 @@ export default function QAPage() {
               <div className="shrink-0 flex flex-col" style={{ width: rightW, height: COL_HEIGHT }}>
                 <Card className="border-teal-500/30 flex flex-col flex-1 min-h-0">
                   <CardHeader className="pb-1 shrink-0 py-2">
-                    <div className="flex items-center gap-2"><Bot className="w-4 h-4 text-teal-600"/><div><CardTitle className="text-xs">AI 助手</CardTitle><CardDescription className="text-[10px]">AI 調整語氣風格輸出</CardDescription></div></div>
+                    <div className="flex items-center gap-2"><Bot className="w-4 h-4 text-teal-600"/><div><CardTitle className="text-xs">AI Assistant</CardTitle><CardDescription className="text-[10px]">AI tone-adjusted output</CardDescription></div></div>
                   </CardHeader>
                   <CardContent className="flex-1 min-h-0 flex flex-col p-0">
                     <ScrollArea className="flex-1 min-h-0">
                       <div className="px-3 py-2 space-y-2.5">
-                        {chatMessages.length===0&&<div className="text-center py-6 text-muted-foreground"><Bot className="w-6 h-6 mx-auto mb-2 opacity-30"/><p className="text-[10px]">直接在下方對話，或勾選 Metric 自動追問</p></div>}
+                        {chatMessages.length===0&&<div className="text-center py-6 text-muted-foreground"><Bot className="w-6 h-6 mx-auto mb-2 opacity-30"/><p className="text-[10px]">Chat below directly, or check a Metric for auto follow-up</p></div>}
                         {chatMessages.map((msg,idx)=>(
                           <div key={idx} className={`flex gap-2 ${msg.role==='user'?'flex-row-reverse':''}`}>
                             <Avatar className="w-6 h-6 shrink-0"><AvatarFallback className={msg.role==='ai'?'bg-teal-500/10 text-teal-600':'bg-primary/10'}>{msg.role==='ai'?<Bot className="w-3 h-3"/>:'D'}</AvatarFallback></Avatar>
                             <div className={`rounded-lg p-2 max-w-[85%] min-w-0 break-words ${msg.role==='ai'?'bg-muted':'bg-primary text-primary-foreground'}`}><p className="text-[10px] whitespace-pre-line leading-relaxed">{msg.content}</p></div>
                           </div>
                         ))}
-                        {chatLoading&&<div className="flex gap-2"><Avatar className="w-6 h-6 shrink-0"><AvatarFallback className="bg-teal-500/10 text-teal-600"><Bot className="w-3 h-3"/></AvatarFallback></Avatar><div className="rounded-lg p-2 bg-muted flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin text-teal-500"/><span className="text-[10px] text-muted-foreground">分析中…</span></div></div>}
+                        {chatLoading&&<div className="flex gap-2"><Avatar className="w-6 h-6 shrink-0"><AvatarFallback className="bg-teal-500/10 text-teal-600"><Bot className="w-3 h-3"/></AvatarFallback></Avatar><div className="rounded-lg p-2 bg-muted flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin text-teal-500"/><span className="text-[10px] text-muted-foreground">Analyzing…</span></div></div>}
                         <div ref={chatScrollRef}/>
                       </div>
                     </ScrollArea>
                     <div className="px-3 py-2 border-t space-y-1.5 shrink-0">
-                      <div className="flex items-center gap-1.5"><span className="text-[9px] text-muted-foreground shrink-0">語氣風格:</span>
-                        <Select value={toneStyle} onValueChange={setToneStyle}><SelectTrigger className="h-5 text-[9px] flex-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="professional">專業正式</SelectItem><SelectItem value="gentle">溫和鼓勵</SelectItem><SelectItem value="direct">簡潔直接</SelectItem><SelectItem value="detailed">詳細解釋</SelectItem></SelectContent></Select>
+                      <div className="flex items-center gap-1.5"><span className="text-[9px] text-muted-foreground shrink-0">Tone:</span>
+                        <Select value={toneStyle} onValueChange={setToneStyle}><SelectTrigger className="h-5 text-[9px] flex-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="professional">Professional</SelectItem><SelectItem value="gentle">Encouraging</SelectItem><SelectItem value="direct">Direct</SelectItem><SelectItem value="detailed">Detailed</SelectItem></SelectContent></Select>
                       </div>
                       <div className="flex gap-1 flex-wrap">
-                        <Button variant="outline" size="sm" className="text-[9px] h-5 bg-transparent" onClick={()=>{setChatMessages(p=>[...p,{role:"user",content:"釐清模糊詞"}]);callAgent("請釐清回饋清單中的模糊描述，提供可量化的具體建議。")}}>釐清模糊詞</Button>
-                        <Button variant="outline" size="sm" className="text-[9px] h-5 bg-transparent" onClick={()=>{setChatMessages(p=>[...p,{role:"user",content:"轉成可操作建議"}]);callAgent("請將目前的回饋轉為可立即執行的操作步驟，附上具體數值。")}}>轉建議</Button>
-                        <Button variant="outline" size="sm" className="text-[9px] h-5 bg-transparent" onClick={handleAnalyzeFeedback} disabled={analyzingFeedback}><Sparkles className="w-2.5 h-2.5 mr-0.5"/>{analyzingFeedback?"...":"AI 分析"}</Button>
+                        <Button variant="outline" size="sm" className="text-[9px] h-5 bg-transparent" onClick={()=>{setChatMessages(p=>[...p,{role:"user",content:"Clarify vague terms"}]);callAgent("Please clarify any vague descriptions in the feedback list and provide quantifiable, specific suggestions.")}}>Clarify Vague Terms</Button>
+                        <Button variant="outline" size="sm" className="text-[9px] h-5 bg-transparent" onClick={()=>{setChatMessages(p=>[...p,{role:"user",content:"Convert to actionable steps"}]);callAgent("Please convert the current feedback into immediately actionable steps with specific values.")}}>Convert to Steps</Button>
+                        <Button variant="outline" size="sm" className="text-[9px] h-5 bg-transparent" onClick={handleAnalyzeFeedback} disabled={analyzingFeedback}><Sparkles className="w-2.5 h-2.5 mr-0.5"/>{analyzingFeedback?"...":"AI Analysis"}</Button>
                       </div>
                       <div className="flex gap-1.5">
-                        <Input placeholder="輸入問題..." className="text-[10px] h-7" value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') e.preventDefault()}}/>
+                        <Input placeholder="Type your question..." className="text-[10px] h-7" value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') e.preventDefault()}}/>
                         <Button size="sm" className="h-7 w-7 p-0" onClick={handleChatSend} disabled={chatLoading}><Send className="w-3 h-3"/></Button>
                       </div>
                     </div>
@@ -1838,29 +1838,29 @@ export default function QAPage() {
                   <Card className={`p-3 ${getStatusBg(selectedMetricDetail.status)}`}>
                     <p className="text-sm text-muted-foreground">{detail.analysis}</p>
                   </Card>
-                  {/* Agent A/B — 雙擊送入對話框 */}
+                  {/* Agent A/B — Double-click to sendchat */}
                   <div className="grid grid-cols-2 gap-3">
                     {detail.agentOpinions.map((op,i)=>(
                       <Card key={i} className="p-3 cursor-pointer hover:ring-1 hover:ring-teal-400 transition-all select-none"
-                        title="雙擊送入 AI 對話"
+                        title="Double-click to send AI chat"
                         onDoubleClick={()=>{
                           if(!op.opinion) return
-                          const msg = "[" + op.agent + " 觀點]\n" + op.opinion
+                          const msg = "[" + op.agent + " Perspective]\n" + op.opinion
                           setChatMessages(p=>[...p,{role:"user",content:msg}])
-                          callAgent("針對以下觀點給出具體改進建議：\n" + msg)
+                          callAgent("Provide specific improvement suggestions for the following perspective:\n" + msg)
                           setShowMetricDetailDialog(false)
                         }}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-medium text-muted-foreground">{op.agent}</span>
                           {op.confidence > 0 && <Badge variant="outline" className="text-xs">{op.confidence}%</Badge>}
-                          <span className="ml-auto text-[9px] text-muted-foreground/50">雙擊送入</span>
+                          <span className="ml-auto text-[9px] text-muted-foreground/50">Double-click to send</span>
                         </div>
                         <p className="text-sm">{op.opinion}</p>
                       </Card>
                     ))}
                   </div>
-                  {/* Debate — 每個區塊可雙擊送入對話框 */}
+                  {/* Debate — double-click any block to send to chat */}
                   {detail.debate && (() => {
                     const d = detail.debate!
                     return (
@@ -1868,15 +1868,15 @@ export default function QAPage() {
                         <div className="px-3 py-1.5 border-b border-teal-500/20 flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-teal-600"/>
                           <span className="text-xs font-semibold text-teal-700">Agent Debate</span>
-                          <span className="ml-auto text-[9px] text-muted-foreground/50">雙擊任一區塊送入</span>
+                          <span className="ml-auto text-[9px] text-muted-foreground/50">Double-click any block to send</span>
                         </div>
                         {d.agentA.opinion && (
                           <div className="px-3 py-2 border-b border-teal-500/10 cursor-pointer hover:bg-blue-500/5 transition-colors select-none"
-                            title="雙擊送入 AI 對話"
+                            title="Double-click to send AI chat"
                             onDoubleClick={()=>{
                               const msg = "[Debate " + d.agentA.name + "]\n" + d.agentA.opinion
                               setChatMessages(p=>[...p,{role:"user",content:msg}])
-                              callAgent("針對以下 Debate 立場給出具體改進建議：\n" + msg)
+                              callAgent("Provide specific improvement suggestions for the following Debate position:\n" + msg)
                               setShowMetricDetailDialog(false)
                             }}
                           >
@@ -1886,11 +1886,11 @@ export default function QAPage() {
                         )}
                         {d.agentB.opinion && (
                           <div className="px-3 py-2 border-b border-teal-500/10 cursor-pointer hover:bg-violet-500/5 transition-colors select-none"
-                            title="雙擊送入 AI 對話"
+                            title="Double-click to send AI chat"
                             onDoubleClick={()=>{
                               const msg = "[Debate " + d.agentB.name + "]\n" + d.agentB.opinion
                               setChatMessages(p=>[...p,{role:"user",content:msg}])
-                              callAgent("針對以下 Debate 立場給出具體改進建議：\n" + msg)
+                              callAgent("Provide specific improvement suggestions for the following Debate position:\n" + msg)
                               setShowMetricDetailDialog(false)
                             }}
                           >
@@ -1900,15 +1900,15 @@ export default function QAPage() {
                         )}
                         {d.consensus && (
                           <div className="px-3 py-2 bg-teal-500/10 cursor-pointer hover:bg-teal-500/20 transition-colors select-none"
-                            title="雙擊送入 AI 對話"
+                            title="Double-click to send AI chat"
                             onDoubleClick={()=>{
-                              const msg = "[Debate 結論]\n" + d.consensus
+                              const msg = "[Debate Conclusion]\n" + d.consensus
                               setChatMessages(p=>[...p,{role:"user",content:msg}])
-                              callAgent("根據以下 Debate 結論給出最終改進步驟：\n" + msg)
+                              callAgent("Based on the following Debate conclusion, provide final improvement steps:\n" + msg)
                               setShowMetricDetailDialog(false)
                             }}
                           >
-                            <p className="text-[10px] font-semibold text-teal-700 mb-0.5">結論</p>
+                            <p className="text-[10px] font-semibold text-teal-700 mb-0.5">Conclusion</p>
                             <p className="text-sm text-teal-800 whitespace-pre-wrap">{d.consensus}</p>
                           </div>
                         )}
@@ -1916,8 +1916,8 @@ export default function QAPage() {
                     )
                   })()}
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={()=>setShowMetricDetailDialog(false)} className="bg-transparent">關閉</Button>
-                    <Button><CheckCircle2 className="w-4 h-4 mr-2"/>已確認</Button>
+                    <Button variant="outline" onClick={()=>setShowMetricDetailDialog(false)} className="bg-transparent">Close</Button>
+                    <Button><CheckCircle2 className="w-4 h-4 mr-2"/>Confirmed</Button>
                   </div>
                   </>)
                   })()}

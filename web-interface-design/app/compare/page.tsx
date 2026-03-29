@@ -23,7 +23,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 
-// 刪除後端 ref / artwork（fire-and-forget，本地 state 優先）
+// Delete backend ref/artwork (fire-and-forget, local state takes priority)
 async function deleteItem(type: "references" | "artworks", id: string) {
   try {
     await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -51,17 +51,17 @@ type ArtItem = { id: string; name: string; image: string; category?: string; imp
 type ChatMsg = { role: string; content: string }
 
 const COMPARE_METRICS: { id: string; name: string }[] = [
-  { id: "light", name: "光影" },
-  { id: "composition", name: "構圖" },
-  { id: "sketch", name: "草稿/線條" },
-  { id: "color", name: "色彩" },
-  { id: "style", name: "風格一致" },
-  { id: "percept", name: "感知品質" },
-  { id: "faithfulness", name: "Spec 忠實度" },
-  { id: "control", name: "可控性" },
-  { id: "robustness", name: "穩定性" },
-  { id: "efficiency", name: "效率" },
-  { id: "stability", name: "一致性" },
+  { id: "light", name: "Lighting" },
+  { id: "composition", name: "Composition" },
+  { id: "sketch", name: "Sketch/Lines" },
+  { id: "color", name: "Color" },
+  { id: "style", name: "Style Consistency" },
+  { id: "percept", name: "Perceptual Quality" },
+  { id: "faithfulness", name: "Spec Faithfulness" },
+  { id: "control", name: "Controllability" },
+  { id: "robustness", name: "Stability" },
+  { id: "efficiency", name: "Efficiency" },
+  { id: "stability", name: "Consistency" },
 ]
 
 type MetricResult = {
@@ -85,7 +85,7 @@ export default function ComparePage() {
   const [selectedRef, setSelectedRef] = useState(0)
   const [chatbotOpen, setChatbotOpen] = useState(true)
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    { role: "ai", content: "您好！我是對照比較助手。\n\n選擇 Artwork 和 Reference 後，我會分析差異。\n\n勾選差距清單項目後，我會自動針對該差異進行追問。" },
+    { role: "ai", content: "Hello! I'm the Comparison Assistant.\n\nOnce you select an Artwork and Reference, I'll analyze the differences.\n\nChecking items in the gap list will trigger automatic follow-up questions." },
   ])
   const [chatInput, setChatInput] = useState("")
   const [chatLoading, setChatLoading] = useState(false)
@@ -289,13 +289,13 @@ export default function ComparePage() {
 
 
 
-  // Auto-analyze disabled — use "重新分析" button to trigger
+  // Auto-analyze disabled — use 'Re-analyze' button to trigger
   const autoAnalyzeRef = useRef<AbortController | null>(null)
 
   // Persist on every change — including initial hydrated values
   const [compareHydrated, setCompareHydrated] = useState(false)
 
-  // Auto-analyze disabled — user clicks 開始分析 / 重新分析 to trigger
+  // Auto-analyze disabled — user clicks 'Start Analysis' / 'Re-analyze' to trigger
   const hasAutoAnalyzed = useRef(false)
   useEffect(() => { setCompareHydrated(true) }, [])
   useEffect(() => { if (compareHydrated) SS.set("compare_chat", JSON.stringify(chatMessages)) }, [chatMessages, compareHydrated])
@@ -359,10 +359,10 @@ export default function ComparePage() {
   // ── Context builder ───────────────────────────────────────────
   const buildCtx = useCallback(() => {
     const parts = [
-      artworkList[selectedArtwork] ? `作品：${artworkList[selectedArtwork].name}` : "",
+      artworkList[selectedArtwork] ? `Artwork: ${artworkList[selectedArtwork].name}` : "",
       currentRefs[selectedRef] ? `Reference：${currentRefs[selectedRef].name}` : "",
       Object.entries(brief).filter(([, v]) => v).length > 0
-        ? `導演 Spec：\n${Object.entries(brief).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n")}`
+        ? `Director Spec:\n${Object.entries(brief).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n")}`
         : "",
     ]
     return parts.filter(Boolean).join("\n\n")
@@ -386,9 +386,9 @@ export default function ComparePage() {
         }),
       })
       const data = await res.json()
-      setChatMessages(p => [...p, { role: "ai", content: stripMd(data.response || data.reply || "抱歉，無法回應。") }])
+      setChatMessages(p => [...p, { role: "ai", content: stripMd(data.response || data.reply || "Sorry, unable to respond.") }])
     } catch {
-      setChatMessages(p => [...p, { role: "ai", content: "連線失敗，請確認後端。" }])
+      setChatMessages(p => [...p, { role: "ai", content: "Connection failed. Please confirm the backend." }])
     }
     setChatLoading(false)
   }, [buildCtx, chatMessages])
@@ -407,8 +407,8 @@ export default function ComparePage() {
       setCheckedDeltas(p => [...p, deltaId])
       const delta = deltas.find(d => d.id === deltaId)
       if (delta) {
-        setChatMessages(p => [...p, { role: "user", content: `[勾選差距] ${delta.type}：${delta.detail}` }])
-        callAgent(`針對差距「${delta.type}: ${delta.detail}」，請給出 2-3 個具體可執行的改進建議。`)
+        setChatMessages(p => [...p, { role: "user", content: `[Checked Gap] ${delta.type}: ${delta.detail}` }])
+        callAgent(`For the gap "${delta.type}: ${delta.detail}", please provide 2–3 specific, actionable improvement suggestions.`)
       }
     } else {
       setCheckedDeltas(p => p.filter(id => id !== deltaId))
@@ -433,20 +433,18 @@ export default function ComparePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_id: PROJECT_ID,
-          message: `深入分析「${delta.type}」指標差距：
-問題：${delta.detail}
-請給出：（1）差距根本原因分析 （2）Agent A 觀點（技術面）（3）Agent B 觀點（創意面）（4）Debate 結論 （5）2-3 個可立即操作的改進步驟。`,
+          message: `In-depth analysis of the "${delta.type}" gap:\nIssue: ${delta.detail}\nPlease provide: (1) Root cause analysis (2) Agent A perspective (technical) (3) Agent B perspective (creative) (4) Debate conclusion (5) 2–3 immediately actionable improvement steps.`,
           context: buildCtx(),
           history: [],
         }),
       })
       const data = await res.json()
-      const text = stripMd(data.response || data.reply || "分析完成。")
+      const text = stripMd(data.response || data.reply || "Analysis complete.")
       setDeltaDialogText(text)
       // Cache the result
       setDeltaDebateCache(p => ({ ...p, [delta.id]: text }))
     } catch {
-      setDeltaDialogText("分析失敗，請重試。")
+      setDeltaDialogText("Analysis failed. Please try again.")
     }
     setDeltaDialogLoading(false)
   }, [buildCtx, deltaDebateCache])
@@ -456,20 +454,20 @@ export default function ComparePage() {
     setDeltaAnalyzing(true)
     setMetricsLoading(true)
     setMetrics([])
-    setMetricsStatus("準備分析...")
+    setMetricsStatus("Preparing analysis...")
 
     const thinkingSteps = [
-      "正在載入圖片與 Reference...",
-      "OpenAI 正在從技術面評估差異...",
-      "Gemini 正在從創意策略面分析...",
-      "Claude 正在直接比對兩張圖...",
-      "計算各項指標分數...",
-      "生成具體修正建議...",
-      "整理分析結果...",
+      "Loading artwork and Reference...",
+      "OpenAI evaluating differences from a technical perspective...",
+      "Gemini analyzing from a creative strategy perspective...",
+      "Claude directly comparing the two images...",
+      "Calculating metric scores...",
+      "Generating specific correction suggestions...",
+      "Organizing analysis results...",
     ]
     let stepIdx = 0
     const thinkingMsgId = `thinking_${Date.now()}`
-    setChatMessages(p => [...p, { role: "user", content: "[重新差距分析]" }, { role: "ai", content: thinkingSteps[0], id: thinkingMsgId } as any])
+    setChatMessages(p => [...p, { role: "user", content: "[Re-run Gap Analysis]" }, { role: "ai", content: thinkingSteps[0], id: thinkingMsgId } as any])
     const thinkingInterval = setInterval(() => {
       stepIdx = Math.min(stepIdx + 1, thinkingSteps.length - 1)
       const step = thinkingSteps[stepIdx]
@@ -507,7 +505,7 @@ export default function ComparePage() {
           ref_b64: ref.image?.startsWith("data:") ? ref.image : "",
           brief_context: ctx.brief_context || "",
           hub_refs: ctx.hub_refs || "",
-          refs_context: `[對照Reference：${ref.name}${ref.note ? " | " + ref.note : ""}]`,
+          refs_context: `[Reference: ${ref.name}${ref.note ? " | " + ref.note : ""}]`,
           reflection_notes: "",
           analyze_scope: ["all"],
         }),
@@ -534,7 +532,7 @@ export default function ComparePage() {
               setMetricsStatus(evt.message)
               setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { ...m, content: evt.message } : m))
             } else if (evt.type === "spec") {
-              setChatMessages(p => [...p, { role: "ai", content: `總體分析：\n${stripMd(evt.spec_summary || "")}` }])
+              setChatMessages(p => [...p, { role: "ai", content: `Overall Analysis:\n${stripMd(evt.spec_summary || "")}` }])
             } else if (evt.type === "metric") {
               const g = evt.data
               const aKey = Object.keys(g.per_agent || {}).find((k: string) => k.endsWith("_A")) || (evt.id + "_A")
@@ -555,7 +553,7 @@ export default function ComparePage() {
 
               // Also update legacy deltas for chat/checkbox compatibility
               const sev = m.status === "red" ? "high" : m.status === "yellow" ? "medium" : "low"
-              const detail = m.debate?.conclusion || m.agentA.opinion || m.name + " 分析完成"
+              const detail = m.debate?.conclusion || m.agentA.opinion || m.name + " analysis complete"
               setDeltas(prev => {
                 const updated = [...prev]
                 const di = updated.findIndex(d => d.type === m.name)
@@ -571,7 +569,7 @@ export default function ComparePage() {
               const yellow = streamMetrics.filter(m => m.status === "yellow").length
               const green = streamMetrics.filter(m => m.status === "green").length
               setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId
-                ? { role: "ai", content: `分析完成！❌ 需改進：${red} 項　⚠️ 需關注：${yellow} 項　✅ 良好：${green} 項` }
+                ? { role: "ai", content: `Analysis complete! ❌ Needs improvement: ${red}  ⚠️ Needs attention: ${yellow}  ✅ Good: ${green}` }
                 : m))
             }
           } catch {}
@@ -579,7 +577,7 @@ export default function ComparePage() {
       }
     } catch (err) {
       clearInterval(thinkingInterval)
-      setChatMessages(p => [...p, { role: "ai", content: `分析失敗：${err}` }])
+      setChatMessages(p => [...p, { role: "ai", content: `Analysis failed: ${err}` }])
     }
     setDeltaAnalyzing(false)
     setMetricsLoading(false)
@@ -614,12 +612,9 @@ export default function ComparePage() {
     SS.set("compare_report_for_qa", JSON.stringify(payload))
     SS.set("compare_annotations", JSON.stringify(deltaAnnotations))
     SS.set("compare_chat", JSON.stringify(chatMessages))
-    setChatMessages(p => [...p, { role: "ai", content: `已儲存！
+    setChatMessages(p => [...p, { role: "ai", content: `Saved！
 
-📁 Artworks：${artworkList.length} 件
-🖼 References：${currentRefs.length} 張
-📋 差距清單：${deltas.length} 項（勾選 ${checkedDeltas.length} 項）
-📝 註解：${Object.keys(deltaAnnotations).length} 條` }])
+📁 Artworks: ${artworkList.length}\n🖼 References: ${currentRefs.length}\n📋 Gap List: ${deltas.length} items (${checkedDeltas.length} checked)\n📝 Annotations: ${Object.keys(deltaAnnotations).length}` }])
   }
 
   const COL_H = "calc(100vh - 200px)"
@@ -636,9 +631,9 @@ export default function ComparePage() {
             <div className="container mx-auto px-6 py-6">
               <div className="flex items-center gap-3 mb-2">
                 <Badge variant="outline">C05</Badge>
-                <h1 className="text-2xl font-bold">Ref 對照 / 差距比對</h1>
+                <h1 className="text-2xl font-bold">Ref Comparison / Gap Analysis</h1>
               </div>
-              <p className="text-muted-foreground text-sm">選擇 Artwork 和 Reference 進行差距比對</p>
+              <p className="text-muted-foreground text-sm">Select an Artwork and Reference for gap analysis</p>
             </div>
           </div>
 
@@ -657,9 +652,9 @@ export default function ComparePage() {
                           <Badge variant="secondary" className="text-[10px] h-4">{artworkList.length}</Badge>
                         </CardTitle>
                         <div className="flex items-center gap-1">
-                          <Button size="sm" variant={leftPanelMode==="expand"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("expand")} title="展開模式"><Maximize2 className="w-3 h-3" /></Button>
-                          <Button size="sm" variant={leftPanelMode==="browse"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("browse")} title="收納模式"><LayoutList className="w-3 h-3" /></Button>
-                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artUploadRef.current?.click()} title="上傳 Artwork"><Upload className="w-3 h-3" /></Button>
+                          <Button size="sm" variant={leftPanelMode==="expand"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("expand")} title="Expand mode"><Maximize2 className="w-3 h-3" /></Button>
+                          <Button size="sm" variant={leftPanelMode==="browse"?"secondary":"ghost"} className="h-6 w-6 p-0" onClick={() => setLeftPanelMode("browse")} title="Compact mode"><LayoutList className="w-3 h-3" /></Button>
+                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => artUploadRef.current?.click()} title="Upload Artwork"><Upload className="w-3 h-3" /></Button>
                         </div>
                       </div>
                       <input ref={artUploadRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => {
@@ -697,7 +692,7 @@ export default function ComparePage() {
                               }}
                             >
                               <ImageIcon className="w-6 h-6 mx-auto mb-1 text-muted-foreground opacity-40" />
-                              <p className="text-[10px] text-muted-foreground">點擊或拖曳上傳 Artwork</p>
+                              <p className="text-[10px] text-muted-foreground">Click or drag to upload Artwork</p>
                             </div>
                           )}
                           {artworkList.map((art, idx) => (
@@ -707,13 +702,13 @@ export default function ComparePage() {
                                 <div
                                   className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedArtwork === idx ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                                   onClick={() => { setSelectedArtwork(idx); setSelectedRef(0) }}
-                                  onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察 Artwork「${art.name}」，分析它與目前選取的 Reference 的差距，並給出 2-3 個具體改進建議。`) }}
-                                  title="雙擊匯入對話框討論"
+                                  onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[Discuss Artwork] ${art.name}` }]); callAgent(`Please examine artwork "${art.name}", analyze the gaps between it and the currently selected Reference, and give 2–3 specific improvement suggestions.`) }}
+                                  title="Double-click to import to chat"
                                 >
                                   <div className="aspect-video bg-muted overflow-hidden relative">
                                     {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                      <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">雙擊討論</span>
+                                      <span className="opacity-0 group-hover:opacity-100 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded-full">Double-click to discuss</span>
                                     </div>
                                   </div>
                                   <div className="p-1.5"><p className="text-[10px] font-medium truncate">{art.name}</p></div>
@@ -723,8 +718,8 @@ export default function ComparePage() {
                                 <div
                                   className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedArtwork === idx ? "bg-primary/10 border border-primary/30" : "hover:bg-muted border border-transparent"}`}
                                   onClick={() => { setSelectedArtwork(idx); setSelectedRef(0) }}
-                                  onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[討論 Artwork] ${art.name}` }]); callAgent(`請觀察 Artwork「${art.name}」，分析它與目前選取的 Reference 的差距，並給出 2-3 個具體改進建議。`) }}
-                                  title="雙擊匯入對話框討論"
+                                  onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[Discuss Artwork] ${art.name}` }]); callAgent(`Please examine artwork "${art.name}", analyze the gaps between it and the currently selected Reference, and give 2–3 specific improvement suggestions.`) }}
+                                  title="Double-click to import to chat"
                                 >
                                   <div className="w-10 h-7 rounded overflow-hidden shrink-0 bg-muted">
                                     {art.image && <img src={art.image} alt={art.name} className="w-full h-full object-cover" />}
@@ -761,7 +756,7 @@ export default function ComparePage() {
                           <CardTitle className="text-xs shrink-0">References</CardTitle>
                           <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{currentRefs.length}</Badge>
                         </div>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 shrink-0" onClick={() => refUploadRef.current?.click()} title="上傳 Reference">
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 shrink-0" onClick={() => refUploadRef.current?.click()} title="Upload Reference">
                           <Upload className="w-3 h-3" />
                         </Button>
                         {/* mode toggle is shared — no separate toggle needed; ref list mirrors artwork mode */}
@@ -801,7 +796,7 @@ export default function ComparePage() {
                               }}
                             >
                               <ImageIcon className="w-6 h-6 mx-auto mb-1 text-muted-foreground opacity-40" />
-                              <p className="text-[10px] text-muted-foreground">點擊或拖曳上傳 Reference</p>
+                              <p className="text-[10px] text-muted-foreground">Click or drag to upload Reference</p>
                             </div>
                           )}
                           {currentRefs.filter(ref => !!ref.image).map((ref, rIdx) => (
@@ -810,7 +805,7 @@ export default function ComparePage() {
                               <div key={ref.id}
                                 className={`relative group flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${selectedRef === rIdx ? "bg-amber-500/10 border border-amber-500/30" : "hover:bg-muted border border-transparent"}`}
                                 onClick={() => setSelectedRef(rIdx)}
-                                onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${ref.name}${ref.category ? ` (${ref.category})` : ""}` }]); callAgent(`請分析 Reference「${ref.name}」與目前 Artwork 的差距。`) }}
+                                onDoubleClick={() => { setChatMessages(p => [...p, { role: "user", content: `[Discuss Reference] ${ref.name}${ref.category ? ` (${ref.category})` : ""}` }]); callAgent(`Please analyze the gap between Reference "${ref.name}" and the current Artwork.`) }}
                               >
                                 <div className="w-10 h-7 rounded overflow-hidden shrink-0 bg-muted relative">
                                   {ref.image && <img src={ref.image} alt={ref.name} className="w-full h-full object-cover" />}
@@ -821,7 +816,7 @@ export default function ComparePage() {
                                 <button
                                   className="w-4 h-4 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                                   onClick={e => { e.stopPropagation(); deleteItem("references", ref.id); setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
-                                  title="刪除"
+                                  title="Delete"
                                 ><XIcon className="w-2.5 h-2.5" /></button>
                               </div>
                             ) : (
@@ -854,9 +849,9 @@ export default function ComparePage() {
                                 }}
                                 onDelete={() => { deleteItem("references", ref.id); setAllRefs(p => p.filter(r => r.id !== ref.id)); if (selectedRef >= rIdx) setSelectedRef(Math.max(0, selectedRef - 1)) }}
                                 onDiscuss={d => {
-                                  setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
-備注：${d.note}` : ""}` }])
-                                  callAgent(`請分析 Reference「${d.title}」${d.category ? `（${d.category}）` : ""}的視覺特徵，並找出它與目前選取的 Artwork 之間的主要差距。${d.note ? `備注：${d.note}` : ""}`)
+                                  setChatMessages(p => [...p, { role: "user", content: `[Discuss Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
+Notes: ${d.note}` : ""}` }])
+                                  callAgent(`Please analyze the visual characteristics of Reference "${d.title}"${d.category ? ` (${d.category})` : ""} and identify the main gaps between it and the currently selected Artwork.${d.note ? `Notes: ${d.note}` : ""}`)
                                 }}
                                 onSave={updated => {
                                   try {
@@ -906,9 +901,9 @@ export default function ComparePage() {
                       <div className="flex items-center justify-between">
                         <Tabs value={compareMode} onValueChange={setCompareMode}>
                           <TabsList>
-                            <TabsTrigger value="split">並排</TabsTrigger>
+                            <TabsTrigger value="split">Side by Side</TabsTrigger>
                             <TabsTrigger value="slider">Wipe</TabsTrigger>
-                            <TabsTrigger value="side-by-side">重疊</TabsTrigger>
+                            <TabsTrigger value="side-by-side">Overlay</TabsTrigger>
                           </TabsList>
                         </Tabs>
                         <span className="text-xs text-muted-foreground">
@@ -938,10 +933,10 @@ export default function ComparePage() {
                     </CardHeader>
                     <CardContent className="flex-1 min-h-0 overflow-hidden p-2">
 
-                      {/* 並排 */}
+                      {/* Side by Side */}
                       {compareMode === "split" && (
                         <div className="flex flex-col h-full gap-1">
-                          <p className="text-[10px] text-muted-foreground text-center shrink-0">Ctrl/⌘ + 滾輪縮放</p>
+                          <p className="text-[10px] text-muted-foreground text-center shrink-0">Ctrl/⌘ + Scroll to zoom</p>
                           <div className="flex gap-2 flex-1 min-h-0">
                             <div className="flex-1 min-w-0 relative overflow-hidden bg-neutral-900 rounded" onWheel={handleWheel(setArtworkZoom)}>
                               <Badge className="absolute top-2 left-2 bg-blue-500 z-10 text-xs">Work</Badge>
@@ -1020,18 +1015,18 @@ export default function ComparePage() {
                         </div>
                       )}
 
-                      {/* 重疊 */}
+                      {/* Overlay */}
                       {compareMode === "side-by-side" && (
                         <div className="flex flex-col h-full gap-2">
                           <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-[10px] text-muted-foreground">Work 透明度</span>
+                            <span className="text-[10px] text-muted-foreground">Work Opacity</span>
                             <input type="range" min={0} max={100} defaultValue={70}
                               className="flex-1 h-1 accent-blue-500"
                               onChange={e => {
                                 const el = document.getElementById("overlay-artwork") as HTMLImageElement
                                 if (el) el.style.opacity = String(Number(e.target.value) / 100)
                               }} />
-                            <span className="text-[10px] text-muted-foreground">Ref 透明度</span>
+                            <span className="text-[10px] text-muted-foreground">Ref Opacity</span>
                             <input type="range" min={0} max={100} defaultValue={50}
                               className="flex-1 h-1 accent-purple-500"
                               onChange={e => {
@@ -1059,7 +1054,7 @@ export default function ComparePage() {
                             <Badge className="absolute top-2 left-2 bg-blue-500 z-10 text-xs" style={{ opacity: 0.9 }}>Work</Badge>
                             <Badge className="absolute top-2 right-2 bg-purple-500 z-10 text-xs" style={{ opacity: 0.9 }}>Ref</Badge>
                           </div>
-                          <p className="text-[10px] text-muted-foreground text-center shrink-0">Ctrl/⌘ + 滾輪縮放</p>
+                          <p className="text-[10px] text-muted-foreground text-center shrink-0">Ctrl/⌘ + Scroll to zoom</p>
                         </div>
                       )}
 
@@ -1080,11 +1075,11 @@ export default function ComparePage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle className="text-base flex items-center gap-2">
-                            <SlidersHorizontal className="w-4 h-4" />差距清單 Delta List
+                            <SlidersHorizontal className="w-4 h-4" />Gap List
 
                             {!autoAnalyzing && Object.keys(deltaDebateCache).length > 0 && (
                               <span className="text-[10px] font-normal text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full">
-                                ✓ Debate 完成
+                                ✓ Debate Complete
                               </span>
                             )}
                           </CardTitle>
@@ -1092,7 +1087,7 @@ export default function ComparePage() {
                             {metrics.filter(m=>m.status==="red").length > 0 && <span className="text-[10px] text-red-500 flex items-center gap-0.5"><AlertCircle className="w-2.5 h-2.5"/>{metrics.filter(m=>m.status==="red").length}</span>}
                             {metrics.filter(m=>m.status==="yellow").length > 0 && <span className="text-[10px] text-amber-500 flex items-center gap-0.5"><AlertCircle className="w-2.5 h-2.5"/>{metrics.filter(m=>m.status==="yellow").length}</span>}
                             {metrics.filter(m=>m.status==="green").length > 0 && <span className="text-[10px] text-green-500 flex items-center gap-0.5"><CheckCircle2 className="w-2.5 h-2.5"/>{metrics.filter(m=>m.status==="green").length}</span>}
-                            {metrics.length === 0 && <CardDescription className="text-xs">選擇作品與 Reference 後按「開始分析」</CardDescription>}
+                            {metrics.length === 0 && <CardDescription className="text-xs">Select artwork and Reference, then click 'Start Analysis'</CardDescription>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1102,10 +1097,10 @@ export default function ComparePage() {
                           onClick={e=>{e.stopPropagation();handleAnalyzeDeltas()}}
                           disabled={deltaAnalyzing || artworkList.length === 0 || currentRefs.length === 0}>
                           {deltaAnalyzing
-                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />分析中</>
+                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Analyzing</>
                             : metrics.length === 0
-                              ? <><Sparkles className="w-3.5 h-3.5" />開始分析</>
-                              : <><Sparkles className="w-3.5 h-3.5" />重新分析</>}
+                              ? <><Sparkles className="w-3.5 h-3.5" />Start Analysis</>
+                              : <><Sparkles className="w-3.5 h-3.5" />Re-analyze</>}
                         </Button>
                         {deltaListOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </div>
@@ -1144,11 +1139,11 @@ export default function ComparePage() {
                                 {/* Preview line */}
                                 {!isExpanded && (
                                   <p className="text-[10px] text-muted-foreground mt-1 ml-9 line-clamp-2">
-                                    {m.debate?.conclusion && m.debate.conclusion !== "分析中..."
+                                    {m.debate?.conclusion && m.debate.conclusion !== "Analyzing..."
                                       ? m.debate.conclusion
-                                      : m.agentA.opinion && m.agentA.opinion !== "分析中..."
+                                      : m.agentA.opinion && m.agentA.opinion !== "Analyzing..."
                                         ? m.agentA.opinion
-                                        : metricsLoading ? metricsStatus || "分析中..." : ""}
+                                        : metricsLoading ? metricsStatus || "Analyzing..." : ""}
                                   </p>
                                 )}
                                 {/* Expanded detail */}
@@ -1156,43 +1151,43 @@ export default function ComparePage() {
                                   <div className="mt-2 ml-1 space-y-2">
                                     {m.agentA.opinion && (
                                       <div className="p-2 bg-background/60 rounded-md">
-                                        <p className="text-[10px] font-medium text-muted-foreground mb-0.5">{m.agentA.name} — 技術觀察</p>
+                                        <p className="text-[10px] font-medium text-muted-foreground mb-0.5">{m.agentA.name} — Technical Observation</p>
                                         <p className="text-xs leading-relaxed">{m.agentA.opinion}</p>
                                       </div>
                                     )}
                                     {m.agentB.opinion && (
                                       <div className="p-2 bg-background/60 rounded-md">
-                                        <p className="text-[10px] font-medium text-muted-foreground mb-0.5">{m.agentB.name} — 創意觀察</p>
+                                        <p className="text-[10px] font-medium text-muted-foreground mb-0.5">{m.agentB.name} — Creative Observation</p>
                                         <p className="text-xs leading-relaxed">{m.agentB.opinion}</p>
                                       </div>
                                     )}
                                     {m.debate?.conclusion && (
                                       <div className="p-2 bg-teal-500/10 rounded-md border border-teal-500/20">
                                         <p className="text-[10px] font-semibold text-teal-700 mb-0.5 flex items-center gap-1">
-                                          <Sparkles className="w-3 h-3" />Claude 分析與建議
+                                          <Sparkles className="w-3 h-3" />Claude Analysis & Suggestions
                                         </p>
                                         <p className="text-xs text-teal-800 leading-relaxed whitespace-pre-wrap">{m.debate.conclusion}</p>
                                       </div>
                                     )}
                                     <div className="flex items-center gap-2 pt-1">
                                       <Button variant="ghost" size="sm" className="h-6 text-[10px] text-amber-600 px-2"
-                                        onClick={e => { e.stopPropagation(); callAgent(`針對「${m.name}」差距（${m.debate?.conclusion || m.agentA.opinion}），請給出詳細改進建議。`) }}>
-                                        <Flag className="w-3 h-3 mr-1" />跟導演討論
+                                        onClick={e => { e.stopPropagation(); callAgent(`For the "${m.name}" gap (${m.debate?.conclusion || m.agentA.opinion}), please providedetailed improvement suggestions.`) }}>
+                                        <Flag className="w-3 h-3 mr-1" />Discuss with Director
                                       </Button>
                                       <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2"
                                         onClick={e => { e.stopPropagation(); setExpandedAnnotation(expandedAnnotation === m.id ? null : m.id) }}>
                                         <MessageSquare className="w-3 h-3 mr-1" />
-                                        {expandedAnnotation === m.id ? "收起" : "寫註解"}
+                                        {expandedAnnotation === m.id ? "Collapse" : "Add Note"}
                                       </Button>
                                     </div>
                                     {expandedAnnotation === m.id && (
                                       <div className="space-y-1" onClick={e => e.stopPropagation()}>
-                                        <Textarea placeholder="輸入註解..." value={deltaAnnotations[m.id] || ""}
+                                        <Textarea placeholder="Add annotation..." value={deltaAnnotations[m.id] || ""}
                                           onChange={e => setDeltaAnnotations(p => ({ ...p, [m.id]: e.target.value }))}
                                           rows={2} className="text-xs" />
                                         <Button size="sm" variant="outline" className="h-6 text-xs gap-1"
                                           onClick={() => saveAnnotation(m.id, deltaAnnotations[m.id] || "")}>
-                                          <Save className="w-3 h-3" />儲存
+                                          <Save className="w-3 h-3" />Save
                                         </Button>
                                       </div>
                                     )}
@@ -1203,7 +1198,7 @@ export default function ComparePage() {
                           })}
                           {/* Empty state */}
                           {!metricsLoading && metrics.length === 0 && (
-                            <p className="text-xs text-muted-foreground text-center py-6">按「重新分析」開始比對</p>
+                            <p className="text-xs text-muted-foreground text-center py-6">Click 'Re-analyze' to start comparison</p>
                           )}
                         </div>
                       </ScrollArea>
@@ -1247,8 +1242,8 @@ export default function ComparePage() {
                           <div className="flex items-center gap-2">
                             <Bot className="w-5 h-5 text-teal-600" />
                             <div>
-                              <CardTitle className="text-base">AI 比對助手</CardTitle>
-                              <CardDescription className="text-xs">勾選差距自動追問</CardDescription>
+                              <CardTitle className="text-base">AI Comparison Assistant</CardTitle>
+                              <CardDescription className="text-xs">Check gaps for automatic follow-up</CardDescription>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1283,7 +1278,7 @@ export default function ComparePage() {
                                 </Avatar>
                                 <div className="rounded-lg p-3 bg-muted flex items-center gap-2">
                                   <Loader2 className="w-3 h-3 animate-spin text-teal-500" />
-                                  <span className="text-sm text-muted-foreground">分析中…</span>
+                                  <span className="text-sm text-muted-foreground">Analyzing…</span>
                                 </div>
                               </div>
                             )}
@@ -1294,25 +1289,25 @@ export default function ComparePage() {
                           <Button
                             variant="outline" size="sm" className="text-xs bg-transparent"
                             onClick={() => {
-                              setChatMessages(p => [...p, { role: "user", content: "這是刻意的選擇" }])
-                              callAgent("Artist 說明這是刻意的藝術選擇，請幫我在報告中標註並給出適當的說明建議。")
+                              setChatMessages(p => [...p, { role: "user", content: "This is an intentional choice" }])
+                              callAgent("The artist states this is an intentional artistic choice. Please mark it in the report and suggest an appropriate explanation.")
                             }}
                           >
-                            刻意選擇
+                            Intentional Choice
                           </Button>
                           <Button
                             variant="outline" size="sm" className="text-xs bg-transparent"
                             onClick={() => {
-                              setChatMessages(p => [...p, { role: "user", content: "幫我整理回饋" }])
-                              callAgent("請幫我整理目前所有勾選的差距項目，生成一份清晰的回饋摘要，按優先順序排列。")
+                              setChatMessages(p => [...p, { role: "user", content: "Compile feedback" }])
+                              callAgent("Please compile all currently checked gap items into a clear feedback summary, ordered by priority.")
                             }}
                           >
-                            整理回饋
+                            Compile Feedback
                           </Button>
                         </div>
                         <div className="flex gap-2 shrink-0">
                           <Input
-                            placeholder="輸入問題..."
+                            placeholder="Type your question..."
                             value={chatInput}
                             onChange={e => setChatInput(e.target.value)}
                             onKeyDown={e => { if (e.key === "Enter") e.preventDefault() }}
@@ -1342,7 +1337,7 @@ export default function ComparePage() {
                 : deltaDialog?.severity === "medium"
                 ? <AlertCircle className="w-5 h-5 text-amber-400" />
                 : <CheckCircle2 className="w-5 h-5 text-green-400" />}
-              {deltaDialog?.type} — 差距分析
+              {deltaDialog?.type} — Gap Analysis
             </DialogTitle>
             <DialogDescription>{deltaDialog?.detail}</DialogDescription>
           </DialogHeader>
@@ -1350,7 +1345,7 @@ export default function ComparePage() {
             {deltaDialogLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Agents 正在分析中…
+                Agents analyzing…
               </div>
             ) : (
               <div className="text-sm leading-relaxed whitespace-pre-line bg-muted rounded-lg p-3">
@@ -1358,15 +1353,15 @@ export default function ComparePage() {
               </div>
             )}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" className="bg-transparent" onClick={() => setDeltaDialog(null)}>關閉</Button>
+              <Button variant="outline" className="bg-transparent" onClick={() => setDeltaDialog(null)}>Close</Button>
               {deltaDialog && (
                 <Button onClick={() => {
-                  const msg = `請針對「${deltaDialog.type}」差距給出更詳細的修改步驟`
+                  const msg = `Please provide more detailed revision steps for the "${deltaDialog.type}" gap`
                   setChatMessages(p => [...p, { role: "user", content: msg }])
                   callAgent(msg)
                   setDeltaDialog(null)
                 }}>
-                  <Sparkles className="w-4 h-4 mr-1.5" />問 Agent
+                  <Sparkles className="w-4 h-4 mr-1.5" />Ask Agent
                 </Button>
               )}
             </div>

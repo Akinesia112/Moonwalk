@@ -1,11 +1,11 @@
 """
 canvas.py  —  /canvas/*
 
-畫布標註系統：
-  - 所有標註直接燒進圖片像素（不是疊加層）
-  - 每次操作都產生新版本，支援 undo（回上一步）
-  - 支援：筆跡、橡皮擦、文字框、矩形、圓形
-  - 每個 artwork+ref 組合有獨立的版本歷史
+Canvas Annotation System:
+  - All annotations are burned directly into image pixels (not an overlay layer)
+  - Each operation creates a new version, supporting undo
+  - Supports: brush strokes, eraser, text boxes, rectangles, circles
+  - Each artwork+ref combination has independent version history
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
