@@ -213,7 +213,7 @@ function UploadAnalyzeContent() {
     const onMove = (ev: MouseEvent) => {
       if (!dragging.current) return
       const d = ev.clientX - dragging.current.startX
-      const nw = Math.max(180, Math.min(700, dragging.current.startW + (dragging.current.col === "left" ? d : -d)))
+      const nw = Math.max(180, Math.min(350, dragging.current.startW + (dragging.current.col === "left" ? d : -d)))
       dragging.current.col === "left" ? setLeftW(nw) : setRightW(nw)
     }
     const onUp = () => { dragging.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp) }
