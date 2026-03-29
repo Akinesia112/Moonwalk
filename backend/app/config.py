@@ -10,7 +10,7 @@ load_dotenv()
 class Config:
 
     HOST = os.getenv("FASTAPI_HOST", "0.0.0.0")
-    PORT = int(os.getenv("PORT", os.getenv("FASTAPI_PORT", 5000)))
+    PORT = int(os.getenv("PORT", os.getenv("FASTAPI_PORT", 5001)))
     DEBUG = os.getenv("FASTAPI_DEBUG", "True").lower() == "true"
 
 

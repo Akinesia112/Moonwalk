@@ -209,13 +209,13 @@ async def analyze_brief(body: BriefAnalyzeBody):
     brief = body.brief or {}
     if isinstance(brief, dict):
         REQUIRED = {
-            "project_name": "專案名稱", "client": "客戶",
-            "director": "導演/創意總監", "supervisor": "Supervisor",
-            "confidentiality": "密等", "selling_points": "產品賣點/重點訊息",
-            "keywords": "情緒關鍵詞", "style": "風格關鍵字", "mood": "色調/氛圍",
+            "project_name": "Project Name", "client": "Client",
+            "director": "Director/Creative Director", "supervisor": "Supervisor",
+            "confidentiality": "Confidentiality Level", "selling_points": "Key Selling Points / Key Messages",
+            "keywords": "Emotional Keywords", "style": "Style Keywords", "mood": "Color Tone / Atmosphere",
         }
         OPTIONAL = {
-            "restrictions": "禁忌事項", "worldview": "世界觀",
+            "restrictions": "Restrictions / Taboos", "worldview": "World Concept",
             "supervisor_spec": "Supervisor Spec",
         }
         filled_req, missing_req, filled_opt = [], [], []
@@ -232,11 +232,11 @@ async def analyze_brief(body: BriefAnalyzeBody):
 
         brief_str = ""
         if filled_req:
-            brief_str += "【已填寫必填欄位】\n" + "\n".join(filled_req)
+            brief_str += "[Required fields filled]\n" + "\n".join(filled_req)
         if missing_req:
-            brief_str += "\n【未填寫必填欄位】" + "、".join(missing_req)
+            brief_str += "\n[Required fields missing]: " + ", ".join(missing_req)
         if filled_opt:
-            brief_str += "\n【已填寫選填欄位】\n" + "\n".join(filled_opt)
+            brief_str += "\n[Optional fields filled]\n" + "\n".join(filled_opt)
     else:
         brief_str = str(brief)
         missing_req = []
@@ -248,21 +248,21 @@ async def analyze_brief(body: BriefAnalyzeBody):
         '{"summary": "...", "ambiguous_items": [...], "missing_items": [...], "suggestions": [...]}\n\n'
         "Rules for each field:\n\n"
         "- summary: 2-3 sentences. Describe the CREATIVE INTENT and EMOTIONAL CORE. "
-        "Identify any inherent tensions (e.g. '寫實又抽象' suggests the tension between documentation and interpretation — "
-        "like Terrence Malick's 《樹》 which uses handheld documentary texture to film surreal sequences). "
+        "Identify any inherent tensions (e.g. 'realistic yet abstract' suggests the tension between documentation and interpretation — "
+        "like Terrence Malick's The Tree of Life which uses handheld documentary texture to film surreal sequences). "
         "Quote the user's actual words.\n\n"
         "- ambiguous_items: List entries that are creatively DANGEROUS if left undefined in production. "
         "Format each as: '「[user's exact word]」— [specific production consequence if undefined]'. "
         "Examples of good ambiguous_items:\n"
-        "  '「飄啊」— 未定義：是攝影機飄移（如《鳥人》長鏡頭）、角色動態飄（慢動作）、還是色彩飄（低飽和記憶感）？合成師無法決定'\n"
-        "  '「溫暖而寒冷」— 矛盾未解：打光師在佈光時需要知道哪個優先。《讓子彈飛》是暖色調+冷敘事；《刺客聶隱娘》是冷光源+溫人物關係——這兩個方向完全不同'\n"
-        "  '「寫實」— 未區分：是《奧本海默》的實拍質感（grain, no CG glow），還是《1917》那種高度設計但無縫的寫實？前者排斥特效，後者接受'\n\n"
+        "  ''Drift' — undefined: is it camera drift (like Birdman long take), character movement drift (slow motion), or color drift (desaturated memory feel)? The compositor cannot decide'\n"
+        "  ''Warm yet cold' — unresolved contradiction: the lighting artist needs to know which takes priority. Let the Bullets Fly uses warm tones + cold narrative; The Assassin uses cool light sources + warm relationships — these are completely different directions'\n"
+        "  ''Realistic' — not differentiated: is it Oppenheimer's raw texture (grain, no CG glow), or 1917's highly designed yet seamless realism? The former rejects effects; the latter embraces them'\n\n"
         "- missing_items: Only list REQUIRED fields that are completely empty. Use the exact field label names.\n\n"
         "- suggestions: 2-4 suggestions that are PRODUCTION-SPECIFIC. Each must:\n"
         "  1. Quote the user's exact words\n"
         "  2. Name a specific film/scene as reference anchor\n"
-        "  3. State which department (打光/動態/合成/剪輯) needs this clarified\n"
-        "  Example: '「詭譎」建議定義為「現實邏輯慢慢崩解」（參考《遺傳厄運》的構圖節奏）而非jump scare式恐嚇，因為前者靠構圖和剪輯節奏執行，後者靠音效和攝影機快速移動——剪輯師需要明確方向'\n\n"
+        "  3. State which department (Lighting / Motion / Compositing / Editing) needs this clarified\n"
+        "  Example: ''Eerie' is recommended to be defined as 'gradual breakdown of reality logic' (reference: Hereditary's compositional rhythm) rather than jump-scare horror, because the former is executed through composition and editing rhythm, while the latter relies on sound design and fast camera movement — the editor needs a clear direction'\n\n"
         "All text in Traditional Chinese."
     )
     raw = await _agent_chat(prompt, [DIRECTOR_TOPIC])
@@ -504,10 +504,10 @@ def _build_history_str(history: list) -> str:
 async def get_questions(project_id: str):
     return {
         "questions": [
-            {"id": "q1", "text": "這個作品的主要光源方向是否符合 brief 的要求？"},
-            {"id": "q2", "text": "色調與情緒目標是否一致？"},
-            {"id": "q3", "text": "構圖的焦點是否清晰？"},
-            {"id": "q4", "text": "材質細節是否達到要求的精細度？"},
+            {"id": "q1", "text": "Does the main light source direction of this artwork match the brief requirements?"},
+            {"id": "q2", "text": "Is the color tone consistent with the emotional target?"},
+            {"id": "q3", "text": "Is the compositional focus clear?"},
+            {"id": "q4", "text": "Does the texture detail meet the required level of refinement?"},
         ]
     }
 
@@ -555,47 +555,47 @@ Be concise and actionable. Respond in the same language as the feedback."""
 @router.get("/combination/deltas/{artwork_id}/{ref_id}")
 async def get_deltas(artwork_id: str, ref_id: str):
     return [
-        {"id": "delta_001", "type": "lighting", "severity": "P0", "detail": "主光方向與參考差異約 30 度"},
-        {"id": "delta_002", "type": "color", "severity": "P1", "detail": "色溫偏冷，參考為暖色調"},
+        {"id": "delta_001", "type": "lighting", "severity": "P0", "detail": "Main light direction differs from reference by approximately 30 degrees"},
+        {"id": "delta_002", "type": "color", "severity": "P1", "detail": "Color temperature too cool; reference uses warm tones"},
     ]
 
 @router.post("/combination/deltas/{artwork_id}/{ref_id}")
 async def rerun_deltas(artwork_id: str, ref_id: str, body: dict):
     return [
-        {"id": "delta_001", "type": "lighting", "severity": "P0", "detail": "主光方向與參考差異約 30 度"},
+        {"id": "delta_001", "type": "lighting", "severity": "P0", "detail": "Main light direction differs from reference by approximately 30 degrees"},
     ]
 
 @router.get("/combination/metrics/{artwork_id}")
 async def get_metrics(artwork_id: str):
     return [
-        {"id": "composition", "name": "Composition", "status": "green", "agent_opinions": [], "debate": "", "consensus": "構圖良好"},
-        {"id": "lighting", "name": "Lighting", "status": "red", "agent_opinions": [], "debate": "", "consensus": "光影需調整"},
-        {"id": "color", "name": "Color", "status": "yellow", "agent_opinions": [], "debate": "", "consensus": "色彩略偏"},
-        {"id": "texture", "name": "Texture", "status": "green", "agent_opinions": [], "debate": "", "consensus": "材質細節佳"},
-        {"id": "motion", "name": "Motion", "status": "green", "agent_opinions": [], "debate": "", "consensus": "動態自然"},
-        {"id": "depth", "name": "Depth", "status": "yellow", "agent_opinions": [], "debate": "", "consensus": "景深可加強"},
-        {"id": "exposure", "name": "Exposure", "status": "green", "agent_opinions": [], "debate": "", "consensus": "曝光正常"},
-        {"id": "style", "name": "Style", "status": "green", "agent_opinions": [], "debate": "", "consensus": "風格一致"},
+        {"id": "composition", "name": "Composition", "status": "green", "agent_opinions": [], "debate": "", "consensus": "Composition good"},
+        {"id": "lighting", "name": "Lighting", "status": "red", "agent_opinions": [], "debate": "", "consensus": "Lighting needs adjustment"},
+        {"id": "color", "name": "Color", "status": "yellow", "agent_opinions": [], "debate": "", "consensus": "Color slightly off"},
+        {"id": "texture", "name": "Texture", "status": "green", "agent_opinions": [], "debate": "", "consensus": "Texture detail good"},
+        {"id": "motion", "name": "Motion", "status": "green", "agent_opinions": [], "debate": "", "consensus": "Natural motion"},
+        {"id": "depth", "name": "Depth", "status": "yellow", "agent_opinions": [], "debate": "", "consensus": "Depth of field can be improved"},
+        {"id": "exposure", "name": "Exposure", "status": "green", "agent_opinions": [], "debate": "", "consensus": "Exposure normal"},
+        {"id": "style", "name": "Style", "status": "green", "agent_opinions": [], "debate": "", "consensus": "Style consistent"},
     ]
 
 @router.get("/combination/metrics/{artwork_id}/{metric_id}")
 async def get_metric_detail(artwork_id: str, metric_id: str):
     return {
-        "analysis": f"{metric_id} 的詳細分析結果",
-        "suggestions": ["調整主光角度", "提高對比度"],
+        "analysis": f"Detailed analysis of {metric_id}",
+        "suggestions": ["Adjust main light angle", "Increase contrast"],
         "agent_opinions": [],
         "debate": "",
-        "consensus": "需要修正",
+        "consensus": "Needs correction",
     }
 
 @router.post("/combination/canvas/submit")
 async def submit_canvas(body: dict):
-    return {"summary": "Canvas 標註已分析", "key_points": ["標記區域需加強光影", "文字說明已記錄"]}
+    return {"summary": "Canvas annotations analyzed", "key_points": ["Marked areas need stronger lighting", "Text notes recorded"]}
 
 @router.post("/combination/analyze_feedback")
 async def analyze_feedback(body: dict):
     return {
-        "key_findings": ["主要問題集中在光影", "色彩有輕微偏差"],
+        "key_findings": ["Main issues concentrated in lighting", "Color has slight deviation"],
         "conflicts": [],
-        "suggested_order": ["先修光影", "再調色彩"],
+        "suggested_order": ["Fix lighting first", "Then adjust color"],
     }

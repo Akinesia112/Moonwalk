@@ -1,20 +1,20 @@
 """
 analysis.py  —  /combination/analyze  (v3)
 
-流程：
-  1. autogen_multiagents.score_answers_multiagent() — Concurrent 評分
-     真正呼叫 scripts/ 裡的 eval_light_A/B, eval_comp_A/B … 等 heuristic functions
-     透過 AutoGen agent hook 並行執行，產出 by_group{score, disagreement, per_agent, notes}
+Pipeline:
+  1. autogen_multiagents.score_answers_multiagent() — Concurrent scoring
+  Calls eval_light_A/B, eval_comp_A/B, etc. heuristic functions in scripts/
+  Runs in parallel via AutoGen agent hooks, outputs by_group{score, disagreement, per_agent, notes}
 
-  2. 全部 metrics 都跑 3-AI Debate（不只分歧才跑）
-     - OpenAI: 扮演 Agent A，基於 notes 說明立場
-     - Gemini: 扮演 Agent B，說明立場並指出與 A 的差異
-     - Claude: 主導最終結論，給出具體可行建議
+  2. All metrics run 3-AI Debate (not just divergent ones)
+  - OpenAI: plays Agent A, states position based on notes
+  - Gemini: plays Agent B, states position and notes differences from A
+  - Claude: leads the final conclusion and gives specific actionable suggestions
 
-  3. Handoff 條件嚴格化：
-     disagreement > 0.30 AND score < 0.30（真正嚴重分歧且分數極低才 handoff）
+  3. Handoff conditions are strict:
+  disagreement > 0.30 AND score < 0.30 (only truly severe divergence + very low score triggers handoff)
 
-  4. spec_summary 由 Claude 整合，禁止 markdown
+  4. spec_summary integrated by Claude, markdown forbidden
 """
 from __future__ import annotations
 
@@ -35,25 +35,25 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-# 把 scripts 目錄加入 path
+# Add scripts directory to path
 SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
 if SCRIPTS_DIR.exists() and str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 router = APIRouter(prefix="/combination", tags=["combination"])
 
-# Handoff 只在非常嚴重時才觸發
-HANDOFF_DIS_TAU   = 0.30   # disagreement 閾值（比之前 0.10 高很多）
-HANDOFF_SCORE_TAU = 0.30   # score 閾值
+# Handoff only triggers in severe cases
+HANDOFF_DIS_TAU   = 0.30   # disagreement threshold (much higher than previous 0.10)
+HANDOFF_SCORE_TAU = 0.30   # score threshold
 
 METRIC_LABELS: Dict[str, str] = {
-    "light": "光影", "composition": "構圖", "sketch": "草稿/線條",
-    "color": "色彩", "style": "風格一致", "percept": "感知品質",
-    "faithfulness": "Spec 忠實度", "control": "可控性",
-    "robustness": "穩定性", "efficiency": "效率", "stability": "一致性",
+    "light": "Lighting", "composition": "Composition", "sketch": "Sketch/Lines",
+    "color": "Color", "style": "Style Consistency", "percept": "Perceptual Quality",
+    "faithfulness": "Spec Faithfulness", "control": "Controllability",
+    "robustness": "Stability", "efficiency": "Efficiency", "stability": "Consistency",
 }
 
-NO_MARKDOWN = "規則：用繁體中文輸出，絕對禁止使用 ** 加粗、# 標題、--- 分隔線、* 列點等任何 markdown 符號，直接輸出純文字段落。"
+NO_MARKDOWN = "Rules: Output in English. Never use ** bold, # headers, --- separators, * bullets, or any markdown symbols. Output plain text paragraphs only."
 
 
 class AnalyzeRequest(BaseModel):
@@ -110,9 +110,9 @@ async def _call_openai(system: str, user: str, max_tokens: int = 400) -> str:
         ), timeout=35.0)
         return _strip_md(r.choices[0].message.content.strip())
     except asyncio.TimeoutError:
-        return "[OpenAI 超時]"
+        return "[OpenAI timed out]"
     except Exception as e:
-        return f"[OpenAI 無回應: {e}]"
+        return f"[OpenAI no response: {e}]"
 
 
 async def _call_gemini(system: str, user: str) -> str:
@@ -121,7 +121,7 @@ async def _call_gemini(system: str, user: str) -> str:
         resp = await asyncio.to_thread(model.generate_content, user)
         return _strip_md(resp.text.strip())
     except Exception as e:
-        return f"[Gemini 無回應: {e}]"
+        return f"[Gemini no response: {e}]"
 
 
 async def _call_anthropic(system: str, user: str, max_tokens: int = 500) -> str:
@@ -133,7 +133,7 @@ async def _call_anthropic(system: str, user: str, max_tokens: int = 500) -> str:
         )
         return _strip_md(r.content[0].text.strip())
     except Exception as e:
-        return f"[Anthropic 無回應: {e}]"
+        return f"[Anthropic no response: {e}]"
 
 
 async def _load_image_as_base64(artwork_url: str) -> tuple[str, str]:
@@ -181,17 +181,17 @@ async def _call_claude_vision(system: str, user_text: str, img_b64: str, img_typ
         ), timeout=40.0)
         return _strip_md(r.content[0].text.strip())
     except asyncio.TimeoutError:
-        return "[Claude vision 超時]"
+        return "[Claude vision timed out]"
     except Exception as e:
-        return f"[Claude vision 錯誤: {e}]"
+        return f"[Claude vision error: {e}]"
 
 
 # ── Score with autogen_multiagents ────────────────────────────────
 def _run_autogen_scoring(req: AnalyzeRequest) -> Tuple[Dict[str, Any], List]:
     """
-    呼叫 scripts/autogen_multiagents.py 的 score_answers_multiagent()
-    真正執行 eval_light_A/B, eval_comp_A/B … 等 heuristic functions
-    透過 AutoGen agent hook 並行計算各 metric 的 score / disagreement
+    Calls score_answers_multiagent() from scripts/autogen_multiagents.py
+    Executes eval_light_A/B, eval_comp_A/B, etc. heuristic functions
+    Parallel computation of score / disagreement per metric via AutoGen agent hooks
     """
     try:
         from autogen_multiagents import score_answers_multiagent
@@ -204,10 +204,10 @@ def _run_autogen_scoring(req: AnalyzeRequest) -> Tuple[Dict[str, Any], List]:
             f"Tags: {', '.join(req.tags)}"
         )
         answers = {
-            "kickoff_spec":     req.brief_context or "（未填）",
-            "director_refs":    req.hub_refs or "（無）",
-            "artist_refs":      req.refs_context or "（無）",
-            "artist_reflection": req.reflection_notes or "（無）",
+            "kickoff_spec":     req.brief_context or "(not filled)",
+            "director_refs":    req.hub_refs or "(none)",
+            "artist_refs":      req.refs_context or "(none)",
+            "artist_reflection": req.reflection_notes or "(none)",
         }
         question = (
             "Evaluate the artwork's compliance with the director's spec and references. "
@@ -261,35 +261,35 @@ async def _debate_metric(
     refs_all: str,
 ) -> Dict[str, str]:
     """
-    全部 metrics 都跑 debate。
-    - OpenAI 扮演 Agent A：從視覺觀察角度給出具體問題與影響（不提內部數字）
-    - Gemini 扮演 Agent B：從技術實作與 Spec 對照給出可操作改進方向
-    - Claude 主導：整合 A+B，給出 2-3 個具體可執行建議
+    All metrics run debate.
+    - OpenAI plays Agent A: gives specific problems and impacts from a visual observation perspective (no internal numbers)
+    - Gemini plays Agent B: gives actionable improvement directions from a technical implementation and Spec comparison perspective
+    - Claude leads: integrates A+B, gives 2–3 specific actionable suggestions
     """
-    level = "需要改進" if score < 0.45 else "需要關注" if score < 0.65 else "表現良好"
+    level = "Needs improvement" if score < 0.45 else "Needs attention" if score < 0.65 else "Good"
     ctx = (
-        f"評估項目：{metric_name}（整體評估：{level}）\n"
-        f"導演 Spec：\n{brief_context or '（未填）'}\n\n"
-        f"References（導演 + Artist）：\n{refs_all or '（無）'}"
+        f"Metric: {metric_name} (Overall: {level})\n"
+        f"Director Spec:\n{brief_context or '(not filled)'}\n\n"
+        f"References (Director + Artist):\n{refs_all or '(none)'}"
     )
 
-    # Agent A: 視覺觀察者角度 — 具體描述畫面上看到的問題
+    # Agent A: visual observer perspective — specifically describe visible issues
     sys_a = (
-        f"你是資深 VFX 視覺評審，針對「{metric_name}」給出視覺觀察。"
-        f"任務：從畫面視覺效果出發，指出最關鍵的問題是什麼、它出現在畫面哪裡、對整體視覺體驗有什麼負面影響。"
-        f"要求：必須包含具體數值，例如角度（主光源偏左 20 度）、比例（高光區域佔畫面 35%）、"
-        f"色值（膚色偏黃約 #D4A96A）、對比度（+15%）等可量化描述。"
-        f"格式：①畫面問題所在位置 ②數值化描述現況 ③對視覺體驗的具體負面影響。"
-        f"不超過 130 字。絕對不提 metric_base、分數等系統參數。{NO_MARKDOWN}"
+        f"You are a senior VFX visual reviewer. Provide visual observations for the metric '{metric_name}'."
+        f"Task: Starting from the visual effect on screen, identify the most critical issue, where it appears in the frame, and what negative impact it has on the overall visual experience."
+        f"Requirements: Must include specific values, e.g. angle (main light shifted left 20°), ratio (highlights occupy 35% of frame),"
+        f"color value (skin tone yellowish ~#D4A96A), contrast (+15%), etc. — all must be quantifiable."
+        f"Format: ① Location of the issue in frame ② Quantified current state ③ Specific negative impact on visual experience."
+        f"Under 130 words. Never mention metric_base, scores, or any internal system parameters. {NO_MARKDOWN}"
     )
-    # Agent B: 技術對照者角度 — 與 Spec/Reference 對照給出可執行方向
+    # Agent B: technical comparison perspective — compare with Spec/Reference and give actionable directions
     sys_b = (
-        f"你是資深 VFX 技術評審，針對「{metric_name}」與導演 Spec 和 Reference 進行對照。"
-        f"任務：指出目前作品在這個 metric 上與 Spec/Reference 的具體差距，並給出 1-2 個可以立即執行的技術調整建議。"
-        f"要求：必須明確描述當前作品與 Reference 的具體差距，格式為"
-        f"「Reference 中 X 為 ___，當前作品為 ___，差距約 ___」。"
-        f"接著給出 1-2 個立即可執行的操作步驟，每步驟必須包含工具名稱或參數名稱與目標數值。"
-        f"不超過 130 字。絕對不提任何分數或技術參數。{NO_MARKDOWN}"
+        f"You are a senior VFX technical reviewer. Compare the metric '{metric_name}' against the Director Spec and Reference."
+        f"Task: Identify the specific gap between the current artwork and Spec/Reference for this metric, and give 1–2 immediately actionable technical adjustments."
+        f"Requirements: Clearly describe the specific gap between current artwork and Reference, format:"
+        f"'Reference: X is ___, current artwork is ___, gap is approximately ___'."
+        f"Then give 1–2 immediately actionable steps, each must include the tool/parameter name and target value."
+        f"Under 130 words. Never mention any scores or internal technical parameters. {NO_MARKDOWN}"
     )
 
     pos_a, pos_b = await asyncio.gather(
@@ -298,21 +298,21 @@ async def _debate_metric(
     )
 
     sys_claude = (
-        f"你是 VFX 資深 Supervisor，主導「{metric_name}」的最終裁決。"
-        f"整合兩位 Agent 的觀察，給出 2-3 條具體改進指令。"
-        f"每條指令必須使用「將 [具體參數] 從 [現況數值] 調整為 [目標數值]」的格式，"
-        f"例如：「將主光源左移 15 度」、「色溫從 5500K 調至 4200K」、「對比度 +20%」、"
-        f"「前景與背景明度差從 0.3 拉至 0.5」。"
-        f"若兩位 Agent 有分歧，先一句話說明分歧點，再直接給裁決指令。"
-        f"禁止輸出泛泛建議（如「注意光影平衡」），每條必須可直接在軟體中執行。"
-        f"不超過 200 字。{NO_MARKDOWN}"
+        f"You are a senior VFX Supervisor leading the final judgment on '{metric_name}'."
+        f"Integrate both Agents' observations and give 2–3 specific improvement directives."
+        f"Each directive must use the format: 'Adjust [specific parameter] from [current value] to [target value]',"
+        f"e.g.: 'Shift main light left 15°', 'Color temperature from 5500K to 4200K', 'Contrast +20%',"
+        f"'Foreground-to-background luminance difference from 0.3 to 0.5'."
+        f"If both Agents diverge, state the divergence point in one sentence, then give the directive."
+        f"No vague suggestions (e.g. 'pay attention to lighting balance'). Every directive must be directly executable in software."
+        f"Under 200 words. {NO_MARKDOWN}"
     )
     claude_prompt = (
-        f"兩位 Agent 的評估如下：\n\n"
-        f"{agent_a_name} 的觀察：\n{pos_a}\n\n"
-        f"{agent_b_name} 的觀察：\n{pos_b}\n\n"
-        f"背景資料：\n{ctx}\n\n"
-        f"請給出最終結論與具體建議。"
+        f"The two Agents' evaluations are as follows:\n\n"
+        f"{agent_a_name}'s observation:\n{pos_a}\n\n"
+        f"{agent_b_name}'s observation:\n{pos_b}\n\n"
+        f"Background:\n{ctx}\n\n"
+        f"Please provide the final conclusion and specific suggestions."
     )
     conclusion = await _call_anthropic(sys_claude, claude_prompt, max_tokens=400)
 
@@ -334,19 +334,19 @@ async def _spec_summary(
     handoff_count = len([f for f in flags if "handoff" in str(f).lower()])
 
     sys_p = (
-        "你是 VFX Supervisor，對 Artist 的作品給出 Spec + Reference 對照總評。"
-        f"不超過 300 字。{NO_MARKDOWN}"
+        "You are a VFX Supervisor. Provide an overall Spec + Reference evaluation of the Artist's artwork."
+        f"Under 300 words. {NO_MARKDOWN}"
     )
     user_p = (
-        f"導演 Kickoff Spec：\n{brief or '（未填）'}\n\n"
-        f"Reference Hub（導演提供）：\n{hub_refs or '（無）'}\n\n"
-        f"Artist 自己的 References：\n{artist_refs or '（無）'}\n\n"
-        f"Artist 創作反思：\n{reflection or '（無）'}\n\n"
-        f"表現良好的項目：{', '.join(green_names) or '無'}\n"
-        f"需要關注的項目：{', '.join(yel_names) or '無'}\n"
-        f"需要改進的項目：{', '.join(red_names) or '無'}\n"
-        f"Handoff 旗標（僅最嚴重問題）：{handoff_count} 個\n\n"
-        f"請評估 Artist 的 References 整體上有沒有符合導演的 Spec，主要優點與不足各是什麼？"
+        f"Director Kickoff Spec:\n{brief or '(not filled)'}\n\n"
+        f"Reference Hub (provided by Director):\n{hub_refs or '(none)'}\n\n"
+        f"Artist's own References:\n{artist_refs or '(none)'}\n\n"
+        f"Artist's creative reflection:\n{reflection or '(none)'}\n\n"
+        f"Good metrics: {', '.join(green_names) or 'none'}\n"
+        f"Needs attention: {', '.join(yel_names) or 'none'}\n"
+        f"Needs improvement: {', '.join(red_names) or 'none'}\n"
+        f"Handoff flags (most severe issues only): {handoff_count}\n\n"
+        f"Please assess whether the Artist's References overall align with the Director's Spec, and what are the main strengths and weaknesses?"
     )
     return await _call_anthropic(sys_p, user_p, max_tokens=500)
 
@@ -408,9 +408,9 @@ async def analyze_artwork(req: AnalyzeRequest):
                 debate_results[mid] = result
             else:
                 debate_results[mid] = {
-                    "positionA": "評估完成。",
-                    "positionB": "評估完成。",
-                    "conclusion": f"此項目已完成評估，如需詳細建議請在對話框追問。（錯誤：{result}）",
+                    "positionA": "Evaluation complete.",
+                    "positionB": "Evaluation complete.",
+                    "conclusion": f"This metric has been evaluated. For detailed suggestions, please ask in the chat. (Error: {result})",
                 }
 
     # Step 4: Build enriched output
@@ -507,13 +507,13 @@ async def analyze_artwork_stream(req: AnalyzeRequest):
         import re as _re, hashlib, random
 
         ctx_short = (
-            f"Spec：{(req.brief_context or '（未填）')[:300]}\n"
+            f"Spec: {(req.brief_context or '(not filled)')[:300]}\n"
             f"Refs：{((req.hub_refs or '') + ' ' + (req.refs_context or ''))[:250]}"
         )
         seed_str = (req.brief_context or "") + (req.refs_context or "")
 
         # Load artwork image — prefer direct base64 from frontend, fallback to URL
-        yield "data: " + json.dumps({"type": "status", "message": "載入圖片..."}) + "\n\n"
+        yield "data: " + json.dumps({"type": "status", "message": "Loading image..."}) + "\n\n"
         img_b64, img_type = "", "image/jpeg"
         if req.artwork_b64 and req.artwork_b64.startswith("data:"):
             # Parse data URL: data:image/jpeg;base64,<data>
@@ -544,7 +544,7 @@ async def analyze_artwork_stream(req: AnalyzeRequest):
             active_metrics = metrics_zh
 
         # Step 1: instant heuristic scores
-        yield "data: " + json.dumps({"type": "status", "message": "本地評分中..."}) + "\n\n"
+        yield "data: " + json.dumps({"type": "status", "message": "Local scoring in progress..."}) + "\n\n"
         try:
             heuristic_fused, _ = await asyncio.wait_for(
                 asyncio.to_thread(_heuristic_scoring_sync, req), timeout=8.0
@@ -557,42 +557,42 @@ async def analyze_artwork_stream(req: AnalyzeRequest):
         # Step 2: fire 3 LLM opinion tasks in parallel
         metrics_str = "\n".join(f"- {mid}({name})" for mid, name in active_metrics.items())
 
-        img_context = "（已附上作品圖片，請直接觀察圖片內容給出分析）" if has_image else "（無圖片，根據Spec和Refs推斷）"
+        img_context = "(Artwork image provided — observe the image directly for analysis)" if has_image else "(No image — infer based on Spec and Refs)"
 
         oai_prompt = (
-            f"你是VFX技術總監。{img_context}\n"
-            f"針對每個指標，輸出三項：\n"
-            f"① 畫面現況（含具體數值：角度/像素比例/色值/對比度等）\n"
-            f"② 存在問題（具體說明哪裡不對、偏差多少）\n"
-            f"③ 修正步驟（格式：將 [參數] 從 [現況] 調整為 [目標]，須包含數值）\n"
-            f"每個指標 80 字以內。\n"
-            f"背景：{ctx_short}\n指標：\n{metrics_str}\n"
-            + '只回JSON禁止markdown：{"metrics":{"light":{"opinion":"①現況②問題③將X從A調整為B"},"composition":{"opinion":"..."},...}}'
+            f"You are the VFX Technical Director. {img_context}\n"
+            f"For each metric, output three items:\n"
+            f"① Current state on screen (with specific values: angle/pixel ratio/color value/contrast, etc.)\n"
+            f"② Issue (specifically what is wrong and by how much)\n"
+            f"③ Correction steps (format: adjust [parameter] from [current] to [target], must include values)\n"
+            f"Under 80 words per metric.\n"
+            f"Background: {ctx_short}\nMetrics:\n{metrics_str}\n"
+            + '{"metrics":{"light":{"opinion":"①Current state②Issue③Adjust X from A to B"},"composition":{"opinion":"..."},...}}'
         )
         gem_prompt = (
-            f"你是VFX創意指導。{img_context}\n"
-            f"針對每個指標，輸出三項：\n"
-            f"① 與 Reference 的具體差距（格式：Reference 中 X 為___，當前作品為___）\n"
-            f"② 導演意圖落差說明\n"
-            f"③ 創意調整方向（含具體可操作數值，如色調偏移、構圖比例）\n"
-            f"每個指標 80 字以內。\n"
-            f"背景：{ctx_short}\n指標：\n{metrics_str}\n"
-            + '只回JSON：{"metrics":{"light":{"opinion_b":"①Reference差距②意圖落差③將X調整為Y"},"composition":{"opinion_b":"..."},...}}'
+            f"You are the VFX Creative Director. {img_context}\n"
+            f"For each metric, output three items:\n"
+            f"① Specific gap vs Reference (format: Reference has X as ___, current artwork is ___)\n"
+            f"② Explanation of director intent gap\n"
+            f"③ Creative adjustment direction (with specific actionable values, e.g. color shift, composition ratio)\n"
+            f"Under 80 words per metric.\n"
+            f"Background: {ctx_short}\nMetrics:\n{metrics_str}\n"
+            + '{"metrics":{"light":{"opinion_b":"①Reference gap②Intent gap③Adjust X to Y"},"composition":{"opinion_b":"..."},...}}'
         )
         # Claude gets the actual image
         claude_vision_prompt = (
-            f"你是VFX Supervisor，請直接觀察這張作品圖片，針對每個指標給出：\n"
-            f"針對每個指標，輸出三項（禁止泛泛而談，每項必須有數值或具體對象）：\n"
-            f"① 圖片中實際看到的問題（具體描述位置與現況數值）\n"
-            f"② 與 Spec/Reference 的差距（用「Reference 為___，當前為___」格式）\n"
-            f"③ 修正指令 ×2（必須使用「將 [具體參數] 從 [現況] 調整為 [目標數值]」格式，"
-            f"例如：主光源左移 15 度、色溫 5500K→4200K、對比度 +20%、飽和度 -10%）\n"
-            f"每個指標 150 字。\n"
-            f"背景：{ctx_short}\n指標：\n{metrics_str}\n"
-            + '只回JSON：{"metrics":{"light":{"conclusion":"①畫面問題②Reference差距③將A調整為B→預期效果；將C調整為D→預期效果"},...}}'
+            f"You are the VFX Supervisor. Observe this artwork image directly and provide for each metric:\n"
+            f"For each metric, output three items (no vague statements — each must include numeric values or specific objects):\n"
+            f"① Actual issue visible in the image (describe location and current values specifically)\n"
+            f"② Gap vs Spec/Reference (format: 'Reference is ___, current is ___')\n"
+            f"③ Correction directives ×2 (must use format: 'Adjust [specific parameter] from [current] to [target value]',"
+            f"e.g.: shift main light left 15°, color temperature 5500K→4200K, contrast +20%, saturation -10%)\n"
+            f"Under 150 words per metric.\n"
+            f"Background: {ctx_short}\nMetrics:\n{metrics_str}\n"
+            + '{"metrics":{"light":{"conclusion":"①Frame issue②Reference gap③Adjust A to B→expected result; adjust C to D→expected result"},...}}'
         )
 
-        sys_j = f"只回傳JSON，不加任何說明或markdown。{NO_MARKDOWN}"
+        sys_j = f"Return JSON only. No explanations or markdown. {NO_MARKDOWN}"
         oai_task = asyncio.create_task(_call_openai(sys_j, oai_prompt, max_tokens=4000))
         gem_task = asyncio.create_task(_call_gemini(sys_j, gem_prompt))
         ant_task = asyncio.create_task(
@@ -603,19 +603,19 @@ async def analyze_artwork_stream(req: AnalyzeRequest):
 
         # Fire spec_summary in parallel with metrics LLMs — same batch, same wait
         spec_prompt = (
-            f"你是VFX Supervisor。{'請觀察這張作品圖片，' if has_image else ''}"
-            f"給出200字內的總體評估：\n1) 作品整體優點（具體說明畫面）\n"
-            f"2) 最需改進的2-3個問題（具體描述）\n3) 最優先改進方向\n"
+            f"You are the VFX Supervisor.{(' Please observe this artwork image,' if has_image else '')}"
+            f"Provide an overall evaluation in under 200 words:\n1) Overall strengths of the artwork (describe the visuals specifically)\n"
+            f"2) 2–3 most critical issues to fix (described specifically)\n3) Highest priority improvement direction\n"
             f"Spec：{(req.brief_context or '')[:200]}"
         )
         spec_task = asyncio.create_task(
-            _call_claude_vision("用繁體中文輸出純文字，不使用markdown。", spec_prompt, img_b64, img_type, max_tokens=350)
+            _call_claude_vision("Output plain text in English, no markdown.", spec_prompt, img_b64, img_type, max_tokens=350)
             if has_image else
-            _call_openai("用繁體中文輸出純文字，不使用markdown。", spec_prompt, max_tokens=350)
+            _call_openai("Output plain text in English, no markdown.", spec_prompt, max_tokens=350)
         )
 
         # Step 3: stream heuristic metrics immediately
-        yield "data: " + json.dumps({"type": "status", "message": "串流初步結果..."}) + "\n\n"
+        yield "data: " + json.dumps({"type": "status", "message": "Streaming initial results..."}) + "\n\n"
         seed = int(hashlib.md5(ctx_short.encode()).hexdigest()[:8], 16)
         rng = random.Random(seed)
         fused_preview = {}
@@ -631,13 +631,13 @@ async def analyze_artwork_stream(req: AnalyzeRequest):
                     "score": score, "disagreement": dis,
                     "per_agent": fused_preview[mid]["per_agent"],
                     "ref_basis": "Spec + References",
-                    "opinion_A": "分析中...", "opinion_B": "分析中...",
-                    "debate": {"positionA": "分析中...", "positionB": "分析中...", "conclusion": "分析中..."},
+                    "opinion_A": "Analyzing...", "opinion_B": "Analyzing...",
+                    "debate": {"positionA": "Analyzing...", "positionB": "Analyzing...", "conclusion": "Analyzing..."},
                 }
             }) + "\n\n"
 
         # Step 4: wait all 4 tasks in parallel — metrics opinions + spec summary together
-        yield "data: " + json.dumps({"type": "status", "message": "三方分析中（含總體評估）..."}) + "\n\n"
+        yield "data: " + json.dumps({"type": "status", "message": "Three-party analysis in progress (including overall evaluation)..."}) + "\n\n"
         try:
             all_raw = await asyncio.wait_for(
                 asyncio.gather(oai_task, gem_task, ant_task, spec_task, return_exceptions=True),
@@ -646,7 +646,7 @@ async def analyze_artwork_stream(req: AnalyzeRequest):
             oai_raw = all_raw[0] if isinstance(all_raw[0], str) else ""
             gem_raw = all_raw[1] if isinstance(all_raw[1], str) else ""
             claude_raw = all_raw[2] if isinstance(all_raw[2], str) else ""
-            spec_summary = all_raw[3] if isinstance(all_raw[3], str) else "分析完成。"
+            spec_summary = all_raw[3] if isinstance(all_raw[3], str) else "Analysis complete."
             print(f"[STREAM] oai_raw len={len(oai_raw)}, gem_raw len={len(gem_raw)}, claude_raw len={len(claude_raw)}, spec len={len(spec_summary)}")
         except (Exception, asyncio.TimeoutError) as _ge:
             print(f"[STREAM] gather exception type={type(_ge).__name__}: {_ge}")
@@ -662,7 +662,7 @@ async def analyze_artwork_stream(req: AnalyzeRequest):
             oai_raw = _safe_result(oai_task)
             gem_raw = _safe_result(gem_task)
             claude_raw = _safe_result(ant_task)
-            spec_summary = _safe_result(spec_task) or "分析完成。"
+            spec_summary = _safe_result(spec_task) or "Analysis complete."
             print(f"[STREAM] partial: oai={len(oai_raw)}, gem={len(gem_raw)}, claude={len(claude_raw)}, spec={len(spec_summary)}")
 
         def parse_json(text: str) -> dict:

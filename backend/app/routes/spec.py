@@ -153,7 +153,7 @@ async def import_by_url(body: dict):
     # Only accept direct image URLs
     is_image = bool(re.search(r'\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$', raw_url, re.IGNORECASE))
     if not is_image:
-        raise HTTPException(status_code=400, detail="只支援直接圖片 URL（.jpg / .png / .webp 等）。請貼上圖片的直接網址，不是網頁連結。")
+        raise HTTPException(status_code=400, detail="Only direct image URLs are supported (.jpg / .png / .webp etc.). Please paste the direct image URL, not a webpage link.")
 
     new_id = f"ref_{uuid.uuid4().hex[:8]}"
 

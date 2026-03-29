@@ -23,9 +23,9 @@ import { RefCard, type RefCardData, CATEGORY_OPTIONS, IMPORTANCE_OPTIONS, USAGE_
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
 
-// 徹底刪除：後端 + 所有 sessionStorage key
+// Full delete: backend + all sessionStorage keys
 async function deleteItem(type: "references" | "artworks", id: string) {
-  // 1. 後端
+  // 1. Backend
   try { await fetch(`${API}/search/${type}/${encodeURIComponent(id)}`, { method: "DELETE" }) } catch {}
 
   if (type === "references") {
@@ -39,13 +39,13 @@ async function deleteItem(type: "references" | "artworks", id: string) {
       const arr = JSON.parse(sessionStorage.getItem("c04_ref_previews") || "[]")
       sessionStorage.setItem("c04_ref_previews", JSON.stringify(arr.filter((r: any) => String(r.id) !== String(id))))
     } catch {}
-    // 4. deleted_ref_ids（加進去讓其他頁面也知道）
+    // 4. deleted_ref_ids (add so other pages are aware)
     try {
       const ids = JSON.parse(sessionStorage.getItem("deleted_ref_ids") || "[]")
       if (!ids.includes(String(id))) ids.push(String(id))
       sessionStorage.setItem("deleted_ref_ids", JSON.stringify(ids))
     } catch {}
-    // 5. 廣播給其他 tab/頁面
+    // 5. Broadcast to other tabs/pages
     try { window.dispatchEvent(new StorageEvent("storage", { key: "deleted_ref_ids" })) } catch {}
   } else {
     // artwork
@@ -74,9 +74,9 @@ interface AnalysisState {
 }
 
 const METRIC_NAMES: Record<string, string> = {
-  light: "光影", composition: "構圖", sketch: "草稿/線條", color: "色彩",
-  style: "風格一致", percept: "感知品質", faithfulness: "Spec 忠實度",
-  control: "可控性", robustness: "穩定性", efficiency: "效率", stability: "一致性",
+  light: "Lighting", composition: "Composition", sketch: "Sketch/Lines", color: "Color",
+  style: "Style Consistency", percept: "Perceptual Quality", faithfulness: "Spec Faithfulness",
+  control: "Controllability", robustness: "Stability", efficiency: "Efficiency", stability: "Consistency",
 }
 // Map reference-hub categories to metric IDs
 const CATEGORY_TO_METRIC: Record<string, string> = {
@@ -113,7 +113,7 @@ function stripBold(text: string): string {
 
 // Render text with bold for Director/Supervisor only
 function renderWithBold(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*(?:Director|Supervisor|導演|督導)\*\*)/g)
+  const parts = text.split(/(\*\*(?:Director|Supervisor|Director|Supervisor)\*\*)/g)
   return parts.map((part, i) => {
     if (/^\*\*(.+)\*\*$/.test(part)) {
       return <strong key={i}>{part.replace(/\*\*/g, "")}</strong>
@@ -154,15 +154,15 @@ function UploadAnalyzeContent() {
 
   // ── Chat
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    { role: "ai", content: "您好！上傳創作後點擊「開始分析」，我會協調多個 AI Agent 進行 Spec + Reference 全面評估。\n\n勾選分項指標或點擊 Agent 意見，我會立即給出具體回饋。" }
+    { role: "ai", content: "Hello! Upload your artwork and click 'Start Analysis'. I will coordinate multiple AI Agents for a comprehensive Spec + Reference evaluation.\n\nCheck individual metrics or click Agent opinions for immediate feedback." }
   ])
   const [chatInput, setChatInput] = useState("")
   const [chatLoading, setChatLoading] = useState(false)
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
   // ── Panels
-  const [leftW, setLeftW] = useState(400)
-  const [rightW, setRightW] = useState(700)
+  const [leftW, setLeftW] = useState(320)
+  const [rightW, setRightW] = useState(320)
   const dragging = useRef<{ col: "left" | "right"; startX: number; startW: number } | null>(null)
 
   // ── Dialog
@@ -213,7 +213,7 @@ function UploadAnalyzeContent() {
     const onMove = (ev: MouseEvent) => {
       if (!dragging.current) return
       const d = ev.clientX - dragging.current.startX
-      const nw = Math.max(180, Math.min(700, dragging.current.startW + (dragging.current.col === "left" ? d : -d)))
+      const nw = Math.max(180, Math.min(350, dragging.current.startW + (dragging.current.col === "left" ? d : -d)))
       dragging.current.col === "left" ? setLeftW(nw) : setRightW(nw)
     }
     const onUp = () => { dragging.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp) }
@@ -474,7 +474,7 @@ function UploadAnalyzeContent() {
       const raw = SS.get("refhub_refs") || SS.get("reference_hub_refs") || "[]"
       const refs = JSON.parse(raw)
       if (Array.isArray(refs) && refs.length > 0)
-        return refs.map((r: any) => `${r.title || r.id}${r.note ? `（${r.note}）` : ""}`).join("\n")
+        return refs.map((r: any) => `${r.title || r.id}${r.note ? `（${r.note})` : ""}`).join("\n")
       const brief = JSON.parse(SS.get("kickoff_brief") || "{}")
       return brief.supervisor_spec || ""
     } catch { return "" }
@@ -492,21 +492,21 @@ function UploadAnalyzeContent() {
   const callAgent = useCallback(async (userMsg: string, extraCtx?: string) => {
     setChatLoading(true)
     const ctx = getFullContext()
-    const systemNote = `你是 VFX AI 分析助手。當前分析背景：\n導演Spec：${ctx.brief_context || "（未填）"}\n版本：${ctx.version}，備註：${ctx.remark || "（無）"}\nArtist References：${ctx.refs_context || "（無）"}${extraCtx ? `\n\n補充資訊：${extraCtx}` : ""}\n\n規則：用繁體中文回應，不使用 ** 或 --- 等 markdown 符號，直接輸出純文字。`
+    const systemNote = `You are a VFX AI Analysis assistant. Current analysis context:\nDirector Spec: ${ctx.brief_context || "(not filled)"}\nVersion: ${ctx.version}, notes: ${ctx.remark || "(none)"}\nArtist References: ${ctx.refs_context || "(none)"}${extraCtx ? `\n\nAdditional context: ${extraCtx}` : ""}\n\nRules: respond in English, no markdown symbols like ** or ---, plain text only.`
     try {
       const res = await fetch(`${API}/suggestion/chat/analysis`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_id: PROJECT_ID,
-          message: `${systemNote}\n\n用戶訊息：${userMsg}`,
+          message: `${systemNote}\n\nUser message: ${userMsg}`,
           history: chatMessages.slice(-6).map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         }),
       })
       const data = await res.json()
-      const reply = stripBold(data.response || data.reply || data.message || "抱歉，無法回應。")
+      const reply = stripBold(data.response || data.reply || data.message || "Sorry, unable to respond.")
       setChatMessages(p => [...p, { role: "ai", content: reply }])
     } catch {
-      setChatMessages(p => [...p, { role: "ai", content: "連線失敗，請確認後端服務。" }])
+      setChatMessages(p => [...p, { role: "ai", content: "Connection failed. Please confirm the backend is running." }])
     } finally {
       setChatLoading(false)
     }
@@ -515,17 +515,17 @@ function UploadAnalyzeContent() {
   // ── Analyze ───────────────────────────────────────────────────
   const handleAnalyze = useCallback(async () => {
     setAnalysis(p => ({ ...p, loading: true, done: false }))
-    setChatMessages(p => [...p, { role: "user", content: "[開始分析]" }])
+    setChatMessages(p => [...p, { role: "user", content: "[Start Analysis]" }])
 
     // ── Progressive thinking messages ──────────────────────────
     const thinkingSteps = [
-      "正在上傳圖片至分析系統...",
-      "OpenAI 正在從技術面評估光影、構圖、色彩...",
-      "Gemini 正在從創意策略面分析視覺語言...",
-      "Claude 正在整合三方觀點，進行 Debate...",
-      "計算各項指標分數與分歧度...",
-      "生成 Spec 忠實度與整體評估...",
-      "準備輸出完整分析報告...",
+      "Uploading images to analysis system...",
+      "OpenAI evaluating lighting, composition, and color from a technical perspective...",
+      "Gemini analyzing visual language from a creative strategy perspective...",
+      "Claude integrating all perspectives in a Debate...",
+      "Calculating metric scores and disagreement levels...",
+      "Generating Spec faithfulness and overall assessment...",
+      "Preparing full analysis report...",
     ]
     let stepIdx = 0
     const thinkingMsgId = `thinking_${Date.now()}`
@@ -611,7 +611,7 @@ function UploadAnalyzeContent() {
               const idx = streamMetrics.findIndex(m => m.id === evt.id)
               if (idx >= 0) streamMetrics[idx] = newMetric; else streamMetrics.push(newMetric)
               setAnalysis(p => ({ ...p, loading: true, done: false, metrics: [...streamMetrics] }))
-              const progressText = (METRIC_NAMES[evt.id] || evt.id) + " 分析完成（" + evt.done + "/" + evt.total + "）..."
+              const progressText = (METRIC_NAMES[evt.id] || evt.id) + " analysis complete (" + evt.done + "/" + evt.total + ")..."
               setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { ...m, content: progressText } : m))
               setAnalysisStatus(progressText)
             } else if (evt.type === "spec") {
@@ -622,7 +622,7 @@ function UploadAnalyzeContent() {
               const finalMetrics = [...streamMetrics]
               const na: AnalysisState = {
                 loading: false, done: true,
-                specSummary: stripBold(evt.spec_summary || "分析完成。"),
+                specSummary: stripBold(evt.spec_summary || "Analysis complete."),
                 overallFeedback: "",
                 metrics: finalMetrics,
                 flags: finalMetrics.filter(m => m.flag === "handoff_needed").map(m => m.name),
@@ -631,7 +631,7 @@ function UploadAnalyzeContent() {
               const red = finalMetrics.filter(m => m.status === "red").length
               const yellow = finalMetrics.filter(m => m.status === "yellow").length
               const green = finalMetrics.filter(m => m.status === "green").length
-              const summary = "分析完成！共評估 " + finalMetrics.length + " 項指標。\n❌ 需改進：" + red + " 項　⚠️ 需關注：" + yellow + " 項　✅ 良好：" + green + " 項"
+              const summary = "Analysis complete! Evaluated " + finalMetrics.length + " metrics.\n❌ Needs improvement: " + red + "  ⚠️ Needs attention: " + yellow + "  ✅ Good: " + green + " metric(s)"
               setChatMessages(p => p.map((m: any) => m.id === thinkingMsgId ? { role: "ai", content: summary } : m))
               setAnalysisStatus("")
             }
@@ -645,13 +645,13 @@ function UploadAnalyzeContent() {
         const s = 0.35 + Math.random() * 0.45; const d = Math.random() * 0.18
         return {
           id, name, score: s, disagreement: d,
-          agentA: { name: `${id}_A`, score: s, opinion: "分析記錄已載入。" },
-          agentB: { name: `${id}_B`, score: s, opinion: "分析記錄已載入。" },
+          agentA: { name: `${id}_A`, score: s, opinion: "Analysis record loaded." },
+          agentB: { name: `${id}_B`, score: s, opinion: "Analysis record loaded." },
           status: scoreToStatus(s, d), refBasis: "Spec", consensus: d < 0.1,
         }
       })
-      setAnalysis({ loading: false, done: true, specSummary: "（後端未連線，顯示本地模擬數據）", overallFeedback: "", metrics: mock, flags: [] })
-      setChatMessages(p => [...p, { role: "ai", content: `後端連線失敗：${e}\n顯示本地模擬分項供參考，點擊各指標可追問。` }])
+      setAnalysis({ loading: false, done: true, specSummary: "(Backend disconnected — showing local mock data)", overallFeedback: "", metrics: mock, flags: [] })
+      setChatMessages(p => [...p, { role: "ai", content: `Backend connection failed: ${e}\nShowing local mock metrics for reference. Click any metric to follow up.` }])
     }
   }, [artworks, getFullContext])
 
@@ -660,22 +660,22 @@ function UploadAnalyzeContent() {
     if (artworks.length === 0) return
     setArtworkSaved(true)
     SS.set("c04_artwork_count", String(artworks.length))
-    setChatMessages(p => [...p, { role: "user", content: `[儲存創作] ${artworks.length} 張圖片已儲存（版本 ${version}）` }])
-    callAgent(`Artist 已儲存 ${artworks.length} 張創作圖片，版本 ${version}，備註：${remark || "（無）"}，標籤：${tags.join(", ") || "（無）"}。請確認已收到這批創作資訊。`)
+    setChatMessages(p => [...p, { role: "user", content: `[Save Artwork] ${artworks.length} image(s) saved (version ${version})` }])
+    callAgent(`Artist saved ${artworks.length} artwork image(s), version ${version}, notes: ${remark || "(none)"}, tags: ${tags.join(", ") || "(none)"}. Please confirm receipt.`)
   }, [artworks, version, remark, tags, callAgent])
 
   const handleSaveInfo = useCallback(() => {
     setInfoSaved(true)
-    setChatMessages(p => [...p, { role: "user", content: `[版本與備註] 版本：${version}，備註：${remark || "（無）"}，標籤：${tags.join(", ") || "（無）"}` }])
-    callAgent(`Artist 更新了版本資訊：版本 ${version}，備註：「${remark || "（無）"}」，標籤：${tags.join("、") || "無"}。`)
+    setChatMessages(p => [...p, { role: "user", content: `[Version & Notes] Version: ${version}, notes: ${remark || "(none)"}, tags: ${tags.join(", ") || "(none)"}` }])
+    callAgent(`Artist updated version info: version ${version}, notes: 「${remark || "(none)"}", tags: ${tags.join(", ") || "none"}。`)
   }, [version, remark, tags, callAgent])
 
   const handleSaveRefs = useCallback(() => {
     if (artistRefs.length === 0) return
     setRefsSaved(true)
     const refList = artistRefs.map(r => `${r.label}: ${r.title}`).join("\n")
-    setChatMessages(p => [...p, { role: "user", content: `[我的 References]\n${refList}` }])
-    callAgent(`Artist 提供了以下 ${artistRefs.length} 張 References：\n${refList}\n\n請確認收到，並說明這些 References 整體上反映了什麼創作方向。`)
+    setChatMessages(p => [...p, { role: "user", content: `[My References]\n${refList}` }])
+    callAgent(`Artist provided ${artistRefs.length} reference(s):\n${refList}\n\nPlease confirm receipt and describe the overall creative direction these References reflect.`)
   }, [artistRefs, callAgent])
 
   // ── Submit notes ──────────────────────────────────────────────
@@ -689,26 +689,26 @@ function UploadAnalyzeContent() {
         SS.set("c04_notes_history", JSON.stringify([reflectionNotes, ...hist.slice(0, 19)]))
       }
     } catch {}
-    setChatMessages(p => [...p, { role: "user", content: `[創作反思筆記]\n${reflectionNotes}` }])
-    callAgent(`以下是 Artist 的創作反思筆記，請仔細閱讀並給出具體、有建設性的回饋：\n\n${reflectionNotes}`)
+    setChatMessages(p => [...p, { role: "user", content: `[Creative Reflection Notes]\n${reflectionNotes}` }])
+    callAgent(`The following are the Artist's creative reflection notes. Please read carefully and provide specific, constructive feedback:\n\n${reflectionNotes}`)
   }, [reflectionNotes, callAgent])
 
   // ── Metric check → immediate AI response ─────────────────────
   const handleMetricCheck = useCallback((m: MetricResult, checked: boolean) => {
     if (!checked) return
-    const sl = m.status === "red" ? "紅燈（需改進）" : m.status === "yellow" ? "黃燈（需關注）" : "綠燈（良好）"
-    const debateCtx = m.debate?.conclusion ? `\n\nDebate 結論：${m.debate.conclusion}` : ""
+    const sl = m.status === "red" ? "Red (Needs Improvement)" : m.status === "yellow" ? "Yellow (Needs Attention)" : "Green (Good)"
+    const debateCtx = m.debate?.conclusion ? `\n\nDebate Conclusion: ${m.debate.conclusion}` : ""
     const agentCtx = [m.agentA.opinion, m.agentB.opinion].filter(Boolean).join("\n")
-    const userMsg = `請針對「${m.name}」（${sl}）給出 2-3 個具體可執行的改進方向。`
+    const userMsg = `Please provide 2–3 specific, actionable improvement directions for "${m.name}" (${sl}).`
     setChatMessages(p => [...p, { role: "user", content: userMsg }])
     callAgent(userMsg, `${agentCtx}${debateCtx}`)
   }, [callAgent])
 
   // ── Agent opinion click → immediate AI response ───────────────
   const handleAgentOpinionClick = useCallback((metricName: string, agentName: string, opinion: string, debate?: MetricResult["debate"]) => {
-    const debateCtx = debate?.conclusion ? `\n\nDebate 結論：${debate.conclusion}` : ""
-    const userMsg = `關於「${metricName}」，${agentName} 的觀察是：「${opinion}」。請根據這個觀察給出具體的改進建議。`
-    setChatMessages(p => [...p, { role: "user", content: `[${metricName} — ${agentName} 意見] 請給出具體建議` }])
+    const debateCtx = debate?.conclusion ? `\n\nDebate Conclusion: ${debate.conclusion}` : ""
+    const userMsg = `Regarding "${metricName}", ${agentName}'s observation: "${opinion}". Please provide specific improvement suggestions based on this observation.`
+    setChatMessages(p => [...p, { role: "user", content: `[${metricName} — ${agentName} opinion] Please give specific suggestions` }])
     setDialogMetric(null)
     callAgent(userMsg, debateCtx)
   }, [callAgent])
@@ -733,8 +733,8 @@ function UploadAnalyzeContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: `針對「${m.name}」指標進行三方辯論分析。OpenAI 和 Gemini 請各自從技術執行面和創意策略面提出與以下初步意見完全不同的新觀點，Claude 整合後給出 2-3 個具體可執行的改進建議。`,
-          context: `初步評分意見（僅供參考，請提出不同角度）：
+          message: `Conduct a three-party debate analysis on the "${m.name}" metric. OpenAI and Gemini should each propose new perspectives from technical and creative angles that differ from the preliminary opinions below. Claude then integrates and provides 2–3 specific improvement suggestions.`,
+          context: `Preliminary scoring opinions (for reference only — please propose different angles):
 ${m.agentA.name}：${m.agentA.opinion}
 
 ${m.agentB.name}：${m.agentB.opinion}`,
@@ -745,19 +745,19 @@ ${m.agentB.name}：${m.agentB.opinion}`,
       setLiveDebate({
         positionA: "",
         positionB: "",
-        conclusion: data.reply || data.response || "無法取得辯論結果",
+        conclusion: data.reply || data.response || "Unable to retrieve debate result",
       })
     } catch {
-      setLiveDebate({ positionA: "", positionB: "", conclusion: "連線失敗，請稍後再試" })
+      setLiveDebate({ positionA: "", positionB: "", conclusion: "Connection failed. Please try again later." })
     }
     setDebateLoading(false)
   }, [debateLoading])
 
   const handleAskAgentFromDialog = useCallback(async (m: MetricResult) => {
-    const sl = m.status === "red" ? "紅燈（需改進）" : m.status === "yellow" ? "黃燈（需關注）" : "綠燈（良好）"
-    const debateCtx = m.debate?.conclusion ? `\n\nDebate 結論：${m.debate.conclusion}` : ""
+    const sl = m.status === "red" ? "Red (Needs Improvement)" : m.status === "yellow" ? "Yellow (Needs Attention)" : "Green (Good)"
+    const debateCtx = m.debate?.conclusion ? `\n\nDebate Conclusion: ${m.debate.conclusion}` : ""
     const agentCtx = [m.agentA.opinion, m.agentB.opinion].filter(Boolean).join("\n")
-    const userMsg = `請針對「${m.name}」（${sl}）給出 2-3 個具體可執行的改進方向。${m.consensus ? "" : "Agent 意見有分歧，請先釐清核心問題再給建議。"}`
+    const userMsg = `Please provide 2–3 specific, actionable improvement directions for "${m.name}" (${sl}).${m.consensus ? "" : "Agents have differing opinions. Please clarify the core issue before giving suggestions."}`
     setDialogMetric(null)
     setChatMessages(p => [...p, { role: "user", content: userMsg }])
     callAgent(userMsg, `${agentCtx}${debateCtx}`)
@@ -783,8 +783,8 @@ ${m.agentB.name}：${m.agentB.opinion}`,
           {/* Header */}
           <div className="shrink-0 flex items-center gap-2">
             <Badge className="bg-primary">C04</Badge>
-            <h1 className="text-lg font-bold">上傳與 AI 分析</h1>
-            <p className="text-xs text-muted-foreground hidden md:block">Artist 作品 × Spec × Reference 全面評估</p>
+            <h1 className="text-lg font-bold">Upload & AI Analysis</h1>
+            <p className="text-xs text-muted-foreground hidden md:block">Artist Artwork × Spec × Reference Comprehensive Evaluation</p>
           </div>
 
           {/* 3-column body */}
@@ -797,17 +797,17 @@ ${m.agentB.name}：${m.agentB.opinion}`,
               <Card>
                 <CardHeader className="pb-1.5 pt-2.5 px-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" />上傳創作檔案</CardTitle>
+                    <CardTitle className="text-xs flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" />Upload Artwork</CardTitle>
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 gap-1"
                         onClick={() => fileInputRef.current?.click()}>
-                        <Plus className="w-3 h-3" />新增
+                        <Plus className="w-3 h-3" />Add
                       </Button>
                       <Button size="sm" variant={artworkSaved ? "default" : "outline"}
                         className={`h-6 text-[10px] px-2 gap-1 ${artworkSaved ? "bg-green-600 hover:bg-green-700" : "bg-transparent"}`}
                         disabled={artworks.length === 0}
                         onClick={() => setArtworkSaved(true)}>
-                        <Save className="w-3 h-3" />{artworkSaved ? "已儲存" : "Save"}
+                        <Save className="w-3 h-3" />{artworkSaved ? "Saved" : "Save"}
                       </Button>
                     </div>
                   </div>
@@ -821,7 +821,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                       onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add("border-primary","bg-primary/5") }}
                       onDragLeave={e => e.currentTarget.classList.remove("border-primary","bg-primary/5")}>
                       <Upload className="w-6 h-6 mx-auto mb-1.5 text-muted-foreground" />
-                      <p className="text-xs font-medium mb-0.5">拖拉或點擊上傳（可多張）</p>
+                      <p className="text-xs font-medium mb-0.5">Drag & drop or click to upload (multiple allowed)</p>
                       <p className="text-[10px] text-muted-foreground">JPG, PNG, EXR, MP4</p>
                     </div>
                   ) : (
@@ -834,13 +834,13 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                         <div
                           key={aw.id}
                           className={`relative aspect-square rounded overflow-hidden border-2 bg-muted cursor-pointer group transition-all ${isSelected ? "border-teal-500 ring-2 ring-teal-400/50" : "border-border hover:border-teal-400/50"}`}
-                          title="點擊選定分析 · 雙擊討論"
+                          title="Click to select for analysis · Double-click to discuss"
                           onClick={() => setSelectedArtworkId(aw.id)}
                           onDoubleClick={e => {
                             e.stopPropagation()
                             const name = aw.file?.name || aw.id
-                            setChatMessages(p => [...p, { role: "user", content: "[討論 Artwork] " + name }])
-                            callAgent("請觀察這張 Artwork「" + name + "」，從光影、構圖、色彩等面向給出具體分析與改進建議。")
+                            setChatMessages(p => [...p, { role: "user", content: "[Discuss Artwork] " + name }])
+                            callAgent("Please examine this Artwork '" + name + "' and provide specific analysis and improvement suggestions across lighting, composition, and color.")
                           }}
                         >
                           <img src={aw.preview} alt={aw.file?.name || aw.id} className="w-full h-full object-cover" />
@@ -874,7 +874,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
               <Card>
                 <CardHeader className="pb-1.5 pt-2.5 px-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs flex items-center gap-1.5"><Pin className="w-3.5 h-3.5" />我的 References</CardTitle>
+                    <CardTitle className="text-xs flex items-center gap-1.5"><Pin className="w-3.5 h-3.5" />My References</CardTitle>
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 gap-1" onClick={() => refInputRef.current?.click()}>
                         <Plus className="w-3 h-3" />Add
@@ -883,12 +883,12 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                         className={`h-6 text-[10px] px-2 gap-1 ${refsSaved ? "bg-green-600 hover:bg-green-700" : "bg-transparent"}`}
                         disabled={artistRefs.length === 0}
                         onClick={() => setRefsSaved(true)}>
-                        <Save className="w-3 h-3" />{refsSaved ? "已儲存" : "Save"}
+                        <Save className="w-3 h-3" />{refsSaved ? "Saved" : "Save"}
                       </Button>
                     </div>
                     <input ref={refInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleRefUpload} />
                   </div>
-                  <CardDescription className="text-[10px]">Save & Send 後納入 Agent 分析依據</CardDescription>
+                  <CardDescription className="text-[10px]">Included in Agent analysis after Save & Send</CardDescription>
                 </CardHeader>
                 <CardContent className="px-3 pb-3">
                   {artistRefs.length === 0 ? (
@@ -913,7 +913,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                         })
                       }}>
                       <ImageIcon className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
-                      <p className="text-[10px] text-muted-foreground">點擊或拖曳新增 Reference</p>
+                      <p className="text-[10px] text-muted-foreground">Click or drag to add Reference</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-3"
@@ -961,9 +961,9 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                           }}
                           onDelete={() => { deleteItem("references", ref.id); setArtistRefs(p => p.filter(r => r.id !== ref.id)); setRefsSaved(false) }}
                           onDiscuss={d => {
-                            setChatMessages(p => [...p, { role: "user", content: `[討論 Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
-備注：${d.note}` : ""}` }])
-                            callAgent(`請分析這張 Reference「${d.title}」${d.category ? `（類別：${d.category}）` : ""}的視覺特徵，以及它對當前作品的參考價值。${d.note ? `Artist 的備注：${d.note}` : ""}`)
+                            setChatMessages(p => [...p, { role: "user", content: `[Discuss Reference] ${d.title}${d.category ? ` (${d.category})` : ""}${d.note ? `
+Notes: ${d.note}` : ""}` }])
+                            callAgent(`Please analyze this Reference "${d.title}"${d.category ? ` (category: ${d.category})` : ""} — describe its visual characteristics and reference value for the current artwork.${d.note ? ` Artist notes: ${d.note}` : ""}`)
                           }}
                           onSave={updated => {
                             setRefsSaved(true)
@@ -995,28 +995,28 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 disabled={artworks.length === 0 && artistRefs.length === 0}
                 onClick={() => {
                   const parts: string[] = []
-                  if (artworks.length > 0) parts.push(`${artworks.length} 張創作圖（版本 ${version}${remark ? "，備註：" + remark : ""}${tags.length > 0 ? "，標籤：" + tags.join("、") : ""}）`)
-                  if (artistRefs.length > 0) parts.push(`${artistRefs.length} 張 References（${artistRefs.map(r => r.label + ": " + r.title).join("；")}）`)
-                  const msg = `[送出給 Agent] ${parts.join("；")}`
+                  if (artworks.length > 0) parts.push(`${artworks.length} artwork image(s) (version ${version}${remark ? ", notes: " + remark : ""}${tags.length > 0 ? ", tags: " + tags.join(", ") : ""})`)
+                  if (artistRefs.length > 0) parts.push(`${artistRefs.length} reference(s) (${artistRefs.map(r => r.label + ": " + r.title).join("; ")})`)
+                  const msg = `[Send to Agent] ${parts.join("; ")}`
                   setChatMessages(p => [...p, { role: "user", content: msg }])
-                  callAgent(`Artist 提交了以下創作資料，請給出整體觀察與建議：\n\n${parts.join("\n")}`)
+                  callAgent(`Artist submitted the following creative materials. Please provide overall observations and suggestions:\n\n${parts.join("\n")}`)
                 }}>
-                <Send className="w-4 h-4" />與AI 分析助手討論
+                <Send className="w-4 h-4" />Discuss with AI Analysis Assistant
               </Button>
 
               {/* Reflection Notes */}
               <Card className="border-indigo-500/30 bg-indigo-500/5">
                 <CardHeader className="pb-1.5 pt-2.5 px-3">
-                  <CardTitle className="text-xs flex items-center gap-1.5 text-indigo-700"><BookOpen className="w-3.5 h-3.5" />創作反思筆記</CardTitle>
-                  <CardDescription className="text-[10px]">Submit 後 Agent 讀取並回饋</CardDescription>
+                  <CardTitle className="text-xs flex items-center gap-1.5 text-indigo-700"><BookOpen className="w-3.5 h-3.5" />Creative Reflection Notes</CardTitle>
+                  <CardDescription className="text-[10px]">Agent reads and responds after Submit</CardDescription>
                 </CardHeader>
                 <CardContent className="px-3 pb-3 space-y-2">
                   <Textarea value={reflectionNotes} onChange={e => { setReflectionNotes(e.target.value); setNotesSaved(false) }}
-                    placeholder={"- 光影方向選擇原因...\n- 色溫偏暖的理由...\n- 構圖考量..."} rows={4} className="text-xs" />
+                    placeholder={"- Reason for lighting direction choice...\n- Why a warmer color temperature...\n- Compositional considerations..."} rows={4} className="text-xs" />
                   <div className="flex gap-1.5">
                     <Button variant="outline" size="sm" className="flex-1 text-[10px] h-7 bg-transparent gap-1"
                       disabled={!reflectionNotes.trim()} onClick={() => setNotesSaved(true)}>
-                      <Save className="w-3 h-3" />{notesSaved ? "已儲存" : "Save"}
+                      <Save className="w-3 h-3" />{notesSaved ? "Saved" : "Save"}
                     </Button>
                     <Button size="sm" className="flex-1 text-[10px] h-7 gap-1"
                       disabled={!reflectionNotes.trim()} onClick={handleSubmitNotes}>
@@ -1035,12 +1035,12 @@ ${m.agentB.name}：${m.agentB.opinion}`,
             {/* ── Col 2: Analysis ──── */}
             <div className="flex-1 min-w-0 flex flex-col gap-2 min-h-0">
 
-              {/* 總體回饋 */}
+              {/* Overall Feedback */}
               <Card className="shrink-0">
                 <CardHeader className="pb-1.5 pt-2.5 px-3 cursor-pointer" onClick={() => setSpecOpen(o => !o)}>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xs flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-teal-600" />分析結果 — 總體回饋
+                      <Sparkles className="w-3.5 h-3.5 text-teal-600" />Analysis Results — Overall Feedback
                       {analysis.loading && <Loader2 className="w-3 h-3 animate-spin text-teal-600" />}
                     </CardTitle>
                     {specOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -1048,11 +1048,11 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 </CardHeader>
                 {specOpen && (
                   <CardContent className="px-3 pb-3">
-                    {!analysis.done && !analysis.loading && <p className="text-xs text-muted-foreground">點擊「開始分析」後顯示結果。</p>}
+                    {!analysis.done && !analysis.loading && <p className="text-xs text-muted-foreground">Results will appear after clicking 'Start Analysis'.</p>}
                     {analysis.loading && (
                       <div className="flex items-center gap-2 text-xs text-teal-600 py-1">
                         <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
-                        <span>{analysisStatus || "Agents 正在生成總體回饋..."}</span>
+                        <span>{analysisStatus || "Agents generating overall feedback..."}</span>
                       </div>
                     )}
                     {analysis.done && (
@@ -1062,7 +1062,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                           {analysis.flags.length > 0 && (
                             <div className="pt-2 border-t">
                               <p className="text-[10px] font-medium text-orange-500/80 flex items-center gap-1 mb-1.5">
-                                <AlertTriangle className="w-3 h-3" />需轉交導演進一步討論
+                                <AlertTriangle className="w-3 h-3" />Escalate to Director for further discussion
                               </p>
                               <div className="flex flex-wrap gap-1">
                                 {analysis.flags.map((f, i) => (
@@ -1078,13 +1078,13 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 )}
               </Card>
 
-              {/* 分項指標回饋 */}
+              {/* Per-Metric Feedback */}
               <Card className="flex-1 flex flex-col min-h-0">
                 <CardHeader className="pb-1.5 pt-2.5 px-3 cursor-pointer shrink-0" onClick={() => setAiOpen(o => !o)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users className="w-3.5 h-3.5 text-purple-600" />
-                      <CardTitle className="text-xs">分項指標回饋</CardTitle>
+                      <CardTitle className="text-xs">Per-Metric Feedback</CardTitle>
                       {analysis.done && (
                         <div className="flex items-center gap-1.5 text-[10px]">
                           <span className="text-red-500 flex items-center gap-0.5"><AlertCircle className="w-2.5 h-2.5" />{analysis.metrics.filter(m=>m.status==="red").length}</span>
@@ -1099,17 +1099,17 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 </CardHeader>
                 {aiOpen && (
                   <CardContent className="px-3 pb-3 flex-1 min-h-0 flex flex-col">
-                    {!analysis.done && !analysis.loading && analysis.metrics.length === 0 && <p className="text-xs text-muted-foreground">分析完成後顯示。</p>}
+                    {!analysis.done && !analysis.loading && analysis.metrics.length === 0 && <p className="text-xs text-muted-foreground">Results will appear after analysis completes.</p>}
                     {analysis.loading && analysis.metrics.length === 0 && (
                       <div className="flex items-center gap-2 text-xs text-teal-600 py-4">
                         <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                        <span>{analysisStatus || "AI Agents 並行評估中，請稍候..."}</span>
+                        <span>{analysisStatus || "AI Agents running parallel evaluation, please wait..."}</span>
                       </div>
                     )}
                     {analysis.loading && analysis.metrics.length > 0 && (
                       <div className="flex items-center gap-1.5 text-[10px] text-teal-600 pb-1.5">
                         <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-                        <span>{analysisStatus || "評估中..."}</span>
+                        <span>{analysisStatus || "Evaluating..."}</span>
                       </div>
                     )}
                     {(analysis.done || analysis.metrics.length > 0) && (
@@ -1127,9 +1127,9 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                                 {statusIcon(m.status, "w-3.5 h-3.5")}
                                 <span className="text-xs font-medium flex-1 min-w-0">{m.name}</span>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                  {!m.consensus && <Badge variant="outline" className="text-[9px] h-3.5 bg-amber-500/10 text-amber-600 border-amber-500/30">意見分歧</Badge>}
-                                  {m.flag && <Badge variant="outline" className="text-[9px] h-3.5 bg-orange-500/10 text-orange-600 border-orange-500/30">請轉交導演</Badge>}
-                                  {m.debate && <Badge variant="outline" className="text-[9px] h-3.5 bg-purple-500/10 text-purple-600 border-purple-500/30">已辯論</Badge>}
+                                  {!m.consensus && <Badge variant="outline" className="text-[9px] h-3.5 bg-amber-500/10 text-amber-600 border-amber-500/30">Opinion Divergence</Badge>}
+                                  {m.flag && <Badge variant="outline" className="text-[9px] h-3.5 bg-orange-500/10 text-orange-600 border-orange-500/30">Escalate to Director</Badge>}
+                                  {m.debate && <Badge variant="outline" className="text-[9px] h-3.5 bg-purple-500/10 text-purple-600 border-purple-500/30">Debated</Badge>}
                                   <ChevronRight className="w-3 h-3 text-muted-foreground" />
                                 </div>
                               </div>
@@ -1154,19 +1154,19 @@ ${m.agentB.name}：${m.agentB.opinion}`,
               <Card className="shrink-0">
                 <CardHeader className="pb-1.5 pt-2.5 px-3">
                   <CardTitle className="text-xs flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-500" />分析範圍
+                    <Sparkles className="w-3.5 h-3.5 text-purple-500" />Analysis Scope
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-3 pb-3 space-y-2">
                   <div className="flex flex-wrap gap-1.5">
-                    {/* 全部 */}
+                    {/* All */}
                     <Badge
                       variant={analyzeScope.includes("all") ? "default" : "outline"}
                       className="text-[10px] cursor-pointer"
                       onClick={() => setAnalyzeScope(["all"])}>
-                      ✓ 全部
+                      ✓ All
                     </Badge>
-                    {/* Reference 項目 — maps refhub categories to metrics */}
+                    {/* Reference Items — maps refhub categories to metrics */}
                     <Badge
                       variant={analyzeScope.includes("refs") ? "default" : "outline"}
                       className="text-[10px] cursor-pointer"
@@ -1186,7 +1186,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                           }
                         }
                       }}>
-                      Reference 項目
+                      Reference Items
                     </Badge>
                     {/* Individual metrics */}
                     {Object.entries(METRIC_NAMES).map(([id, name]) => (
@@ -1206,13 +1206,13 @@ ${m.agentB.name}：${m.agentB.opinion}`,
               <div className="flex gap-3 shrink-0">
                 {artworks.length > 0 && (
                   <p className="text-[10px] text-muted-foreground text-center">
-                    分析圖：<span className="text-teal-600 font-medium">{artworks.find(a => a.id === selectedArtworkId)?.file?.name || "（未選擇）"}</span>
+                    Artwork: <span className="text-teal-600 font-medium">{artworks.find(a => a.id === selectedArtworkId)?.file?.name || "(none selected)"}</span>
                   </p>
                 )}
                 <Button size="lg" onClick={handleAnalyze} disabled={analysis.loading} className="flex-1 gap-2 py-5">
                   {analysis.loading
-                    ? <><Loader2 className="w-4 h-4 animate-spin" />分析中…</>
-                    : <><Sparkles className="w-4 h-4" />開始分析 Analyze</>}
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />Analyzing…</>
+                    : <><Sparkles className="w-4 h-4" />Start Analysis</>}
                 </Button>
                 <Button size="lg" variant="outline" className="flex-1 gap-2 py-5 bg-transparent" asChild>
                   <a href="/compare"><ChevronRight className="w-4 h-4" />Jump to Reference Compare</a>
@@ -1231,10 +1231,10 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 <CardHeader className="pb-1.5 pt-2.5 px-3 shrink-0">
                   <div className="flex items-center gap-2">
                     <Bot className="w-4 h-4 text-teal-600" />
-                    <CardTitle className="text-xs">AI 分析助手</CardTitle>
+                    <CardTitle className="text-xs">AI Analysis Assistant</CardTitle>
                     <Badge variant="secondary" className="text-[9px] bg-teal-500/20 text-teal-700 ml-auto">{chatMessages.length}</Badge>
                   </div>
-                  <CardDescription className="text-[10px]">勾選指標或點擊 Agent 意見 → 立即獲得回饋</CardDescription>
+                  <CardDescription className="text-[10px]">Check metrics or click Agent opinions → get instant feedback</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0 flex-1 min-h-0 flex flex-col">
                   <ScrollArea className="flex-1 min-h-0 px-3 py-2">
@@ -1255,7 +1255,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                         <div className="flex gap-2">
                           <Avatar className="w-6 h-6 shrink-0"><AvatarFallback className="bg-teal-500/10 text-teal-600"><Bot className="w-3 h-3"/></AvatarFallback></Avatar>
                           <div className="rounded-lg px-2.5 py-1.5 bg-muted flex items-center gap-1.5">
-                            <Loader2 className="w-3 h-3 animate-spin text-teal-500"/><span className="text-[10px] text-muted-foreground">AI 思考中…</span>
+                            <Loader2 className="w-3 h-3 animate-spin text-teal-500"/><span className="text-[10px] text-muted-foreground">AI Thinking…</span>
                           </div>
                         </div>
                       )}
@@ -1263,7 +1263,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                     </div>
                   </ScrollArea>
                   <div className="px-3 pb-3 pt-2 border-t shrink-0 flex gap-1.5">
-                    <Input placeholder="分享你的想法" value={chatInput} onChange={e => setChatInput(e.target.value)} className="h-8 text-xs" />
+                    <Input placeholder="Share your thoughts" value={chatInput} onChange={e => setChatInput(e.target.value)} className="h-8 text-xs" />
                     <Button size="icon" className="w-8 h-8 shrink-0" onClick={handleChatSend} disabled={chatLoading}>
                       <Send className="w-3.5 h-3.5" />
                     </Button>
@@ -1282,22 +1282,22 @@ ${m.agentB.name}：${m.agentB.opinion}`,
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {dialogMetric && statusIcon(dialogMetric.status)}
-              {dialogMetric?.name} — 詳細分析
+              {dialogMetric?.name} — Detailed Analysis
             </DialogTitle>
             <DialogDescription>
-              {dialogMetric?.status === "red" ? "❌ 紅燈 — 需優先改進" : dialogMetric?.status === "yellow" ? "⚠️ 黃燈 — 需關注" : "✅ 綠燈 — 通過"}
-              {dialogMetric && !dialogMetric.consensus ? "　意見分歧" : "　Agent 共識"}
-              {dialogMetric?.flag ? "　⚡ Handoff 建議" : ""}
+              {dialogMetric?.status === "red" ? "❌ Red — Priority improvement needed" : dialogMetric?.status === "yellow" ? "⚠️ Yellow — Needs attention" : "✅ Green — Passed"}
+              {dialogMetric && !dialogMetric.consensus ? "　Opinion Divergence" : "  Agent consensus"}
+              {dialogMetric?.flag ? "  ⚡ Handoff suggested" : ""}
             </DialogDescription>
           </DialogHeader>
           {dialogMetric && (
             <div className="space-y-4">
 
-              {/* Dual-Agent 初步綜合意見 */}
+              {/* Dual-Agent Preliminary Synthesis */}
               <div>
                 <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-yellow-500" />Dual-Agent 初步綜合意見
-                  <span className="text-[10px] text-muted-foreground font-normal ml-1">（點擊 Agent 卡片，對話框立即回饋）</span>
+                  <Zap className="w-3.5 h-3.5 text-yellow-500" />Dual-Agent Preliminary Synthesis
+                  <span className="text-[10px] text-muted-foreground font-normal ml-1"> (click an Agent card for instant chat feedback)</span>
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {[
@@ -1309,7 +1309,7 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                       <p className="text-[10px] text-muted-foreground mb-1.5 font-medium">{ag.name}</p>
                       {ag.opinion
                         ? <p className="text-xs leading-relaxed">{ag.opinion}</p>
-                        : <p className="text-xs text-muted-foreground italic">— 詳見 Claude 整合結論 —</p>
+                        : <p className="text-xs text-muted-foreground italic">— See Claude synthesis below —</p>
                       }
                     </Card>
                   ))}
@@ -1321,14 +1321,14 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-purple-600" />Agent Debate
-                    <span className="text-[10px] text-muted-foreground font-normal">OpenAI + Gemini → Claude 主導整合</span>
+                    <span className="text-[10px] text-muted-foreground font-normal">OpenAI + Gemini → Claude-led Synthesis</span>
                   </p>
                   <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1.5 border-purple-400/50 text-purple-600 hover:bg-purple-500/10"
                     disabled={debateLoading || !dialogMetric.agentA.opinion}
                     onClick={() => runLiveDebate(dialogMetric)}>
                     {debateLoading
-                      ? <><Loader2 className="w-3 h-3 animate-spin" />辯論中…</>
-                      : <><Zap className="w-3 h-3" />觸發三方辯論</>}
+                      ? <><Loader2 className="w-3 h-3 animate-spin" />Debating…</>
+                      : <><Zap className="w-3 h-3" />Trigger Three-Party Debate</>}
                   </Button>
                 </div>
 
@@ -1340,8 +1340,8 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                     return (
                       <div className="p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg flex items-center justify-center gap-2">
                         {debateLoading
-                          ? <><Loader2 className="w-4 h-4 animate-spin text-purple-500" /><p className="text-xs text-muted-foreground">OpenAI + Gemini 辯論中，Claude 整合中…</p></>
-                          : <><Loader2 className="w-4 h-4 animate-spin text-purple-400" /><p className="text-xs text-muted-foreground">後台辯論進行中，稍候自動顯示…</p></>
+                          ? <><Loader2 className="w-4 h-4 animate-spin text-purple-500" /><p className="text-xs text-muted-foreground">OpenAI + Gemini debating, Claude synthesizing…</p></>
+                          : <><Loader2 className="w-4 h-4 animate-spin text-purple-400" /><p className="text-xs text-muted-foreground">Background debate in progress, result auto-updates shortly…</p></>
                         }
                       </div>
                     )
@@ -1350,12 +1350,12 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                     <div className="space-y-2">
                       {d.conclusion && (
                         <div className="p-2.5 bg-teal-500/10 rounded-lg cursor-pointer hover:bg-teal-500/20 transition-colors border border-teal-500/20"
-                          onClick={() => { setChatMessages(p => [...p, { role: "user", content: `[${dialogMetric.name} — Claude 整合結論]` }]); setDialogMetric(null); setLiveDebate(null); callAgent(`「${dialogMetric.name}」Claude 整合結論：${d.conclusion}
+                          onClick={() => { setChatMessages(p => [...p, { role: "user", content: `[${dialogMetric.name} — Claude Synthesis]` }]); setDialogMetric(null); setLiveDebate(null); callAgent(`"${dialogMetric.name}" Claude Synthesis: ${d.conclusion}
 
-請給出 2-3 個具體可執行的改進步驟。`) }}>
+Please provide 2–3 specific, actionable improvement steps.`) }}>
                           <div className="flex items-center gap-1.5 mb-1">
                             <Bot className="w-3 h-3 text-teal-600" />
-                            <p className="text-[10px] font-semibold text-teal-700">Claude 視覺分析與建議<span className="text-teal-500 font-normal ml-1">（點擊讓 Agent 進一步說明）</span></p>
+                            <p className="text-[10px] font-semibold text-teal-700">Claude Visual Analysis & Suggestions<span className="text-teal-500 font-normal ml-1"> (click to ask Agent for further explanation)</span></p>
                           </div>
                           <p className="text-xs text-teal-800 leading-relaxed whitespace-pre-wrap">{d.conclusion}</p>
                         </div>
@@ -1365,21 +1365,21 @@ ${m.agentB.name}：${m.agentB.opinion}`,
                 })()}
               </div>
 
-              {/* 轉交導演 — 只在極嚴重分歧才顯示 */}
+              {/* Escalate to Director — only shown for extreme divergence */}
               {dialogMetric.flag && (
                 <div className="p-2.5 bg-orange-500/8 rounded-lg flex items-center gap-2 border border-orange-500/20">
                   <AlertTriangle className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                   <div>
-                    <p className="text-[11px] font-medium text-orange-600">建議與導演討論</p>
-                    <p className="text-[10px] text-orange-500/80">此指標分歧程度與偏差均超過閾值，可向導演確認創作方向後再修正。</p>
+                    <p className="text-[11px] font-medium text-orange-600">Recommend discussing with Director</p>
+                    <p className="text-[10px] text-orange-500/80">This metric's divergence and deviation exceed thresholds. Confirm creative direction with the Director before revising.</p>
                   </div>
                 </div>
               )}
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" className="bg-transparent" onClick={() => setDialogMetric(null)}>關閉</Button>
+                <Button variant="outline" className="bg-transparent" onClick={() => setDialogMetric(null)}>Close</Button>
                 <Button onClick={() => handleAskAgentFromDialog(dialogMetric)}>
-                  <Zap className="w-3.5 h-3.5 mr-1.5" />請 Agent 給建議
+                  <Zap className="w-3.5 h-3.5 mr-1.5" />Ask Agent for Suggestions
                 </Button>
               </div>
             </div>

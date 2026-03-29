@@ -1,17 +1,17 @@
 """
 suggestion.py  —  /suggestion/*
 
-架構：
-  每個 chat endpoint 都走 3-AI debate：
-  - OpenAI：從技術/執行面給意見
-  - Gemini：從創意/策略面給意見
-  - Claude：主導整合，輸出統一建議（不提角色名稱，不說「A認為/B認為」）
+Architecture:
+  Every chat endpoint runs a 3-AI debate:
+  - OpenAI: provides opinions from a technical/execution perspective
+  - Gemini: provides opinions from a creative/strategy perspective
+  - Claude: leads the synthesis, outputs unified suggestions (no role names, no 'A thinks/B thinks')
 
-  輸出原則：
-  - 建議優先：先給 2-3 個具體可執行建議，資訊不足才追問
-  - 不在回覆裡提及任何角色名稱（Director, Supervisor, Agent A/B 等）
-  - 不使用 ** 加粗、--- 分隔線等 markdown
-  - 繁體中文
+  Output principles:
+  - Suggestions first: give 2-3 specific actionable suggestions; only ask follow-up questions when info is truly insufficient
+  - Never mention role names in responses (Director, Supervisor, Agent A/B, etc.)
+  - No ** bold or --- separators or any markdown
+  - English
 """
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -46,7 +46,7 @@ async def _call_openai(system: str, msgs: list, max_tokens: int = 500) -> str:
         )
         return resp.choices[0].message.content.strip()
     except Exception as e:
-        return f"[技術面觀察暫時無法取得: {e}]"
+        return f"[Technical observation temporarily unavailable: {e}]"
 
 
 async def _call_gemini(system: str, user: str) -> str:
@@ -63,7 +63,7 @@ async def _call_gemini(system: str, user: str) -> str:
         )
         return resp.text.strip()
     except Exception as e:
-        return f"[創意面觀察暫時無法取得: {e}]"
+        return f"[Creative observation temporarily unavailable: {e}]"
 
 
 async def _call_claude(system: str, msgs: list, max_tokens: int = 800) -> str:
@@ -95,7 +95,7 @@ async def _call_claude(system: str, msgs: list, max_tokens: int = 800) -> str:
             )
             return resp.choices[0].message.content.strip()
         except Exception as e2:
-            return f"AI 回應失敗：{e2}"
+            return f"AI response failed: {e2}"
 
 
 def _build_ref_image_blocks(refs: list) -> list:
@@ -116,7 +116,7 @@ def _build_ref_image_blocks(refs: list) -> list:
             note = r.get("note", "")
             label = "Main" if r.get("is_pinned") or r.get("priority") == "Main" else "Secondary"
             note_part = (" | note: " + note) if note else ""
-            blocks.append({"type": "text", "text": "[圖片：" + title + " | " + cat + " | " + label + note_part + "]"})
+            blocks.append({"type": "text", "text": "[Image: " + title + " | " + cat + " | " + label + note_part + "]"})
             blocks.append({"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64data}})
         except Exception:
             continue
@@ -124,31 +124,31 @@ def _build_ref_image_blocks(refs: list) -> list:
 
 
 # ── Core debate engine ────────────────────────────────────────────
-NO_MD = "用繁體中文回應。輸出純文字，不使用 ** 加粗、--- 分隔線或任何 markdown 符號。"
+NO_MD = "Respond in English. Output plain text only. Do not use ** bold, --- separators, or any markdown symbols."
 
 async def debate_and_synthesize(
-    context: str,          # 當前頁面的背景資料（brief/refs/etc）
-    user_message: str,     # 用戶輸入
-    history: list,         # 對話歷史 [{role, content}]
-    page_focus: str,       # 這個頁面的分析重點
+    context: str,          # Current page background data (brief/refs/etc)
+    user_message: str,     # User input
+    history: list,         # Conversation history [{role, content}]
+    page_focus: str,       # This page's analysis focus
 ) -> str:
     """
-    Round 1: OpenAI (技術/執行面) + Gemini (創意/策略面) 並行
-    Round 2: Claude 整合兩方意見，輸出統一建議，不提角色名
+    Round 1: OpenAI (technical/execution) + Gemini (creative/strategy) in parallel
+    Round 2: Claude integrates both perspectives, outputs unified suggestions, no role names
     """
     # ── Round 1 ───────────────────────────────────────────────────
-    NO_HALLUCINATE = "絕對不要編造或假設任何檔案名稱。只使用用戶提供資料中實際出現的名稱，若無則用「你的參考圖」代替。"
+    NO_HALLUCINATE = "Never fabricate or assume any filenames. Use only names that appear in the user-provided data. If none exist, refer to 'your reference image'."
     sys_tech = (
-        f"你是資深 VFX 技術專家，從技術執行角度分析問題。{page_focus}\n"
-        f"規則：直接給出技術層面的具體觀察與建議。{NO_HALLUCINATE} {NO_MD}"
+        f"You are a senior VFX technical expert, analyzing problems from a technical execution perspective. {page_focus}\n"
+        f"Rules: Provide direct, specific technical observations and suggestions. {NO_HALLUCINATE} {NO_MD}"
     )
     sys_creative = (
-        f"你是資深 VFX 創意策略顧問，從創意與視覺語言角度分析問題。{page_focus}\n"
-        f"規則：直接給出創意層面的具體觀察與方向建議。{NO_HALLUCINATE} {NO_MD}"
+        f"You are a senior VFX creative strategy consultant, analyzing problems from the perspective of creativity and visual language. {page_focus}\n"
+        f"Rules: Provide direct, specific creative observations and directional suggestions. {NO_HALLUCINATE} {NO_MD}"
     )
 
     # Build user content for parallel calls
-    full_user = f"背景資料：\n{context}\n\n用戶訊息：{user_message}" if context else user_message
+    full_user = f"Background:\n{context}\n\nUser message: {user_message}" if context else user_message
 
     tech_view, creative_view = await asyncio.gather(
         _call_openai(sys_tech, history + [{"role": "user", "content": full_user}]),
@@ -157,28 +157,28 @@ async def debate_and_synthesize(
 
     # ── Round 2: Claude synthesizes ───────────────────────────────
     ADVICE_RULE = (
-        "核心原則：建議優先，追問是例外。"
-        "先給 2-3 個具體可執行的改進建議，每個建議說明在 VFX 工作流中如何具體操作。"
-        "只有在資訊嚴重不足、無法給出任何有意義建議時，才追問一個最關鍵的問題。"
-        "不要複述問題描述，直接切入「你可以這樣做」。"
+        "Core principle: lead with suggestions; follow-up questions are the exception."
+        "Start with 2–3 specific, actionable improvement suggestions, each explaining how to execute in the VFX workflow."
+        "Only ask one critical follow-up question when information is so insufficient that no meaningful suggestions can be given."
+        "Do not repeat the problem description. Go straight to 'Here's what you can do'."
     )
 
     sys_claude = (
-        f"你是資深 VFX 顧問助手，整合了技術和創意兩個維度的分析，給出統一的建議。\n"
+        f"You are a senior VFX advisory assistant integrating both technical and creative analysis to deliver unified suggestions.\n"
         f"{ADVICE_RULE}\n"
-        f"格式規則：輸出純文字，不使用 ** 加粗或 --- 分隔線，不提及任何 AI 角色或模型名稱，"
-        f"不說「根據分析」「有兩種觀點」等繞圈子的話，直接給建議。\n"
-        f"重要限制：絕對不要自己編造或假設任何檔案名稱（如 Tokyo.jpg、test.png 等）。"
-        f"只使用用戶實際提供的資料中出現的檔案名稱。若無具體檔案資料，用「你的參考圖」代替。{NO_MD}"
+        f"Format rules: Output plain text. Do not use ** bold or --- separators. Do not mention any AI roles or model names."
+        f"Do not use phrases like 'based on the analysis' or 'there are two perspectives'. Go directly to the suggestion.\n"
+        f"Important: Never fabricate or assume any filenames (e.g. Tokyo.jpg, test.png)."
+        f"Use only filenames that actually appear in user-provided data. If none, refer to 'your reference image'. {NO_MD}"
     )
 
     synthesis_prompt = (
-        f"以下是從兩個不同角度對這個問題的分析：\n\n"
-        f"技術執行面：\n{tech_view}\n\n"
-        f"創意策略面：\n{creative_view}\n\n"
-        f"用戶的原始訊息：{user_message}\n"
-        f"背景資料：{context[:500] if context else '（無）'}\n\n"
-        f"請整合以上分析，直接輸出給用戶的建議回覆。"
+        f"The following is an analysis of this issue from two different perspectives:\n\n"
+        f"Technical Execution:\n{tech_view}\n\n"
+        f"Creative Strategy:\n{creative_view}\n\n"
+        f"User's original message: {user_message}\n"
+        f"Background: {context[:500] if context else '(none)'}\n\n"
+        f"Integrate the above analysis and output a direct suggestion reply to the user."
     )
 
     return await _call_claude(sys_claude, history + [{"role": "user", "content": synthesis_prompt}])
@@ -187,20 +187,20 @@ async def debate_and_synthesize(
 # ── Page-specific focus descriptions ─────────────────────────────
 FOCUS = {
     "brief": (
-        "頁面重點：協助理解導演的 Brief 和 Spec，把導演意圖轉譯成 Artist 能執行的具體方向。"
-        "關注：創意方向的清晰度、技術規格的完整性、可能遺漏的重要細節。"
+        "Page focus: Help understand the Director's Brief and Spec, translating the director's intent into specific directions the Artist can execute."
+        "Focus on: Clarity of creative direction, completeness of technical specs, and potentially missing important details."
     ),
     "reference": (
-        "頁面重點：從 Reference 圖中提取可執行的視覺語言。"
-        "關注：光影邏輯、色彩結構、構圖原則，以及 Reference 與 Spec 的對應關係和缺口。"
+        "Page focus: Extract actionable visual language from Reference images."
+        "Focus on: Lighting logic, color structure, compositional principles, and the alignment and gaps between Reference and Spec."
     ),
     "reflection": (
-        "頁面重點：深化 Artist 的創意思考，找到可執行的方向。"
-        "關注：創意意圖的邏輯性、與 Spec/Reference 的張力、可以提升的技術細節。"
+        "Page focus: Deepen the Artist's creative thinking and identify actionable directions."
+        "Focus on: Logical coherence of creative intent, tension with Spec/Reference, and technical details that can be improved."
     ),
     "analysis": (
-        "頁面重點：理解 AI 分析結果，從分項指標回饋中提取最重要的行動項目。"
-        "關注：哪些問題必須立即修正、哪些可以後續迭代、符合 VFX Pipeline 的操作建議。"
+        "Page focus: Understand the AI analysis results and extract the most important action items from per-metric feedback."
+        "Focus on: Which issues must be fixed immediately, which can be iterated later, and VFX pipeline-compatible operation suggestions."
     ),
 }
 
@@ -244,10 +244,10 @@ def _context_str(req: BriefChatRequest) -> str:
             cat     = r.get("category", "")
             note    = r.get("note", "").strip()
             pinned  = "Main Ref" if r.get("is_pinned") or r.get("priority") == "main" else "Secondary"
-            note_str = f'note: "{note}"' if note else "note: （未填寫）"
-            clicked = " ← 用戶正在詢問此圖" if r.get("id") == req.clicked_ref_id else ""
+            note_str = f'note: "{note}"' if note else "note: (not filled)"
+            clicked = " ← User is asking about this image" if r.get("id") == req.clicked_ref_id else ""
             lines.append(f"  [{i+1}] {title} | {cat} | {pinned} | {note_str}{clicked}")
-        parts.append("Reference 清單（使用真實檔名，禁止自行捏造）：\n" + "\n".join(lines))
+        parts.append("Reference list (real filenames only — no fabrication):\n" + "\n".join(lines))
     return "\n\n".join(parts) if parts else ""
 
 
@@ -276,23 +276,23 @@ async def chat_reference(req: BriefChatRequest):
             cat = r.get("category", "")
             note = r.get("note", "").strip()
             label = "Main" if r.get("is_pinned") or r.get("priority") == "Main" else "Secondary"
-            clicked = " ← 用戶正在詢問此圖" if r.get("id") == req.clicked_ref_id else ""
+            clicked = " ← User is asking about this image" if r.get("id") == req.clicked_ref_id else ""
             ref_meta.append(f"[{i+1}] {title} | {cat} | {label}{f' | note: {note}' if note else ''}{clicked}")
-        meta_text = "Reference 清單：\n" + "\n".join(ref_meta)
+        meta_text = "Reference list:\n" + "\n".join(ref_meta)
 
         # Extra context (brief etc)
         extra = _context_str(req)
 
         sys_vision = (
-            "你是資深 VFX 顧問，你能直接看到所有 reference 圖片。"
-            "請根據圖片的實際視覺內容（光影方向、色調、構圖、材質等）給出具體分析。"
-            "絕對不要說「我無法看到圖片」，你已經看到圖片了，直接描述你看到的內容。"
-            "輸出純文字，不使用 ** 或 --- markdown，用繁體中文。"
+            "You are a senior VFX consultant who can directly view all reference images."
+            "Provide specific analysis based on the actual visual content of the images (lighting direction, color tone, composition, texture, etc.)."
+            "Never say 'I cannot see the image'. You have already seen the images. Describe what you see directly."
+            "Output plain text. Do not use ** or --- markdown. Respond in English."
         )
 
         # Build multimodal user message: images + text question
         user_content = image_blocks + [
-            {"type": "text", "text": meta_text + "\n\n" + extra + "\n\n用戶問題：" + req.message}
+            {"type": "text", "text": meta_text + "\n\n" + extra + "\n\nUser question: " + req.message}
         ]
 
         # Use Claude vision directly (no debate, images can't go through OpenAI/Gemini here)
@@ -320,16 +320,16 @@ async def chat_reflection(req: BriefChatRequest):
             note = r.get("note", "").strip()
             label = "Main" if r.get("is_pinned") or r.get("priority") == "Main" else "Secondary"
             ref_meta.append(f"[{i+1}] {title} | {cat} | {label}" + (f" | note: {note}" if note else ""))
-        meta_text = "Reference 清單：\n" + "\n".join(ref_meta)
+        meta_text = "Reference list:\n" + "\n".join(ref_meta)
         extra = _context_str(req)
         sys_vision = (
-            "你是 Creative Exploration Agent，協助 VFX Artist 深化創意思考。"
-            "你能直接看到所有 reference 圖片，請根據圖片的實際視覺內容給出具體分析。"
-            "絕對不要說「我無法看到圖片」，直接描述你看到的內容並給出建議。"
-            "輸出純文字，不使用 ** 或 --- markdown，用繁體中文。"
+            "You are the Creative Exploration Agent, helping VFX Artists deepen creative thinking."
+            "You can directly view all reference images. Provide specific analysis based on the actual visual content."
+            "Never say 'I cannot see the image'. Describe what you see directly and give suggestions."
+            "Output plain text. Do not use ** or --- markdown. Respond in English."
         )
         user_content = image_blocks + [
-            {"type": "text", "text": meta_text + "\n\n" + extra + "\n\n用戶說：" + req.message}
+            {"type": "text", "text": meta_text + "\n\n" + extra + "\n\nUser said: " + req.message}
         ]
         reply = await _call_claude(sys_vision, _history_msgs(req) + [{"role": "user", "content": user_content}], max_tokens=1000)
     else:
@@ -361,39 +361,39 @@ async def chat_compare(req: BriefChatRequest):
         user_message=req.message,
         history=_history_msgs(req),
         page_focus=(
-            "頁面重點：比對 Artist 作品與 Reference，找出各指標的具體差距並給出可操作的修改建議。"
-            "關注：光影方向/強度差異、構圖比例差距、色彩溫度偏差、材質質感、景深和曝光差距。"
-            "建議要具體到 VFX 軟體中可以直接操作的步驟。"
+            "Page focus: Compare Artist artwork with Reference, identify specific metric gaps, and provide actionable revision suggestions."
+            "Focus on: Lighting direction/intensity differences, compositional proportion gaps, color temperature deviations, texture quality, depth of field and exposure gaps."
+            "Suggestions must be specific enough to be directly actionable in VFX software."
         ),
     )
     return {"response": reply, "reply": reply}
 
 @router.post("/chat/mode")
 async def chat_mode(req: ModeChatRequest):
-    """換句話說 / 講邏輯 / Evidence Binding — 3-AI debate."""
+    """Rephrase / Logic Mode / Evidence Binding — 3-AI debate."""
     MODE_CONFIGS = {
         "rephrase": {
-            "task": "把以下這段 VFX 專業回覆改寫成白話版本，去除術語，用日常比喻解釋，語氣像朋友解釋。",
-            "tech": "你負責找出術語並替換成簡單的技術類比。",
-            "creative": "你負責找出跨領域的生活比喻，讓完全不懂 VFX 的人也能理解。",
+            "task": "Rewrite the following VFX professional response in plain language. Remove jargon, use everyday analogies, and write as if explaining to a friend.",
+            "tech": "Your task: identify technical jargon and replace it with simple technical analogies.",
+            "creative": "Your task: find cross-domain everyday analogies so that someone with no VFX knowledge can understand.",
         },
         "logic": {
-            "task": "把以下這段回覆用嚴格因果邏輯重新整理，每個論點用「因為...所以...」句式，最後列出 2-3 個可驗證的判斷標準。",
-            "tech": "你負責拆解因果鏈，找出每個論點的前提假設與技術依據。",
-            "creative": "你負責質疑論點漏洞，提出反例或邊界條件，讓邏輯更嚴密。",
+            "task": "Reorganize the following response using strict causal logic. Frame each argument with 'because...therefore...', and end with 2–3 verifiable judgment criteria.",
+            "tech": "Your task: break down the causal chain and identify the underlying assumptions and technical basis of each argument.",
+            "creative": "Your task: challenge logical gaps, propose counterexamples or edge cases to make the reasoning more rigorous.",
         },
         "evidence": {
-            "task": "把以下這段回覆用具體證據支撐，優先引用專案資料，不足時補充真實網路資源 URL。",
-            "tech": f"你負責從專案資料中找最直接相關的引用：\n{req.spec_and_refs or '（無）'}",
-            "creative": "你負責找 1-2 個真實的業界資源 URL，格式：「延伸參考：說明 https://...」",
+            "task": "Support the following response with concrete evidence. Prioritize project data; supplement with real web resource URLs when needed.",
+            "tech": f"Your task: find the most directly relevant references from project data:\n{req.spec_and_refs or '(none)'}",
+            "creative": "Your task: find 1–2 real industry resource URLs, format: 'Further reading: description https://...'.",
         },
     }
 
     if req.mode not in MODE_CONFIGS:
-        return {"response": f"不支援的模式：{req.mode}", "reply": f"不支援的模式：{req.mode}"}
+        return {"response": f"Unsupported mode: {req.mode}", "reply": f"Unsupported mode: {req.mode}"}
 
     cfg = MODE_CONFIGS[req.mode]
-    user_input = f"任務：{cfg['task']}\n\n需要處理的內容：\n{req.content}"
+    user_input = f"Task: {cfg['task']}\n\nContent to process:\n{req.content}"
 
     tech_view, creative_view = await asyncio.gather(
         _call_openai(f"{cfg['tech']} {NO_MD}", [{"role": "user", "content": user_input}]),
@@ -401,13 +401,13 @@ async def chat_mode(req: ModeChatRequest):
     )
 
     sys_claude = (
-        f"整合兩個角度的分析，輸出最終版本給用戶。"
-        f"不提角色名稱，不說「根據分析」，直接輸出結果。{NO_MD}"
+        f"Integrate analysis from both perspectives and output the final version for the user."
+        f"Do not mention role names or say 'based on the analysis'. Output the result directly. {NO_MD}"
     )
     final = await _call_claude(sys_claude, [{"role": "user", "content": (
-        f"任務：{cfg['task']}\n\n原始內容：\n{req.content}\n\n"
-        f"角度一：\n{tech_view}\n\n角度二：\n{creative_view}\n\n"
-        f"請整合以上，直接輸出最終版本。"
+        f"Task: {cfg['task']}\n\nOriginal content:\n{req.content}\n\n"
+        f"Perspective 1:\n{tech_view}\n\nPerspective 2:\n{creative_view}\n\n"
+        f"Please integrate the above and output the final version directly."
     )}])
 
     return {"response": final, "reply": final,

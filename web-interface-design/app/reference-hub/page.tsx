@@ -115,7 +115,7 @@ function ReferenceHubContent() {
   const [chatOpen, setChatOpen]         = useState(true)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([{
     role: "ai" as const,
-    content: "您好！我是 Reference 助手。\n\n上傳並 Submit 參考圖後，我會自動分析每張 ref 的用途、note 是否夠具體，並找出缺口。\n\n也可以點擊圖片直接問我這張要看什麼。",
+    content: "Hello! I'm the Reference Assistant.\n\nAfter uploading and submitting your references, I'll automatically analyze each ref's purpose, whether the notes are specific enough, and identify any gaps.\n\nYou can also click an image to ask me what to look for.",
   }])
   const [chatInput, setChatInput]   = useState("")
   const [chatLoading, setChatLoading] = useState(false)
@@ -406,7 +406,7 @@ function ReferenceHubContent() {
       const res = await apiFetch("/suggestion/chat/reference", {
         method: "POST",
         body: JSON.stringify({
-          message: "請仔細分析這個 reference set：\n1) 每張 ref 的 note 夠不夠具體？打光師/合成師看到後能直接執行嗎？\n2) category 設定合理嗎？\n3) Main Ref 的選擇有沒有問題？\n4) 整個 set 有沒有明顯的缺口？\n\n針對有問題的 ref 直接點名追問。",
+          message: "Please carefully analyze this reference set:\n1) Are the notes for each ref specific enough for a lighting artist/compositor to act on immediately?\n2) Are the categories set correctly?\n3) Is the Main Ref selection appropriate?\n4) Are there any obvious gaps in the overall set?\n\nDirectly call out any problematic refs.",
           project_id: PROJECT_ID,
           clicked_ref_id: null,
           all_refs_context: refs.map(r => ({
@@ -473,7 +473,7 @@ function ReferenceHubContent() {
       })
       setChatMessages(prev => [...prev, { role: "ai", content: res.reply }])
     } catch (e) {
-      setChatMessages(prev => [...prev, { role: "ai", content: `⚠️ 連線錯誤：${e}` }])
+      setChatMessages(prev => [...prev, { role: "ai", content: `⚠️ Connection error: ${e}` }])
     } finally {
       setChatLoading(false)
       setClickedRef(null)
@@ -482,7 +482,7 @@ function ReferenceHubContent() {
 
   const handleRefClick = (ref: Reference) => {
     setClickedRef(ref)
-    setChatInput(`這張「${ref.title}」（${ref.category}）我想參考的是`)
+    setChatInput(`For this ref "${ref.title}" (${ref.category}), what I want to reference is`)
   }
 
   // ── Markdown renderer ──────────────────────────────────────
@@ -530,7 +530,7 @@ function ReferenceHubContent() {
                 <Badge variant="outline" className="bg-teal-500/10 text-teal-600 border-teal-500/30">C02</Badge>
                 <h1 className="text-xl font-bold">Reference Hub</h1>
               </div>
-              <p className="text-muted-foreground">上傳視覺參考、標注用途、儲存至專案</p>
+              <p className="text-muted-foreground">Upload visual references, annotate usage, and save to project</p>
             </div>
 
 <div className="flex gap-4 flex-1 min-h-0">
@@ -540,21 +540,21 @@ function ReferenceHubContent() {
                 {/* Upload Card */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">上傳參考圖</CardTitle>
-                    <CardDescription>支援圖片檔案或貼上圖片 URL</CardDescription>
+                    <CardTitle className="text-base">Upload References</CardTitle>
+                    <CardDescription>Supports image files or paste an image URL</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Settings row */}
                     <div className="flex gap-3 flex-wrap">
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">分類</Label>
+                        <Label className="text-xs text-muted-foreground">Category</Label>
                         <Select value={uploadCategory} onValueChange={setUploadCategory}>
                           <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>{REF_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">重要性</Label>
+                        <Label className="text-xs text-muted-foreground">Priority</Label>
                         <Select value={uploadPriority} onValueChange={setUploadPriority}>
                           <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -568,8 +568,8 @@ function ReferenceHubContent() {
                         </Select>
                       </div>
                       <div className="flex-1 space-y-1">
-                        <Label className="text-xs text-muted-foreground">備注（上傳前填寫）</Label>
-                        <Input className="h-8 text-xs" placeholder="例：參考光影方向，主光從右側..." value={uploadNote} onChange={e => setUploadNote(e.target.value)} />
+                        <Label className="text-xs text-muted-foreground">Notes (fill in before uploading)</Label>
+                        <Input className="h-8 text-xs" placeholder="e.g. Reference for lighting direction, key light from the right..." value={uploadNote} onChange={e => setUploadNote(e.target.value)} />
                       </div>
                     </div>
 
@@ -613,8 +613,8 @@ function ReferenceHubContent() {
                       }}
                     >
                       {uploading
-                        ? <><Loader2 className="w-8 h-8 text-teal-500 animate-spin" /><p className="text-sm text-muted-foreground">上傳中...</p></>
-                        : <><ImageIcon className="w-8 h-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">點擊或拖曳上傳圖片</p><p className="text-xs text-muted-foreground">JPG, PNG, WEBP, GIF</p></>
+                        ? <><Loader2 className="w-8 h-8 text-teal-500 animate-spin" /><p className="text-sm text-muted-foreground">Uploading...</p></>
+                        : <><ImageIcon className="w-8 h-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">Click or drag to upload image</p><p className="text-xs text-muted-foreground">JPG, PNG, WEBP, GIF</p></>
                       }
                     </div>
                     <input ref={fileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
@@ -622,14 +622,14 @@ function ReferenceHubContent() {
                     {/* URL import */}
                     <div className="flex gap-2">
                       <Input
-                        placeholder="或貼上圖片 URL..."
+                        placeholder="Or paste an image URL..."
                         value={urlInput}
                         onChange={e => setUrlInput(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && handleImportUrl()}
                         className="text-sm"
                       />
                       <Button size="sm" variant="outline" onClick={handleImportUrl} disabled={uploading || !urlInput.trim()}>
-                        <LinkIcon className="w-4 h-4 mr-1" />匯入
+                        <LinkIcon className="w-4 h-4 mr-1" />Import
                       </Button>
                     </div>
                   </CardContent>
@@ -640,13 +640,13 @@ function ReferenceHubContent() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="font-semibold text-sm text-muted-foreground">
-                      已加入的參考圖 ({refs.filter(ref => ref.localPreview || ref.file_url?.trim() || ref.thumbnail_url?.trim()).length})
+                      Added References ({refs.filter(ref => ref.localPreview || ref.file_url?.trim() || ref.thumbnail_url?.trim()).length})
                     </h2>
                   </div>
 
                   {loading ? (
                     <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />載入中...
+                      <Loader2 className="w-4 h-4 animate-spin" />Loading...
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -674,10 +674,9 @@ function ReferenceHubContent() {
                             onDelete={() => removeRef(ref.id)}
                             onDiscuss={d => {
                               setClickedRef(ref)
-                              setChatInput(`這張「${d.title}」（${d.category || "未分類"}）我想參考的是`)
-                              setChatMessages(prev => [...prev, { role: "user", content: `[討論] ${d.title}${d.note ? `
-備注：${d.note}` : ""}` }])
-                              handleChatSend(`請分析「${d.title}」${d.category ? `（${d.category}）` : ""}的視覺特徵，以及它在這個 reference set 中的角色與作用。${d.note ? `Artist 備注：${d.note}` : ""}`)
+                              setChatInput(`For this ref "${d.title}" (${d.category || "Uncategorized"}), what I want to reference is`)
+                              setChatMessages(prev => [...prev, { role: "user", content: `[Discuss] ${d.title}${d.note ? `\nNotes: ${d.note}` : ""}` }])
+                              handleChatSend(`Please analyze the visual characteristics of "${d.title}"${d.category ? ` (${d.category})` : ""} and its role in this reference set.${d.note ? ` Artist Notes: ${d.note}` : ""}`)
                             }}
                             onSave={updated => {
                               const pinned = updated.importance === "Main"
@@ -707,8 +706,8 @@ function ReferenceHubContent() {
                     className="border-teal-500/50 text-teal-700 hover:bg-teal-500/10"
                   >
                     {chatLoading
-                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />分析中...</>
-                      : <><Bot className="w-4 h-4 mr-2" />開始分析 Ref</>
+                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing...</>
+                      : <><Bot className="w-4 h-4 mr-2" />Analyze Refs</>
                     }
                   </Button>
                   <Button
@@ -718,9 +717,9 @@ function ReferenceHubContent() {
                     disabled={submitting || refs.length === 0}
                   >
                     {submitting
-                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />儲存中...</>
+                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
                       : submitted
-                        ? <><CheckCircle2 className="w-4 h-4 mr-2" />已儲存</>
+                        ? <><CheckCircle2 className="w-4 h-4 mr-2" />Saved</>
                         : <><Upload className="w-4 h-4 mr-2" />Submit & Save</>
                     }
                   </Button>
@@ -742,8 +741,8 @@ function ReferenceHubContent() {
                           <div className="flex items-center gap-2">
                             <Bot className="w-5 h-5 text-teal-600" />
                             <div>
-                              <CardTitle className="text-base">AI Reference 助手</CardTitle>
-                              <CardDescription className="text-xs">點擊圖片可直接詢問</CardDescription>
+                              <CardTitle className="text-base">AI Reference Assistant</CardTitle>
+                              <CardDescription className="text-xs">Click an image to ask directly</CardDescription>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -780,7 +779,7 @@ function ReferenceHubContent() {
                                 </Avatar>
                                 <div className="rounded-lg p-3 bg-muted flex items-center gap-2">
                                   <Loader2 className="w-3 h-3 animate-spin text-teal-500" />
-                                  <span className="text-sm text-muted-foreground">AI 思考中...</span>
+                                  <span className="text-sm text-muted-foreground">AI thinking...</span>
                                 </div>
                               </div>
                             )}
@@ -791,9 +790,9 @@ function ReferenceHubContent() {
                         {/* Quick prompts */}
                         <div className="flex gap-2 flex-wrap mb-2 shrink-0">
                           {[
-                            ["分析目前 ref set", "分析目前我加入的所有參考圖，是否涵蓋了 brief 的主要需求？有什麼缺口？"],
-                            ["幫我分類", "幫我建議每張圖應該歸在哪個 category"],
-                            ["Main Ref 選哪些", "根據這些 ref 的 note，哪幾張最適合設為 Main Ref？"],
+                            ["Analyze current ref set", "Analyze all the references I've added. Do they cover the main requirements of the brief? What gaps exist?"],
+                            ["Suggest categories", "Suggest which category each image should belong to"],
+                            ["Which refs should be Main?", "Based on the notes for these refs, which ones are most suitable as Main Refs?"],
                           ].map(([label, msg]) => (
                             <Button key={label} variant="outline" size="sm" className="text-xs bg-transparent h-7"
                               onClick={() => handleChatSend(msg)}>
@@ -804,14 +803,14 @@ function ReferenceHubContent() {
 
                         {clickedRef && (
                           <div className="mb-2 px-2 py-1 bg-teal-500/10 rounded text-xs text-teal-700 flex items-center gap-2 shrink-0">
-                            <span>詢問：{clickedRef.title}</span>
+                            <span>Asking about: {clickedRef.title}</span>
                             <button onClick={() => { setClickedRef(null); setChatInput("") }} className="ml-auto"><X className="w-3 h-3" /></button>
                           </div>
                         )}
 
                         <div className="flex gap-2 shrink-0">
                           <Input
-                            placeholder="輸入問題或點擊圖片..."
+                            placeholder="Type a question or click an image..."
                             value={chatInput}
                             onChange={e => setChatInput(e.target.value)}
                             onKeyDown={e => e.stopPropagation()}
