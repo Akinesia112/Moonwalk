@@ -111,8 +111,8 @@ type ChatMsg = { role: string; content: string }
 
 export default function QAPage() {
   // ── Layout ────────────────────────────────────────────────────
-  const [leftW, setLeftW] = useState(300)
-  const [rightW, setRightW] = useState(500)
+  const [leftW, setLeftW] = useState(350)
+  const [rightW, setRightW] = useState(300)
   const hDragRef = useRef<{ side: "left"|"right"; startX: number; startW: number } | null>(null)
 
   const startHDrag = (side: "left"|"right") => (e: React.MouseEvent) => {

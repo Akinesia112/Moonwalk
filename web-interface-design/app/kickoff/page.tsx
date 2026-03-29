@@ -163,7 +163,7 @@ export default function KickoffPage() {
 
   // ── Send chat message ────────────────────────────────────────
   const handleSendMessage = async (overrideMsg?: string) => {
-    const msg = (overrideMsg ?? inputMessage).trim()
+    const msg = (typeof overrideMsg === "string" ? overrideMsg : inputMessage).trim()
     if (!msg || aiThinking) return
 
     const newHistory: ChatMessage[] = [...chatMessages, { role: "user", content: msg }]
@@ -616,7 +616,7 @@ ${briefLines}`,
                             onKeyDown={e => e.stopPropagation()}
                             disabled={aiThinking}
                           />
-                          <Button size="icon" onClick={handleSendMessage} disabled={aiThinking || !inputMessage.trim()}>
+                          <Button size="icon" onClick={() => handleSendMessage()} disabled={aiThinking || !inputMessage.trim()}>
                             {aiThinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                           </Button>
                         </div>

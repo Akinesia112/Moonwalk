@@ -116,8 +116,8 @@ export default function ComparePage() {
   const leftVDragRef = useRef<{ startY: number; startH: number } | null>(null)
 
   // Horizontal resize (left/right panels)
-  const [leftW, setLeftW] = useState(300)
-  const [rightW, setRightW] = useState(700)
+  const [leftW, setLeftW] = useState(280)
+  const [rightW, setRightW] = useState(380)
   const hDragRef = useRef<{ side: "left" | "right"; startX: number; startW: number } | null>(null)
 
   // Delta detail dialog

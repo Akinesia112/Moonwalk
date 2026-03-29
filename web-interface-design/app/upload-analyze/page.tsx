@@ -161,8 +161,8 @@ function UploadAnalyzeContent() {
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
   // ── Panels
-  const [leftW, setLeftW] = useState(400)
-  const [rightW, setRightW] = useState(700)
+  const [leftW, setLeftW] = useState(320)
+  const [rightW, setRightW] = useState(320)
   const dragging = useRef<{ col: "left" | "right"; startX: number; startW: number } | null>(null)
 
   // ── Dialog
