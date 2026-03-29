@@ -25,12 +25,12 @@ export function ReferenceGrid({
   }, [projectId, artworkId, pinnedOnly, loadReferences]);
 
   if (loading) {
-    return <div className="loading">載入中...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   return (
     <div className="reference-grid">
-      <h3>{pinnedOnly ? '主要參考' : '所有參考'}</h3>
+      <h3>{pinnedOnly ? 'Main References' : 'All References'}</h3>
       <div className="grid">
         {references.map((ref) => (
           <div key={ref.id} className="reference-card">

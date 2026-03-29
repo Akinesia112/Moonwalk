@@ -73,7 +73,7 @@ type ChatMsg = { role: string; content: string }
 export default function GovernancePage() {
   const [chatbotOpen, setChatbotOpen] = useState(true)
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    { role: "ai", content: "Hello! I'm the Decision Loop assistant. I've loaded the QA feedback list and image data. I can help you:\n1. Clarify conflicting opinions\n2. Synthesize QA analysis results\n3. Draft the final feedback\n\nWhat do you need help with?" },
+    { role: "ai", content: "Hello! I'm the Decision Loop assistant. I've loaded the QA feedback list and image data. I can help you:\n1. Clarify conflicting opinions\n2. Summarize QA analysis results\n3. Draft the final feedback\n\nWhat do you need help with?" },
   ])
   const [chatInput, setChatInput] = useState("")
   const [chatLoading, setChatLoading] = useState(false)
@@ -92,7 +92,7 @@ export default function GovernancePage() {
   const [supervisorSpec, setSupervisorSpec] = useState("")
   const [allRefsContext, setAllRefsContext] = useState<any[]>([])
 
-  // ── Synthesis state ───────────────────────────────────────────
+  // ── Summarize state ───────────────────────────────────────────
   const [supervisorFeedback, setSupervisorFeedback] = useState("")
   const [aiFeedback, setAiFeedback] = useState("")
   const [clientFeedback, setClientFeedback] = useState("")
@@ -283,8 +283,8 @@ export default function GovernancePage() {
 
   const handleSendQAToChat = () => {
     if (feedbackItems.length === 0) return
-    const summary = `Please provide a final synthesis based on the following QA feedback to help the director decide:\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
-    setChatMessages(p => [...p, { role: "user", content: "[QA Feedback Imported — Please Synthesize]" }])
+    const summary = `Please provide a final summary based on the following QA feedback to help the director decide:\n${feedbackItems.map(f => `[${f.priority}] ${f.text}`).join("\n")}`
+    setChatMessages(p => [...p, { role: "user", content: "[QA Feedback Imported — Please Summarize]" }])
     callAgent(summary)
   }
 
@@ -390,13 +390,13 @@ export default function GovernancePage() {
               {feedbackItems.length > 0 && (
                 <div className="px-3 pb-3 shrink-0">
                   <Button size="sm" variant="outline" className="w-full text-xs h-7 bg-transparent gap-1.5" onClick={handleSendQAToChat}>
-                    <Sparkles className="w-3 h-3" />Send to AI assistant for synthesis
+                    <Sparkles className="w-3 h-3" />Send to AI assistant for summarize
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* ── Col 2: Final Synthesis ─────────────────────── */}
+            {/* ── Col 2: Final Summarize ─────────────────────── */}
             <div className="col-span-5 border-r border-border flex flex-col min-h-0 overflow-y-auto">
               <div className="p-4 space-y-3">
 
@@ -415,12 +415,12 @@ export default function GovernancePage() {
                   </div>
                 )}
 
-                {/* Main synthesis card */}
+                {/* Main Summarize card */}
                 <Card className="border-teal-500/30 bg-teal-500/5">
                   <CardHeader className="px-4 pt-3 pb-2">
                     <CardTitle className="flex items-center gap-2 text-sm">
                       <Sparkles className="w-4 h-4 text-teal-600" />
-                      Final Feedback Synthesis
+                      Final Feedback Summary
                     </CardTitle>
                     <CardDescription className="text-xs">Consolidate three-party feedback; final authority sends after review</CardDescription>
                   </CardHeader>
@@ -452,11 +452,11 @@ export default function GovernancePage() {
                     <div className="flex items-center gap-3 py-1 border-t border-teal-500/20">
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Crown className="w-3.5 h-3.5 text-amber-400" />
-                        <Label className="text-xs font-medium">Final Decision Maker</Label>
+                        <Label className="text-xs font-medium">Decision Maker</Label>
                       </div>
                       <Select value={finalAuthority} onValueChange={setFinalAuthority}>
                         <SelectTrigger className="h-7 text-xs w-36">
-                          <SelectValue placeholder="Select decision maker" />
+                          <SelectValue placeholder="Decision Maker" />
                         </SelectTrigger>
                         <SelectContent>
                           {["Supervisor", "Art Director", "Director", "Client", "PM"].map(v => (
@@ -469,7 +469,7 @@ export default function GovernancePage() {
                       )}
                     </div>
 
-                    {/* Synthesis textarea */}
+                    {/* Summarize textarea */}
                     <div className="space-y-1">
                       <Label className="text-xs">Final Consolidated Feedback (edit before sending)</Label>
                       <Textarea
@@ -555,7 +555,7 @@ export default function GovernancePage() {
                   {/* Quick actions */}
                   <div className="px-3 py-2 border-t border-border flex flex-wrap gap-1 shrink-0">
                     {[
-                      { label: "Synthesize QA", prompt: "Based on the current QA feedback list, identify the 3 most important revision directions with specific numeric suggestions." },
+                      { label: "Summarize QA", prompt: "Based on the current QA feedback list, identify the 3 most important revision directions with specific numeric suggestions." },
                       { label: "Clarify Conflicts", prompt: "What are the key conflicts among the three parties? How can consensus be reached while respecting the Spec?" },
                       { label: "Draft Feedback", prompt: "Based on the QA analysis and three-party feedback, draft final revision instructions for the Artist in bullet format with specific values." },
                       { label: "Analyze Images", prompt: "Directly describe the visual gap between the current artwork and Reference images across three dimensions: lighting, color temperature, and composition." },

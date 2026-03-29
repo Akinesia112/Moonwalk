@@ -96,14 +96,14 @@ export function RefCard({
       <div className={`rounded-xl border bg-card overflow-hidden flex flex-col shadow-sm ${className}`}>
 
         {/* ── Thumbnail
-            雙擊 = 匯入對話框討論
-            📝 按鈕 = 查看備注
+            Double-click = import to chat
+            📝 button = view notes
         ── */}
         <div
           className="relative w-full select-none"
           style={{ aspectRatio: "4/3", cursor: onDiscuss ? "pointer" : "default" }}
           onDoubleClick={() => onDiscuss?.(data)}
-          title={onDiscuss ? "雙擊匯入對話框討論" : undefined}
+          title={onDiscuss ? "Double-click to import to chat" : undefined}
         >
           {data.preview ? (
             <img src={data.preview} alt={data.title} className="w-full h-full object-cover" draggable={false} />
@@ -132,9 +132,9 @@ export function RefCard({
             <button
               onClick={e => { e.stopPropagation(); setNoteOpen(true) }}
               className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 hover:bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow transition-colors"
-              title="查看備注"
+              title="View notes"
             >
-              <FileText className="w-2.5 h-2.5" />備注
+              <FileText className="w-2.5 h-2.5" />Notes
             </button>
           )}
 
@@ -150,7 +150,7 @@ export function RefCard({
           {onDiscuss && (
             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20 pointer-events-none">
               <span className="bg-black/70 text-white text-[11px] px-2 py-1 rounded-full flex items-center gap-1">
-                <MessageSquare className="w-3 h-3" />雙擊討論
+                <MessageSquare className="w-3 h-3" />Double-click to discuss
               </span>
             </div>
           )}
@@ -169,13 +169,13 @@ export function RefCard({
         {/* ── Metadata ── */}
         <div className="flex flex-col gap-2 p-3">
           <p className="text-sm font-medium leading-tight truncate" title={data.title}>
-            {data.title || "未命名"}
+            {data.title || "Untitled"}
           </p>
 
           <div className="flex gap-2">
             <Select value={data.category ?? ""} onValueChange={v => update({ category: v })}>
               <SelectTrigger className="flex-1 h-8 text-xs">
-                <SelectValue placeholder="類別" />
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
                 {CATEGORY_OPTIONS.map(o => <SelectItem key={o} value={o} className="text-xs">{o}</SelectItem>)}
@@ -184,7 +184,7 @@ export function RefCard({
 
             <Select value={data.importance ?? ""} onValueChange={v => update({ importance: v })}>
               <SelectTrigger className="flex-1 h-8 text-xs">
-                <SelectValue placeholder="重要性" />
+                <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
                 {IMPORTANCE_OPTIONS.map(o => <SelectItem key={o} value={o} className="text-xs">{o}</SelectItem>)}
@@ -194,7 +194,7 @@ export function RefCard({
 
           <Select value={data.usage ?? ""} onValueChange={v => update({ usage: v })}>
             <SelectTrigger className="h-8 text-xs w-full">
-              <SelectValue placeholder="用途" />
+              <SelectValue placeholder="Usage" />
             </SelectTrigger>
             <SelectContent>
               {USAGE_OPTIONS.map(o => <SelectItem key={o} value={o} className="text-xs">{o}</SelectItem>)}
@@ -204,10 +204,10 @@ export function RefCard({
           {artworkOptions && artworkOptions.length > 0 && (
             <Select value={data.artworkId ?? "__none__"} onValueChange={v => update({ artworkId: v === "__none__" ? undefined : v })}>
               <SelectTrigger className="h-8 text-xs w-full">
-                <SelectValue placeholder="綁定作品（選填）" />
+                <SelectValue placeholder="Bind to artwork (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__" className="text-xs text-muted-foreground">— 不綁定</SelectItem>
+                <SelectItem value="__none__" className="text-xs text-muted-foreground">— None</SelectItem>
                 {artworkOptions.map(a => (
                   <SelectItem key={a.id} value={a.id} className="text-xs truncate">{a.name}</SelectItem>
                 ))}
@@ -218,7 +218,7 @@ export function RefCard({
           <Textarea
             value={data.note ?? ""}
             onChange={e => update({ note: e.target.value })}
-            placeholder="這張 ref 要看什麼？例：主光從右側，硬光質感，陰影邊緣銳利..."
+            placeholder="What to reference? e.g. Key light from right, hard light quality, sharp shadow edges..."
             rows={3}
             className="text-xs resize-none"
           />
@@ -231,7 +231,7 @@ export function RefCard({
                 onClick={handleSave}
               >
                 <Save className="w-3 h-3" />
-                {saved ? "已儲存" : "儲存"}
+                {saved ? "Saved" : "Save"}
               </Button>
             </div>
           )}
@@ -244,7 +244,7 @@ export function RefCard({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-sm">
               <FileText className="w-4 h-4 text-muted-foreground" />
-              {data.title || "備注"}
+              {data.title || "Notes"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
@@ -276,7 +276,7 @@ export function RefCard({
               )}
             </div>
             <div className="rounded-lg bg-muted p-3 text-sm leading-relaxed whitespace-pre-wrap min-h-[60px]">
-              {data.note || "（無備注）"}
+              {data.note || "(No notes)"}
             </div>
           </div>
         </DialogContent>

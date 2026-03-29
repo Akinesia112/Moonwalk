@@ -32,7 +32,7 @@ export function ReferenceUpload({
         category,
       });
 
-      // 重置表單
+      // Reset form
       setInstruction('');
       setPriority('main');
       setCategory('Lighting');
@@ -46,42 +46,42 @@ export function ReferenceUpload({
 
   return (
     <div className="upload-container">
-      <h3>上傳參考資料</h3>
+      <h3>Upload References</h3>
 
       {error && <div className="error-message">{error}</div>}
 
       <div className="form-group">
-        <label>優先級</label>
+        <label>Priority</label>
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value as any)}
         >
-          <option value="main">主要</option>
-          <option value="secondary">次要</option>
-          <option value="supplementary">補充</option>
+          <option value="main">Main</option>
+          <option value="secondary">Secondary</option>
+          <option value="supplementary">Supplementary</option>
         </select>
       </div>
 
       <div className="form-group">
-        <label>類別</label>
+        <label>Category</label>
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="Lighting">光影</option>
-          <option value="Color">色彩</option>
-          <option value="Composition">構圖</option>
-          <option value="Style">風格</option>
-          <option value="Texture">質感</option>
-          <option value="Motion">動態</option>
-          <option value="Mood">氛圍</option>
-          <option value="VFX">視覺效果</option>
+          <option value="Lighting">Lighting</option>
+          <option value="Color">Color</option>
+          <option value="Composition">Composition</option>
+          <option value="Style">Style</option>
+          <option value="Texture">Texture</option>
+          <option value="Motion">Motion</option>
+          <option value="Mood">Mood</option>
+          <option value="VFX">VFX</option>
         </select>
       </div>
 
       <div className="form-group">
-        <label>備註</label>
+        <label>Notes</label>
         <textarea
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
-          placeholder="附加說明..."
+          placeholder="Additional notes..."
         />
       </div>
 
@@ -96,7 +96,7 @@ export function ReferenceUpload({
       </div>
 
       <button disabled={loading}>
-        {loading ? '上傳中...' : '上傳'}
+        {loading ? 'Uploading...' : 'Upload'}
       </button>
     </div>
   );

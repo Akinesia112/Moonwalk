@@ -79,8 +79,8 @@ export function InteractiveReviewCanvas({
   const [activeColor, setActiveColor] = useState("#ef4444")
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const [comments, setComments] = useState<Comment[]>([
-    { id: "1", x: 30, y: 25, content: "這裡的光影方向需要調整", author: "Supervisor", timestamp: "2 分鐘前" },
-    { id: "2", x: 70, y: 60, content: "色溫太冷，要更暖一點", author: "Supervisor", timestamp: "5 分鐘前" },
+    { id: "1", x: 30, y: 25, content: "Lighting direction needs adjustment here", author: "Supervisor", timestamp: "2 minutes ago" },
+    { id: "2", x: 70, y: 60, content: "Color temperature too cool — needs to be warmer", author: "Supervisor", timestamp: "5 minutes ago" },
   ])
   const [newComment, setNewComment] = useState("")
   const [selectedComment, setSelectedComment] = useState<string | null>(null)
@@ -94,12 +94,12 @@ export function InteractiveReviewCanvas({
   const colors = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#8b5cf6", "#000000"]
 
   const tools = [
-    { id: "select", icon: MousePointer2, label: "選取" },
-    { id: "pencil", icon: Pencil, label: "畫筆" },
-    { id: "circle", icon: Circle, label: "圓形" },
-    { id: "rect", icon: Square, label: "方形" },
-    { id: "text", icon: Type, label: "文字" },
-    { id: "eraser", icon: Eraser, label: "橡皮擦" },
+    { id: "select", icon: MousePointer2, label: "Select" },
+    { id: "pencil", icon: Pencil, label: "Brush" },
+    { id: "circle", icon: Circle, label: "Circle" },
+    { id: "rect", icon: Square, label: "Rectangle" },
+    { id: "text", icon: Type, label: "Text" },
+    { id: "eraser", icon: Eraser, label: "Eraser" },
   ]
 
   // Canvas drawing logic
@@ -173,7 +173,7 @@ export function InteractiveReviewCanvas({
       setIsDrawing(true)
       setCurrentPath([x, y])
     } else if (activeTool === "text") {
-      const text = prompt("輸入文字：")
+      const text = prompt("Enter text:")
       if (text) {
         setAnnotations([...annotations, {
           id: Date.now().toString(),
@@ -182,7 +182,7 @@ export function InteractiveReviewCanvas({
           text,
           color: activeColor,
           author: "Supervisor",
-          timestamp: "剛剛"
+          timestamp: "Just now"
         }])
       }
     }
@@ -209,7 +209,7 @@ export function InteractiveReviewCanvas({
         points: currentPath,
         color: activeColor,
         author: "Supervisor",
-        timestamp: "剛剛"
+        timestamp: "Just now"
       }])
     }
     setIsDrawing(false)
@@ -224,7 +224,7 @@ export function InteractiveReviewCanvas({
       y: 50,
       content: newComment,
       author: "Supervisor",
-      timestamp: "剛剛"
+      timestamp: "Just now"
     }
     setComments([...comments, comment])
     setNewComment("")
@@ -266,10 +266,10 @@ export function InteractiveReviewCanvas({
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleUndo} title="復原">
+          <Button variant="ghost" size="sm" onClick={handleUndo} title="Undo">
             <Undo className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleClear} title="清除全部">
+          <Button variant="ghost" size="sm" onClick={handleClear} title="Clear all">
             <Trash2 className="w-4 h-4" />
           </Button>
           <div className="w-px h-6 bg-border mx-2" />
@@ -326,7 +326,7 @@ export function InteractiveReviewCanvas({
               style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}
             >
               <img 
-                src={workImage} 
+                src={workImage || "/placeholder.svg"} 
                 alt="Artist Work" 
                 className="max-w-none"
                 style={{ width: 800 }}
@@ -373,7 +373,7 @@ export function InteractiveReviewCanvas({
           {/* Comments Input */}
           <div className="p-3 border-t bg-background flex gap-2">
             <Input
-              placeholder="新增註解..."
+              placeholder="Add annotation..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
@@ -405,7 +405,7 @@ export function InteractiveReviewCanvas({
                     className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${activeRefIndex === idx ? "border-purple-500" : "border-transparent hover:border-muted-foreground/30"}`}
                     onClick={() => setActiveRefIndex(idx)}
                   >
-                    <img src={img} alt={`Reference ${idx + 1}`} className="w-full aspect-video object-cover" />
+                    <img src={img || "/placeholder.svg"} alt={`Reference ${idx + 1}`} className="w-full aspect-video object-cover" />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                       <span className="text-white text-xs font-medium">Reference #{idx + 1}</span>
                     </div>
@@ -418,7 +418,7 @@ export function InteractiveReviewCanvas({
             <div className="border-t">
               <div className="p-3 border-b flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-amber-600" />
-                <span className="font-medium text-sm">註解 ({comments.length})</span>
+                <span className="font-medium text-sm">Annotations ({comments.length})</span>
               </div>
               <ScrollArea className="h-48">
                 <div className="p-3 space-y-2">

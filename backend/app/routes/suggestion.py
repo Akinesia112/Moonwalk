@@ -148,7 +148,7 @@ async def debate_and_synthesize(
     )
 
     # Build user content for parallel calls
-    full_user = f"Background:\n{context}\n\nUser message: {user_message}" if context else user_message
+    full_user = f"[RESPOND ONLY IN ENGLISH — do not use any other language regardless of the input language]\n\nBackground:\n{context}\n\nUser message: {user_message}" if context else f"[RESPOND ONLY IN ENGLISH — do not use any other language regardless of the input language]\n\n{user_message}"
 
     tech_view, creative_view = await asyncio.gather(
         _call_openai(sys_tech, history + [{"role": "user", "content": full_user}]),
@@ -176,7 +176,7 @@ async def debate_and_synthesize(
         f"The following is an analysis of this issue from two different perspectives:\n\n"
         f"Technical Execution:\n{tech_view}\n\n"
         f"Creative Strategy:\n{creative_view}\n\n"
-        f"User's original message: {user_message}\n"
+        f"[RESPOND ONLY IN ENGLISH]\nUser's original message: {user_message}\n"
         f"Background: {context[:500] if context else '(none)'}\n\n"
         f"Integrate the above analysis and output a direct suggestion reply to the user."
     )

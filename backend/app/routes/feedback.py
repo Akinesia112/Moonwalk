@@ -263,7 +263,7 @@ async def analyze_brief(body: BriefAnalyzeBody):
         "  2. Name a specific film/scene as reference anchor\n"
         "  3. State which department (Lighting / Motion / Compositing / Editing) needs this clarified\n"
         "  Example: ''Eerie' is recommended to be defined as 'gradual breakdown of reality logic' (reference: Hereditary's compositional rhythm) rather than jump-scare horror, because the former is executed through composition and editing rhythm, while the latter relies on sound design and fast camera movement — the editor needs a clear direction'\n\n"
-        "All text in Traditional Chinese."
+        "IMPORTANT: All output text must be in English only. Do not use any other language regardless of the input language."
     )
     raw = await _agent_chat(prompt, [DIRECTOR_TOPIC])
 

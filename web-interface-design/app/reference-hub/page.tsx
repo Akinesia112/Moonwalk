@@ -560,10 +560,6 @@ function ReferenceHubContent() {
                           <SelectContent>
                             <SelectItem value="Main">⭐ Main</SelectItem>
                             <SelectItem value="Secondary">Secondary</SelectItem>
-                            <SelectItem value="Style">Style</SelectItem>
-                            <SelectItem value="Composition">Composition</SelectItem>
-                            <SelectItem value="Color">Color</SelectItem>
-                            <SelectItem value="Lighting">Lighting</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
