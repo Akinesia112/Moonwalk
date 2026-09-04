@@ -1,5 +1,5 @@
 # Moonwalk
-MOONWALK: Model-agnostic Open Negotiated Workflow by Agentic Mediators Looping on Key References and Reviews to Explore Animator-Supervisor Reflection in Pre-Production
+MOONWALK: Mediating Open Operations in Structured Workflows of Animators Looping on Key References for Junior–Supervisor Creation Alignment in Pre-Production Reviews
 
 **MOONWALK** is an agentic pre-production review system for 2D animation and VFX. It implements IR4IA (Inspiring Reflection for Intention Alignment) across three stages — Intention Reflection, Artwork Reflection, and Feedback Reflection — through a multi-agent MLLM pipeline and a seven-panel web interface.
 
