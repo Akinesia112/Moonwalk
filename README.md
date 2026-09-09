@@ -1,2 +1,1 @@
-# Moonwalk
-MOONWALK: Model-agnostic Open Negotiated Workflow by Agentic Mediators Looping on Key References and Reviews to Explore Animator-Supervisor Reflection in Pre-Production
+# MOONWALK: Mediating Operations with Intent–Evidence–Action Alignment Across Junior–Supervisor Review Workflows in Animation/VFX Pre-Production
